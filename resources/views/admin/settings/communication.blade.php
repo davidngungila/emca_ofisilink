@@ -919,8 +919,18 @@ function testEmail() {
         },
         body: JSON.stringify({ email: email })
     })
-    .then(res => res.json())
-    .then(data => {
+    .then(async res => {
+        // Try to parse JSON response
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return res.json().then(data => ({ status: res.status, data }));
+        } else {
+            // If not JSON, read as text
+            const text = await res.text();
+            return { status: res.status, data: { success: false, message: text || 'Failed to send test email' } };
+        }
+    })
+    .then(({ status, data }) => {
         if(data.success) {
             Swal.fire({
                 icon: 'success',
@@ -932,22 +942,38 @@ function testEmail() {
                 confirmButtonText: 'OK'
             });
         } else {
+            // Build error message with suggestion if available
+            let errorHtml = `<p><strong>${data.message || 'Failed to send test email'}</strong></p>`;
+            
+            if (data.error) {
+                errorHtml += `<p class="text-muted small mt-2"><strong>Error:</strong> ${data.error}</p>`;
+            }
+            
+            if (data.suggestion) {
+                errorHtml += `<div class="alert alert-info mt-3 mb-0"><small><strong>Suggestions:</strong><br>${data.suggestion}</small></div>`;
+            } else {
+                errorHtml += `<p class="text-muted small mt-2">Please check your email configuration and try again.</p>`;
+            }
+            
             Swal.fire({
                 icon: 'error',
-                title: 'Failed',
-                html: `
-                    <p>${data.message || 'Failed to send test email'}</p>
-                    <p class="text-muted small mt-2">Please check your email configuration and try again.</p>
-                `,
-                confirmButtonText: 'OK'
+                title: 'Failed to Send Test Email',
+                html: errorHtml,
+                confirmButtonText: 'OK',
+                width: '600px'
             });
         }
     })
     .catch(err => {
+        console.error('Email test error:', err);
         Swal.fire({
             icon: 'error',
             title: 'Network Error',
-            text: 'Network error occurred. Please try again.',
+            html: `
+                <p>Network error occurred while sending test email.</p>
+                <p class="text-muted small mt-2">Error: ${err.message || 'Unknown error'}</p>
+                <p class="text-muted small mt-2">Please check your internet connection and try again.</p>
+            `,
             confirmButtonText: 'OK'
         });
     });

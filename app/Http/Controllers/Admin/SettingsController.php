@@ -1033,11 +1033,22 @@ class SettingsController extends Controller
                         'connection_status' => 'connected'
                     ]);
                 } else {
+                    $errorMessage = $this->sanitizeForJson($testResult['message'] ?? 'Failed to send test email');
+                    $errorDetails = $this->sanitizeForJson($testResult['error'] ?? 'Unknown error');
+                    $suggestion = $this->sanitizeForJson($testResult['suggestion'] ?? null);
+                    
+                    \Log::warning('Email test failed', [
+                        'provider_id' => $emailProvider->id,
+                        'provider_name' => $emailProvider->name,
+                        'error' => $errorDetails,
+                        'email' => $request->email
+                    ]);
+                    
                     return response()->json([
                         'success' => false,
-                        'message' => $this->sanitizeForJson($testResult['message'] ?? 'Failed to send test email'),
-                        'error' => $this->sanitizeForJson($testResult['error'] ?? 'Unknown error'),
-                        'suggestion' => $this->sanitizeForJson($testResult['suggestion'] ?? null),
+                        'message' => $errorMessage,
+                        'error' => $errorDetails,
+                        'suggestion' => $suggestion,
                         'connection_status' => 'disconnected'
                     ], 400);
                 }
@@ -1068,6 +1079,11 @@ class SettingsController extends Controller
                 $errorDetails = $this->sanitizeForJson($testResult['error'] ?? 'Unknown error');
                 $suggestion = $this->sanitizeForJson($testResult['suggestion'] ?? null);
                 
+                \Log::warning('Email test failed (fallback)', [
+                    'error' => $errorDetails,
+                    'email' => $request->email
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => $errorMessage,
@@ -1082,17 +1098,30 @@ class SettingsController extends Controller
                 'provider_id' => $emailProvider->id ?? null,
                 'provider_name' => $emailProvider->name ?? null,
                 'host' => $emailProvider->mail_host ?? null,
-                'port' => $emailProvider->mail_port ?? null
+                'port' => $emailProvider->mail_port ?? null,
+                'email' => $request->email ?? null
             ]);
             
             $suggestion = 'Check firewall settings, verify SMTP host and port are correct, and ensure internet connection is active.';
             
+            // Get more detailed error message
+            $errorMessage = $e->getMessage();
+            
+            // Provide more specific suggestions based on error type
+            if (stripos($errorMessage, 'connection') !== false || stripos($errorMessage, 'timeout') !== false) {
+                $suggestion = 'Connection failed. Please check: 1) SMTP host and port are correct, 2) Firewall allows outbound connections, 3) Internet connection is active, 4) Server can reach SMTP server.';
+            } elseif (stripos($errorMessage, 'authentication') !== false || stripos($errorMessage, 'login') !== false) {
+                $suggestion = 'Authentication failed. Please verify: 1) Username/email is correct, 2) Password is correct (for Gmail, use App Password), 3) Account is not locked or suspended.';
+            } elseif (stripos($errorMessage, 'ssl') !== false || stripos($errorMessage, 'tls') !== false) {
+                $suggestion = 'SSL/TLS error. Please check: 1) Encryption type matches port (TLS for 587, SSL for 465), 2) Server supports the encryption method, 3) SSL certificates are valid.';
+            }
+            
             // Sanitize error message to ensure valid UTF-8
-            $errorMessage = $this->sanitizeForJson($e->getMessage());
+            $errorMessage = $this->sanitizeForJson($errorMessage);
             
             return response()->json([
                 'success' => false,
-                'message' => 'Email test failed: ' . $errorMessage,
+                'message' => 'Failed to send test email: ' . $errorMessage,
                 'error' => $errorMessage,
                 'suggestion' => $suggestion
             ], 500);
