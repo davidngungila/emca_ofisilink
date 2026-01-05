@@ -1056,99 +1056,139 @@ class MeetingController extends Controller
      */
     private function getMeetings(Request $request, $user)
     {
-        $userBranchId = $user->branch_id ?? null;
-        $canViewAll = $user->hasAnyRole(['System Admin', 'General Manager', 'HR Officer']);
-        
-        // Get filters
-        $statusFilter = $request->input('status', '');
-        $categoryFilter = $request->input('category_id', '');
-        $searchFilter = $request->input('search', '');
-        $branchFilter = $request->input('branch_id', '');
-        $dateRange = $request->input('date_range', '');
-        
-        // Build query
-        $query = DB::table('meetings')
-            ->leftJoin('meeting_categories', 'meetings.category_id', '=', 'meeting_categories.id')
-            ->leftJoin('branches', 'meetings.branch_id', '=', 'branches.id')
-            ->leftJoin('users as creator', 'meetings.created_by', '=', 'creator.id')
-            ->select(
-                'meetings.*',
-                'meeting_categories.name as category_name',
-                'branches.name as branch_name',
-                'branches.code as branch_code',
-                'creator.name as creator_name'
-            );
-        
-        // Apply branch filter
-        if ($branchFilter) {
-            $query->where('meetings.branch_id', $branchFilter);
-        } elseif (!$canViewAll && $userBranchId) {
-            $query->where('meetings.branch_id', $userBranchId);
-        }
-        
-        // Apply status filter
-        if ($statusFilter) {
-            $query->where('meetings.status', $statusFilter);
-        }
-        
-        // Apply category filter
-        if ($categoryFilter) {
-            $query->where('meetings.category_id', $categoryFilter);
-        }
-        
-        // Apply search filter
-        if ($searchFilter) {
-            $query->where(function($q) use ($searchFilter) {
-                $q->where('meetings.title', 'like', "%{$searchFilter}%")
-                  ->orWhere('meetings.description', 'like', "%{$searchFilter}%")
-                  ->orWhere('meetings.venue', 'like', "%{$searchFilter}%");
-            });
-        }
-        
-        // Apply date range filter
-        if ($dateRange) {
-            $dates = explode(' to ', $dateRange);
-            if (count($dates) == 2) {
-                $query->whereBetween('meetings.meeting_date', [
-                    date('Y-m-d', strtotime(trim($dates[0]))),
-                    date('Y-m-d', strtotime(trim($dates[1])))
-                ]);
-            } elseif (count($dates) == 1) {
-                $query->whereDate('meetings.meeting_date', date('Y-m-d', strtotime(trim($dates[0]))));
+        try {
+            $userBranchId = $user->branch_id ?? null;
+            $canViewAll = $user->hasAnyRole(['System Admin', 'General Manager', 'HR Officer']);
+            
+            // Get filters
+            $statusFilter = $request->input('status', '');
+            $categoryFilter = $request->input('category_id', '');
+            $searchFilter = $request->input('search', '');
+            $branchFilter = $request->input('branch_id', '');
+            $dateRange = $request->input('date_range', '');
+            
+            // Build query
+            $query = DB::table('meetings')
+                ->leftJoin('meeting_categories', 'meetings.category_id', '=', 'meeting_categories.id')
+                ->leftJoin('branches', 'meetings.branch_id', '=', 'branches.id')
+                ->leftJoin('users as creator', 'meetings.created_by', '=', 'creator.id')
+                ->select(
+                    'meetings.*',
+                    'meeting_categories.name as category_name',
+                    'branches.name as branch_name',
+                    'branches.code as branch_code',
+                    'creator.name as creator_name'
+                );
+            
+            // Apply branch filter
+            if ($branchFilter) {
+                $query->where('meetings.branch_id', $branchFilter);
+            } elseif (!$canViewAll && $userBranchId) {
+                $query->where('meetings.branch_id', $userBranchId);
             }
+            
+            // Apply status filter
+            if ($statusFilter) {
+                $query->where('meetings.status', $statusFilter);
+            }
+            
+            // Apply category filter
+            if ($categoryFilter) {
+                $query->where('meetings.category_id', $categoryFilter);
+            }
+            
+            // Apply search filter
+            if ($searchFilter) {
+                $query->where(function($q) use ($searchFilter) {
+                    $q->where('meetings.title', 'like', "%{$searchFilter}%")
+                      ->orWhere('meetings.description', 'like', "%{$searchFilter}%");
+                    
+                    // Check which column exists and use it
+                    if (Schema::hasColumn('meetings', 'venue')) {
+                        $q->orWhere('meetings.venue', 'like', "%{$searchFilter}%");
+                    } elseif (Schema::hasColumn('meetings', 'location')) {
+                        $q->orWhere('meetings.location', 'like', "%{$searchFilter}%");
+                    }
+                });
+            }
+            
+            // Apply date range filter
+            if ($dateRange) {
+                $dates = explode(' to ', $dateRange);
+                if (count($dates) == 2) {
+                    $query->whereBetween('meetings.meeting_date', [
+                        date('Y-m-d', strtotime(trim($dates[0]))),
+                        date('Y-m-d', strtotime(trim($dates[1])))
+                    ]);
+                } elseif (count($dates) == 1) {
+                    $query->whereDate('meetings.meeting_date', date('Y-m-d', strtotime(trim($dates[0]))));
+                }
+            }
+            
+            // Get participant counts
+            $meetings = $query->orderBy('meetings.meeting_date', 'desc')
+                ->orderBy('meetings.start_time', 'desc')
+                ->get()
+                ->map(function($meeting) {
+                    $participantsCount = DB::table('meeting_participants')
+                        ->where('meeting_id', $meeting->id)
+                        ->count();
+                    
+                    // Get venue/location - check which column exists
+                    $venue = null;
+                    if (property_exists($meeting, 'venue') && $meeting->venue) {
+                        $venue = $meeting->venue;
+                    } elseif (property_exists($meeting, 'location') && $meeting->location) {
+                        $venue = $meeting->location;
+                    }
+                    
+                    // Get meeting_type - check which column exists
+                    $meetingType = 'physical'; // Default
+                    if (property_exists($meeting, 'meeting_type') && $meeting->meeting_type) {
+                        $meetingType = $meeting->meeting_type;
+                    } elseif (property_exists($meeting, 'meeting_mode') && $meeting->meeting_mode) {
+                        // Map old meeting_mode to new meeting_type
+                        if ($meeting->meeting_mode == 'in_person') {
+                            $meetingType = 'physical';
+                        } else {
+                            $meetingType = $meeting->meeting_mode;
+                        }
+                    }
+                    
+                    return [
+                        'id' => $meeting->id,
+                        'title' => $meeting->title ?? 'Untitled Meeting',
+                        'meeting_date' => $meeting->meeting_date ?? null,
+                        'start_time' => $meeting->start_time ?? null,
+                        'end_time' => $meeting->end_time ?? null,
+                        'venue' => $venue,
+                        'meeting_type' => $meetingType,
+                        'status' => $meeting->status ?? 'draft',
+                        'category_name' => $meeting->category_name ?? null,
+                        'branch_name' => $meeting->branch_name ?? null,
+                        'branch_code' => $meeting->branch_code ?? null,
+                        'creator_name' => $meeting->creator_name ?? 'Unknown',
+                        'participants_count' => $participantsCount,
+                        'created_at' => $meeting->created_at ?? now()->toDateTimeString(),
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'meetings' => $meetings
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error loading meetings: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $user->id
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load meetings: ' . $e->getMessage(),
+                'meetings' => []
+            ], 500);
         }
-        
-        // Get participant counts
-        $meetings = $query->orderBy('meetings.meeting_date', 'desc')
-            ->orderBy('meetings.start_time', 'desc')
-            ->get()
-            ->map(function($meeting) {
-                $participantsCount = DB::table('meeting_participants')
-                    ->where('meeting_id', $meeting->id)
-                    ->count();
-                
-                return [
-                    'id' => $meeting->id,
-                    'title' => $meeting->title,
-                    'meeting_date' => $meeting->meeting_date,
-                    'start_time' => $meeting->start_time,
-                    'end_time' => $meeting->end_time,
-                    'venue' => $meeting->venue,
-                    'meeting_type' => $meeting->meeting_type,
-                    'status' => $meeting->status,
-                    'category_name' => $meeting->category_name,
-                    'branch_name' => $meeting->branch_name,
-                    'branch_code' => $meeting->branch_code,
-                    'creator_name' => $meeting->creator_name,
-                    'participants_count' => $participantsCount,
-                    'created_at' => $meeting->created_at,
-                ];
-            });
-        
-        return response()->json([
-            'success' => true,
-            'meetings' => $meetings
-        ]);
     }
     
     /**

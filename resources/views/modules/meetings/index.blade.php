@@ -522,6 +522,10 @@
 <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+// Set AJAX URL for meetings
+window.meetingAjaxUrl = '{{ route("modules.meetings.ajax") }}';
+</script>
 <script src="{{ asset('js/meetings.js') }}"></script>
 <script>
 $(document).ready(function() {

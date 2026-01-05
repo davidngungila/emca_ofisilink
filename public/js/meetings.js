@@ -327,20 +327,52 @@ $(document).ready(function() {
             branch_id: branchId
         };
 
+        // Show loading state
+        const container = $('#meetings-container');
+        container.html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">Loading meetings...</p></div>');
+
         $.ajax({
             url: ajaxUrl,
             method: 'POST',
             data: { _token: csrfToken, action: 'get_meetings', ...filters },
             success: function(response) {
                 if (response.success) {
-                    renderMeetings(response.meetings);
+                    renderMeetings(response.meetings || []);
                 } else {
-                    $('#meetings-container').html('<div class="text-center py-5 text-muted"><i class="bx bx-calendar-x" style="font-size: 3rem;"></i><p>No meetings found</p></div>');
+                    const errorMsg = response.message || 'No meetings found';
+                    container.html(`<div class="text-center py-5 text-muted"><i class="bx bx-calendar-x" style="font-size: 3rem;"></i><p>${errorMsg}</p></div>`);
                 }
             },
-            error: function(xhr) {
-                console.error('Error loading meetings:', xhr);
-                Swal.fire('Error', 'Failed to load meetings. Please try again.', 'error');
+            error: function(xhr, status, error) {
+                console.error('Error loading meetings:', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseJSON,
+                    statusCode: xhr.status
+                });
+                
+                let errorMessage = 'Failed to load meetings. Please try again.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Meetings endpoint not found. Please contact support.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Server error occurred. Please try again later.';
+                } else if (xhr.status === 403) {
+                    errorMessage = 'You do not have permission to view meetings.';
+                }
+                
+                container.html(`<div class="text-center py-5 text-danger"><i class="bx bx-error-circle" style="font-size: 3rem;"></i><p class="mt-2">${errorMessage}</p><button class="btn btn-primary mt-3" onclick="location.reload()">Reload Page</button></div>`);
+                
+                // Only show Swal for critical errors
+                if (xhr.status === 500 || xhr.status === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMessage,
+                        confirmButtonText: 'OK'
+                    });
+                }
             }
         });
     }
