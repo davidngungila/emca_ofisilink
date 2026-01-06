@@ -945,9 +945,17 @@ class SettingsController extends Controller
      */
     public function testSMS(Request $request)
     {
-        $request->validate([
-            'phone' => 'required|string',
-        ]);
+        try {
+            $request->validate([
+                'phone' => 'required|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->errors()['phone'] ?? ['Phone number is required']),
+                'error' => 'Validation error'
+            ], 422);
+        }
 
         try {
             // Clean phone number
@@ -956,6 +964,33 @@ class SettingsController extends Controller
                 $phone = '255' . ltrim($phone, '0');
             }
             
+            // Validate phone format
+            if (strlen($phone) !== 12 || !str_starts_with($phone, '255')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid phone number format. Must be 255XXXXXXXXX (12 digits starting with 255)',
+                    'error' => 'Invalid phone format'
+                ], 400);
+            }
+            
+            // If custom SMS credentials are provided, use them temporarily
+            if ($request->has('sms_username') && $request->has('sms_password') && $request->has('sms_url')) {
+                // Create a temporary provider for testing
+                $tempProvider = new \App\Models\NotificationProvider([
+                    'name' => 'Test Provider',
+                    'type' => 'sms',
+                    'sms_username' => $request->sms_username,
+                    'sms_password' => $request->sms_password,
+                    'sms_from' => $request->sms_from ?? 'OfisiLink',
+                    'sms_url' => $request->sms_url,
+                    'is_active' => true,
+                ]);
+                
+                $result = $tempProvider->testSMS($phone);
+                return response()->json($result);
+            }
+            
+            // Use existing notification service
             $notifier = app(\App\Services\NotificationService::class);
             $result = $notifier->sendSMS($phone, 'Test SMS from OfisiLink System. If you receive this, SMS configuration is working correctly.');
 
@@ -973,19 +1008,29 @@ class SettingsController extends Controller
                 
                 return response()->json([
                     'success' => false,
-                    'message' => 'SMS sending failed. Please check: 1) SMS credentials are correct, 2) Phone number format is valid (255XXXXXXXXX), 3) SMS gateway URL is accessible. Check logs for more details.'
+                    'message' => 'SMS sending failed. Please check: 1) SMS credentials are correct, 2) Phone number format is valid (255XXXXXXXXX), 3) SMS gateway URL is accessible. Check logs for more details.',
+                    'error' => 'SMS sending failed'
                 ], 400);
             }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->errors()['phone'] ?? ['Phone number is required']),
+                'error' => 'Validation error'
+            ], 422);
         } catch (\Exception $e) {
             \Log::error('SMS test exception', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'phone' => $request->phone
+                'phone' => $request->phone ?? null
             ]);
+            
+            $errorMessage = $this->sanitizeForJson($e->getMessage());
             
             return response()->json([
                 'success' => false,
-                'message' => 'SMS test failed: ' . $e->getMessage()
+                'message' => 'SMS test failed: ' . $errorMessage,
+                'error' => $errorMessage
             ], 500);
         }
     }
