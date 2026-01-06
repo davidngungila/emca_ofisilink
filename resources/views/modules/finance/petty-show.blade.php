@@ -1368,7 +1368,7 @@
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <form id="markPaidForm" method="POST" action="{{ route('petty-cash.mark-paid', $pettyCash) }}" enctype="multipart/form-data">
+      <form id="markPaidForm" method="POST" action="{{ route('petty-cash.payment.mark-paid', $pettyCash) }}" enctype="multipart/form-data">
         @csrf
         <div class="modal-body">
           <div class="alert alert-info">
