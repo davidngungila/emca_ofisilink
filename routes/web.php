@@ -1146,6 +1146,13 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::get('settings/communication/check-sms', [SettingsController::class, 'checkSMSStatus'])->name('admin.settings.communication.check-sms');
         
         // Notification Providers Management
+        // Notification Provider Pages
+        Route::get('settings/communication/email-providers/create', [SettingsController::class, 'createEmailProvider'])->name('admin.settings.communication.email-providers.create');
+        Route::get('settings/communication/sms-providers/create', [SettingsController::class, 'createSmsProvider'])->name('admin.settings.communication.sms-providers.create');
+        Route::get('settings/communication/email-providers/{provider}/edit', [SettingsController::class, 'editEmailProvider'])->name('admin.settings.communication.email-providers.edit');
+        Route::get('settings/communication/sms-providers/{provider}/edit', [SettingsController::class, 'editSmsProvider'])->name('admin.settings.communication.sms-providers.edit');
+        
+        // Notification Provider API
         Route::get('settings/notification-providers', [SettingsController::class, 'getNotificationProviders'])->name('admin.settings.notification-providers');
         Route::get('settings/notification-providers/{provider}', [SettingsController::class, 'getNotificationProvider'])->name('admin.settings.notification-providers.show');
         Route::post('settings/notification-providers', [SettingsController::class, 'storeNotificationProvider'])->name('admin.settings.notification-providers.store');

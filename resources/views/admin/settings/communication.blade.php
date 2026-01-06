@@ -95,12 +95,12 @@
                             <p class="text-muted mb-0 mt-2">Manage multiple SMS and Email providers. The primary provider is used first for all system notifications.</p>
                         </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#addEmailProviderModal">
+                            <a href="{{ route('admin.settings.communication.email-providers.create') }}" class="btn btn-sm btn-danger">
                                 <i class="bx bx-plus me-1"></i>Add Email Provider
-                            </button>
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSmsProviderModal">
+                            </a>
+                            <a href="{{ route('admin.settings.communication.sms-providers.create') }}" class="btn btn-sm btn-primary">
                                 <i class="bx bx-plus me-1"></i>Add SMS Provider
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -195,11 +195,11 @@
                                                             title="Test Connection">
                                                         <i class="bx bx-refresh"></i> Test
                                                     </button>
-                                                    <button class="btn btn-outline-info btn-sm" 
-                                                            onclick="editEmailProvider({{ $provider->id }})"
-                                                            title="Edit Provider">
-                                                        <i class="bx bx-edit"></i> Edit
-                                                    </button>
+                                                <a href="{{ route('admin.settings.communication.email-providers.edit', $provider->id) }}" 
+                                                   class="btn btn-outline-info btn-sm"
+                                                   title="Edit Provider">
+                                                    <i class="bx bx-edit"></i> Edit
+                                                </a>
                                                 </div>
                                                 <div class="btn-group mt-1" role="group">
                                                     @if(!$provider->is_primary)
@@ -238,9 +238,9 @@
                                             <div class="text-muted">
                                                 <i class="bx bx-inbox fs-1 d-block mb-2"></i>
                                                 <p class="mb-2">No email providers configured.</p>
-                                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#addEmailProviderModal">
+                                                <a href="{{ route('admin.settings.communication.email-providers.create') }}" class="btn btn-sm btn-danger">
                                                     <i class="bx bx-plus me-1"></i>Add Email Provider
-                                                </button>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
@@ -333,11 +333,11 @@
                                                             title="Test Connection">
                                                         <i class="bx bx-refresh"></i> Test
                                                     </button>
-                                                    <button class="btn btn-outline-info btn-sm" 
-                                                            onclick="editSmsProvider({{ $provider->id }})"
-                                                            title="Edit Provider">
-                                                        <i class="bx bx-edit"></i> Edit
-                                                    </button>
+                                                <a href="{{ route('admin.settings.communication.sms-providers.edit', $provider->id) }}" 
+                                                   class="btn btn-outline-info btn-sm"
+                                                   title="Edit Provider">
+                                                    <i class="bx bx-edit"></i> Edit
+                                                </a>
                                                 </div>
                                                 <div class="btn-group mt-1" role="group">
                                                     @if(!$provider->is_primary)
@@ -376,9 +376,9 @@
                                             <div class="text-muted">
                                                 <i class="bx bx-message-rounded-dots fs-1 d-block mb-2"></i>
                                                 <p class="mb-2">No SMS providers configured.</p>
-                                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSmsProviderModal">
+                                                <a href="{{ route('admin.settings.communication.sms-providers.create') }}" class="btn btn-sm btn-primary">
                                                     <i class="bx bx-plus me-1"></i>Add SMS Provider
-                                                </button>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>

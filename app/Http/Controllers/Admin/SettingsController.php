@@ -1543,6 +1543,44 @@ class SettingsController extends Controller
     }
 
     /**
+     * Show create email provider page
+     */
+    public function createEmailProvider()
+    {
+        return view('admin.settings.communication.email-providers.create');
+    }
+
+    /**
+     * Show create SMS provider page
+     */
+    public function createSmsProvider()
+    {
+        return view('admin.settings.communication.sms-providers.create');
+    }
+
+    /**
+     * Show edit email provider page
+     */
+    public function editEmailProvider(NotificationProvider $provider)
+    {
+        if ($provider->type !== 'email') {
+            abort(404, 'Provider is not an email provider');
+        }
+        return view('admin.settings.communication.email-providers.edit', compact('provider'));
+    }
+
+    /**
+     * Show edit SMS provider page
+     */
+    public function editSmsProvider(NotificationProvider $provider)
+    {
+        if ($provider->type !== 'sms') {
+            abort(404, 'Provider is not an SMS provider');
+        }
+        return view('admin.settings.communication.sms-providers.edit', compact('provider'));
+    }
+
+    /**
      * Store a new notification provider
      */
     public function storeNotificationProvider(Request $request)
