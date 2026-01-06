@@ -40,13 +40,10 @@ class SystemController extends Controller
         // Get advanced metrics
         $advancedMetrics = $this->getAdvancedMetrics();
         
-        // Get recent system events
-        $recentEvents = $this->getRecentSystemEvents();
-        
         // Get performance metrics (after queries)
         $performanceMetrics = $this->getPerformanceMetrics();
         
-        return view('admin.system', compact('health', 'liveStats', 'systemInfo', 'backupSchedule', 'advancedMetrics', 'recentEvents', 'performanceMetrics'));
+        return view('admin.system', compact('health', 'liveStats', 'systemInfo', 'backupSchedule', 'advancedMetrics', 'performanceMetrics'));
     }
 
     public function healthCheck()

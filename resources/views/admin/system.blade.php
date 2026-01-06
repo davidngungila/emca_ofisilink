@@ -378,72 +378,189 @@
         </div>
     </div>
 
-    <!-- Recent System Events -->
-    @if(!empty($recentEvents))
-    <div class="col-lg-6 mb-4">
+    <!-- System Statistics & Analytics -->
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bx bx-time-five"></i> Recent System Events
+                    <i class="bx bx-bar-chart-alt-2"></i> System Statistics & Analytics
                 </h5>
             </div>
             <div class="card-body">
-                <div class="list-group list-group-flush">
-                    @foreach(array_slice($recentEvents, 0, 5) as $event)
-                    <div class="list-group-item px-0">
-                        <div class="d-flex align-items-start">
-                            <div class="avatar avatar-sm me-3">
-                                <span class="avatar-initial rounded bg-label-primary">
-                                    <i class="bx {{ $event['icon'] ?? 'bx-info-circle' }}"></i>
-                                </span>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1 small">{{ $event['title'] ?? 'Unknown Event' }}</h6>
-                                <p class="mb-1 small text-muted">{{ strlen($event['description'] ?? '') > 60 ? substr($event['description'] ?? '', 0, 60) . '...' : ($event['description'] ?? '') }}</p>
-                                <small class="text-muted">{{ \Carbon\Carbon::parse($event['time'] ?? now())->diffForHumans() }}</small>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="card bg-gradient-primary text-white">
+                            <div class="card-body text-center">
+                                <i class="bx bx-server fs-1 mb-2"></i>
+                                <h3 class="mb-0">{{ $systemInfo['database']['tables'] ?? 0 }}</h3>
+                                <small>Database Tables</small>
                             </div>
                         </div>
                     </div>
-                    @endforeach
+                    <div class="col-md-3">
+                        <div class="card bg-gradient-success text-white">
+                            <div class="card-body text-center">
+                                <i class="bx bx-data fs-1 mb-2"></i>
+                                <h3 class="mb-0">
+                                    @if(isset($systemInfo['database']['size_mb']))
+                                        {{ number_format($systemInfo['database']['size_mb'], 0) }} MB
+                                    @else
+                                        N/A
+                                    @endif
+                                </h3>
+                                <small>Database Size</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-gradient-info text-white">
+                            <div class="card-body text-center">
+                                <i class="bx bx-hdd fs-1 mb-2"></i>
+                                <h3 class="mb-0">
+                                    @if(isset($systemInfo['storage']['used_gb']))
+                                        {{ number_format($systemInfo['storage']['used_gb'], 1) }} GB
+                                    @else
+                                        N/A
+                                    @endif
+                                </h3>
+                                <small>Storage Used</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-gradient-warning text-white">
+                            <div class="card-body text-center">
+                                <i class="bx bx-memory-card fs-1 mb-2"></i>
+                                <h3 class="mb-0">{{ number_format($advancedMetrics['memory']['current_mb'] ?? 0, 0) }} MB</h3>
+                                <small>Memory Usage</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3"><i class="bx bx-trending-up me-2"></i>Performance Overview</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <td width="60%"><strong>Database Queries Executed</strong></td>
+                                        <td><span class="badge bg-primary">{{ $performanceMetrics['database']['query_count'] ?? 0 }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total Query Time</strong></td>
+                                        <td><span class="badge bg-info">{{ number_format($performanceMetrics['database']['total_time_ms'] ?? 0, 2) }} ms</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Average Query Time</strong></td>
+                                        <td><span class="badge bg-{{ ($performanceMetrics['database']['avg_time_ms'] ?? 0) > 100 ? 'danger' : (($performanceMetrics['database']['avg_time_ms'] ?? 0) > 50 ? 'warning' : 'success') }}">
+                                            {{ number_format($performanceMetrics['database']['avg_time_ms'] ?? 0, 2) }} ms
+                                        </span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cache Status</strong></td>
+                                        <td>
+                                            <span class="badge bg-{{ ($performanceMetrics['cache']['status'] ?? 'inactive') == 'active' ? 'success' : 'secondary' }}">
+                                                {{ ucfirst($performanceMetrics['cache']['status'] ?? 'inactive') }}
+                                            </span>
+                                            <small class="text-muted ms-2">({{ $performanceMetrics['cache']['driver'] ?? 'N/A' }})</small>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mb-3"><i class="bx bx-info-circle me-2"></i>System Configuration</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-borderless">
+                                <tbody>
+                                    <tr>
+                                        <td width="60%"><strong>Application Environment</strong></td>
+                                        <td><span class="badge bg-{{ ($health['app']['env'] ?? 'production') == 'production' ? 'success' : 'warning' }}">{{ strtoupper($health['app']['env'] ?? 'unknown') }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Debug Mode</strong></td>
+                                        <td><span class="badge bg-{{ ($health['app']['debug'] ?? false) ? 'danger' : 'success' }}">{{ ($health['app']['debug'] ?? false) ? 'Enabled' : 'Disabled' }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Laravel Version</strong></td>
+                                        <td><code>{{ $health['app']['version'] ?? 'Unknown' }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>PHP Version</strong></td>
+                                        <td><code>{{ $systemInfo['server']['php_version'] ?? 'N/A' }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Server OS</strong></td>
+                                        <td>{{ $systemInfo['server']['os'] ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Timezone</strong></td>
+                                        <td>{{ $systemInfo['application']['timezone'] ?? 'N/A' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    @endif
 
-    <!-- Recent Errors -->
-    @if(!empty($advancedMetrics['recent_errors']))
-    <div class="col-lg-6 mb-4">
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white">
+    <!-- Quick Actions & System Tools -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bx bx-error-circle"></i> Recent System Errors
+                    <i class="bx bx-cog"></i> Quick Actions & System Tools
                 </h5>
             </div>
             <div class="card-body">
-                <div class="list-group list-group-flush">
-                    @foreach(array_slice($advancedMetrics['recent_errors'], 0, 5) as $error)
-                    <div class="list-group-item px-0">
-                        <div class="d-flex align-items-start">
-                            <div class="avatar avatar-sm me-3">
-                                <span class="avatar-initial rounded bg-label-danger">
-                                    <i class="bx bx-error"></i>
-                                </span>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ route('admin.settings') }}" class="card text-decoration-none border h-100">
+                            <div class="card-body text-center">
+                                <i class="bx bx-cog fs-1 text-primary mb-2"></i>
+                                <h6 class="mb-0">System Settings</h6>
+                                <small class="text-muted">Configure system preferences</small>
                             </div>
-                            <div class="flex-grow-1">
-                                <p class="mb-1 small">{{ strlen($error['message'] ?? 'Unknown error') > 100 ? substr($error['message'] ?? 'Unknown error', 0, 100) . '...' : ($error['message'] ?? 'Unknown error') }}</p>
-                                @if(isset($error['time']))
-                                <small class="text-muted">{{ $error['time'] }}</small>
-                                @endif
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ route('admin.system.errors') }}" class="card text-decoration-none border h-100">
+                            <div class="card-body text-center">
+                                <i class="bx bx-error-circle fs-1 text-danger mb-2"></i>
+                                <h6 class="mb-0">System Errors</h6>
+                                <small class="text-muted">View error logs</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ route('admin.dashboard') }}" class="card text-decoration-none border h-100">
+                            <div class="card-body text-center">
+                                <i class="bx bx-dashboard fs-1 text-info mb-2"></i>
+                                <h6 class="mb-0">Admin Dashboard</h6>
+                                <small class="text-muted">Return to dashboard</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border h-100" onclick="refreshHealth()" style="cursor: pointer;">
+                            <div class="card-body text-center">
+                                <i class="bx bx-refresh fs-1 text-success mb-2"></i>
+                                <h6 class="mb-0">Refresh Health</h6>
+                                <small class="text-muted">Check system status</small>
                             </div>
                         </div>
                     </div>
-                    @endforeach
                 </div>
             </div>
         </div>
     </div>
-    @endif
 
     <!-- User Management Section -->
     <div class="col-12 mb-4">
