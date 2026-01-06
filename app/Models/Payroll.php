@@ -24,6 +24,7 @@ class Payroll extends Model
         'total_amount',
         'status',
         'processed_by',
+        'branch_id',
         'reviewed_by',
         'approved_by',
         'paid_by',
@@ -121,6 +122,14 @@ class Payroll extends Model
     public function paidBy()
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    /**
+     * Get the branch for this payroll
+     */
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     /**

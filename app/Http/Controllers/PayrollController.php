@@ -8,6 +8,7 @@ use App\Models\PayrollItem;
 use App\Models\User;
 use App\Models\Employee;
 use App\Models\Department;
+use App\Models\Branch;
 use App\Services\TanzaniaStatutoryCalculator;
 use App\Services\NotificationService;
 use App\Services\ActivityLogService;
@@ -36,6 +37,18 @@ class PayrollController extends Controller
         try {
         $user = Auth::user();
         
+        // Get user's branch
+        $userBranchId = $user->branch_id ?? null;
+        
+        // Get selected branch from request
+        $selectedBranchId = $request->input('branch_id', $userBranchId);
+        
+        // Get all branches for dropdown
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        
+        // Check if user can view all branches
+        $canViewAll = $user->hasAnyRole(['System Admin', 'General Manager', 'HR Officer']);
+        
         // Determine access level
         $is_hr_officer = $user->hasRole('HR Officer');
         $is_admin = $user->hasRole('System Admin');
@@ -58,23 +71,32 @@ class PayrollController extends Controller
         $employee_details = null;
 
         if ($pageMode === 'manager') {
-            // Use raw queries to ensure accurate totals
-            $payrolls = Payroll::with(['processor', 'reviewer', 'approver', 'payer'])
+            // Build payroll query with branch filtering
+            $payrollQuery = Payroll::with(['processor', 'reviewer', 'approver', 'payer', 'branch'])
                             ->select('payrolls.*')
                             ->selectRaw('(SELECT COUNT(*) FROM payroll_items WHERE payroll_items.payroll_id = payrolls.id) as employee_count')
                             ->selectRaw('(SELECT COALESCE(SUM(payroll_items.net_salary), 0) FROM payroll_items WHERE payroll_items.payroll_id = payrolls.id) as total_amount')
-                            ->selectRaw('(SELECT COALESCE(SUM(payroll_items.total_employer_cost), 0) FROM payroll_items WHERE payroll_items.payroll_id = payrolls.id) as total_employer_cost')
-                            ->orderBy('pay_period', 'desc')
+                            ->selectRaw('(SELECT COALESCE(SUM(payroll_items.total_employer_cost), 0) FROM payroll_items WHERE payroll_items.payroll_id = payrolls.id) as total_employer_cost');
+            
+            // Apply branch filter
+            if ($selectedBranchId) {
+                $payrollQuery->where('payrolls.branch_id', $selectedBranchId);
+            } elseif (!$canViewAll && $userBranchId) {
+                $payrollQuery->where('payrolls.branch_id', $userBranchId);
+            }
+            
+            $payrolls = $payrollQuery->orderBy('pay_period', 'desc')
                             ->orderBy('created_at', 'desc')
                             ->paginate(20);
 
-                // Load employees with relationships safely
+                // Load employees with relationships safely and branch filtering
                 try {
-            $employees = User::where('is_active', true)
+            $employeeQuery = User::where('is_active', true)
                                     ->whereHas('employee')
                                     ->with([
                                         'primaryDepartment', 
                                         'employee',
+                                        'branch',
                                         'bankAccounts' => function($query) {
                                             $query->orderBy('is_primary', 'desc')
                                                   ->orderBy('created_at', 'desc');
@@ -83,8 +105,16 @@ class PayrollController extends Controller
                                             $query->orderBy('is_active', 'desc')
                                                   ->orderBy('created_at', 'desc');
                                         }
-                                    ])
-                            ->get();
+                                    ]);
+            
+            // Apply branch filter for employees
+            if ($selectedBranchId) {
+                $employeeQuery->where('branch_id', $selectedBranchId);
+            } elseif (!$canViewAll && $userBranchId) {
+                $employeeQuery->where('branch_id', $userBranchId);
+            }
+            
+            $employees = $employeeQuery->get();
                 } catch (\Exception $e) {
                     \Log::error('Error loading employees for payroll', [
                         'error' => $e->getMessage(),
@@ -175,7 +205,8 @@ class PayrollController extends Controller
         return view('modules.hr.payroll', compact(
             'payrolls', 'employees', 'stats', 'employee_details', 'recent_periods',
             'pageMode', 'can_process_payroll', 'can_review_payroll', 'can_approve_payroll', 'can_pay_payroll',
-            'glAccounts', 'chartAccounts', 'cashBoxes', 'deductionsSummary'
+            'glAccounts', 'chartAccounts', 'cashBoxes', 'deductionsSummary',
+            'branches', 'selectedBranchId', 'canViewAll'
         ));
             
         } catch (\Exception $e) {
@@ -268,7 +299,7 @@ class PayrollController extends Controller
         return view('modules.hr.payroll-staff', compact('payrolls', 'employeeDetails'));
     }
 
-    private function getPayrollStatistics()
+    private function getPayrollStatistics($branchId = null, $canViewAll = false, $userBranchId = null)
     {
         try {
         $currentMonth = Carbon::now()->format('Y-m');
@@ -276,90 +307,108 @@ class PayrollController extends Controller
         $lastMonth = Carbon::now()->subMonth()->format('Y-m');
         $lastYear = $currentYear - 1;
         
+        // Helper function to apply branch filter
+        $applyBranchFilter = function($query) use ($branchId, $canViewAll, $userBranchId) {
+            if ($branchId) {
+                $query->where('payrolls.branch_id', $branchId);
+            } elseif (!$canViewAll && $userBranchId) {
+                $query->where('payrolls.branch_id', $userBranchId);
+            }
+            return $query;
+        };
+        
         \Log::info('Calculating payroll statistics', [
             'current_month' => $currentMonth,
             'current_year' => $currentYear,
+            'branch_id' => $branchId,
         ]);
 
             // Use direct queries for better performance and accuracy
         $stats = [
-                'total_processed' => (int)DB::table('payrolls')
+                'total_processed' => (int)$applyBranchFilter(DB::table('payrolls'))
                     ->where('status', '!=', 'cancelled')
                     ->count(),
-                'pending_review' => (int)DB::table('payrolls')
+                'pending_review' => (int)$applyBranchFilter(DB::table('payrolls'))
                     ->where('status', 'processed')
                     ->count(),
-                'pending_approval' => (int)DB::table('payrolls')
+                'pending_approval' => (int)$applyBranchFilter(DB::table('payrolls'))
                     ->where('status', 'reviewed')
                     ->count(),
-                'approved_unpaid' => (int)DB::table('payrolls')
+                'approved_unpaid' => (int)$applyBranchFilter(DB::table('payrolls'))
                     ->where('status', 'approved')
                     ->count(),
-                'current_month_total' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'current_month_total' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                     ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                     ->sum('payroll_items.net_salary') ?? 0,
-                'current_month_employer_cost' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'current_month_employer_cost' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                     ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                     ->sum('payroll_items.total_employer_cost') ?? 0,
-                'current_month_gross' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'current_month_gross' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                     ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                     ->selectRaw('COALESCE(SUM(basic_salary + overtime_amount + bonus_amount + allowance_amount), 0) as gross')
                     ->value('gross') ?? 0,
-                'current_month_deductions' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'current_month_deductions' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                     ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                     ->selectRaw('COALESCE(SUM(deduction_amount + nssf_amount + paye_amount + nhif_amount + heslb_amount + wcf_amount + sdl_amount + other_deductions), 0) as total')
                     ->value('total') ?? 0,
-                'last_month_total' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'last_month_total' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $lastMonth . '%')
                     ->where('payrolls.status', 'paid')
                     ->sum('payroll_items.net_salary') ?? 0,
-                'year_to_date_total' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'year_to_date_total' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentYear . '-%')
                     ->where('payrolls.status', 'paid')
                     ->sum('payroll_items.net_salary') ?? 0,
-                'year_to_date_employer_cost' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'year_to_date_employer_cost' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentYear . '-%')
                     ->where('payrolls.status', 'paid')
                     ->sum('payroll_items.total_employer_cost') ?? 0,
-                'last_year_total' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'last_year_total' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $lastYear . '-%')
                     ->where('payrolls.status', 'paid')
                     ->sum('payroll_items.net_salary') ?? 0,
                 'employees_count' => (int)DB::table('users')
                     ->where('is_active', true)
+                    ->where(function($query) use ($branchId, $canViewAll, $userBranchId) {
+                        if ($branchId) {
+                            $query->where('branch_id', $branchId);
+                        } elseif (!$canViewAll && $userBranchId) {
+                            $query->where('branch_id', $userBranchId);
+                        }
+                    })
                     ->whereExists(function($query) {
                         $query->select(DB::raw(1))
                               ->from('employees')
                               ->whereColumn('employees.user_id', 'users.id');
                     })
                     ->count(),
-                'paid_payrolls_count' => (int)DB::table('payrolls')
+                'paid_payrolls_count' => (int)$applyBranchFilter(DB::table('payrolls'))
                     ->where('status', 'paid')
                     ->count(),
-                'total_all_time_net' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'total_all_time_net' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.status', 'paid')
                     ->sum('payroll_items.net_salary') ?? 0,
-                'total_all_time_employer_cost' => (float)DB::table('payroll_items')
-                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                'total_all_time_employer_cost' => (float)$applyBranchFilter(DB::table('payroll_items')
+                    ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.status', 'paid')
                     ->sum('payroll_items.total_employer_cost') ?? 0,
-                'average_monthly_payroll' => (float)(function() use ($currentYear) {
+                'average_monthly_payroll' => (float)(function() use ($currentYear, $applyBranchFilter) {
                     try {
-                        $monthlyTotals = DB::table('payroll_items')
-                            ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+                        $monthlyTotals = $applyBranchFilter(DB::table('payroll_items')
+                            ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                             ->where('payrolls.status', 'paid')
                             ->selectRaw('pay_period, SUM(net_salary) as monthly_total')
                             ->groupBy('pay_period')
@@ -374,8 +423,8 @@ class PayrollController extends Controller
             ];
 
             // Calculate monthly trends (last 12 months)
-            $monthlyTrends = DB::table('payroll_items')
-                ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+            $monthlyTrends = $applyBranchFilter(DB::table('payroll_items')
+                ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                 ->where('payrolls.status', 'paid')
                 ->where('payrolls.pay_period', '>=', Carbon::now()->subMonths(11)->format('Y-m'))
                 ->selectRaw('payrolls.pay_period, 
@@ -391,10 +440,10 @@ class PayrollController extends Controller
             $stats['monthly_trends'] = $monthlyTrends;
 
             // Department-wise breakdown
-            $departmentStats = DB::table('payroll_items')
+            $departmentStats = $applyBranchFilter(DB::table('payroll_items')
                 ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
                 ->join('users', 'payroll_items.employee_id', '=', 'users.id')
-                ->leftJoin('departments', 'users.primary_department_id', '=', 'departments.id')
+                ->leftJoin('departments', 'users.primary_department_id', '=', 'departments.id'))
                 ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                 ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                 ->selectRaw('departments.id, departments.name,
@@ -411,10 +460,10 @@ class PayrollController extends Controller
             $stats['department_breakdown'] = $departmentStats;
 
             // Top earners (current month)
-            $topEarners = DB::table('payroll_items')
+            $topEarners = $applyBranchFilter(DB::table('payroll_items')
                 ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
                 ->join('users', 'payroll_items.employee_id', '=', 'users.id')
-                ->leftJoin('employees', 'users.id', '=', 'employees.user_id')
+                ->leftJoin('employees', 'users.id', '=', 'employees.user_id'))
                 ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                 ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                 ->selectRaw('users.id, users.name, employees.employee_id,
@@ -428,8 +477,8 @@ class PayrollController extends Controller
             $stats['top_earners'] = $topEarners;
 
             // Deduction analysis
-            $deductionAnalysis = DB::table('payroll_items')
-                ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id')
+            $deductionAnalysis = $applyBranchFilter(DB::table('payroll_items')
+                ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                 ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                 ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                 ->selectRaw('
@@ -515,11 +564,22 @@ class PayrollController extends Controller
 
         DB::beginTransaction();
         try {
+            $user = Auth::user();
+            
+            // Determine branch_id - use from request or default to user's branch
+            $branchId = $request->input('branch_id');
+            if (!$branchId) {
+                // Get branch from first employee
+                $firstEmployee = User::find($request->employee_ids[0] ?? null);
+                $branchId = $firstEmployee->branch_id ?? $user->branch_id ?? null;
+            }
+            
             // Create payroll record
             $payroll = Payroll::create([
                 'pay_period' => $request->pay_period,
                 'pay_date' => $request->pay_date,
                 'processed_by' => Auth::id(),
+                'branch_id' => $branchId,
                 'status' => 'processed',
             ]);
 

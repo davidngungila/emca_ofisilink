@@ -18,7 +18,23 @@
                                 Comprehensive payroll processing, approvals, and payments with advanced statutory calculations
                             </p>
                         </div>
-                        <div class="d-flex gap-2 flex-wrap">
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            @if($pageMode === 'manager')
+                            <!-- Branch Filter -->
+                            <div class="me-3">
+                                <label class="text-white-50 small mb-1 d-block">Filter by Branch</label>
+                                <form method="GET" action="{{ route('modules.hr.payroll') }}" class="d-inline">
+                                    <select name="branch_id" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 200px;">
+                                        <option value="">All Branches</option>
+                                        @foreach($branches as $branch)
+                                            <option value="{{ $branch->id }}" {{ $selectedBranchId == $branch->id ? 'selected' : '' }}>
+                                                {{ $branch->name }} ({{ $branch->code }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            </div>
+                            @endif
                             @if($pageMode === 'manager' && $can_process_payroll)
                             <a href="{{ route('payroll.process.page') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-plus-circle me-2"></i>Process New Payroll
@@ -1050,6 +1066,14 @@
                                                     <i class="bx bx-money me-1"></i>{{ $employee->salaryDeductions->count() }} deduction(s)
                                                 </small>
                                                 @endif
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <i class="bx bx-building me-1"></i>{{ $employee->branch->name ?? 'N/A' }}
+                                                    @if($employee->branch)
+                                                    <br><span class="badge bg-label-secondary">{{ $employee->branch->code ?? '' }}</span>
+                                                    @endif
+                                                </small>
                                             </td>
                                             <td>
                                                 <input type="hidden" name="basic_salary[{{ $employee->id }}]" 

@@ -74,8 +74,13 @@
                                     </div>
                                     <div>
                                         <h5 class="mb-1 fw-bold">{{ date('F Y', strtotime($payroll->pay_period . '-01')) }}</h5>
-                                        <div class="d-flex align-items-center gap-2">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
                                             <span class="badge bg-{{ $statusClass }}">{{ ucfirst($payroll->status) }}</span>
+                                            @if($payroll->branch)
+                                            <small class="text-muted">
+                                                <i class="bx bx-building me-1"></i>{{ $payroll->branch->name }} ({{ $payroll->branch->code }})
+                                            </small>
+                                            @endif
                                             @if($payroll->pay_date)
                                             <small class="text-muted">
                                                 <i class="bx bx-calendar me-1"></i>{{ \Carbon\Carbon::parse($payroll->pay_date)->format('M d, Y') }}
