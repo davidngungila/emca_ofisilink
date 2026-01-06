@@ -524,13 +524,20 @@ class EmailService
     {
         $errorLower = strtolower($error);
         
-        if (stripos($errorLower, 'connect') !== false || stripos($errorLower, 'timeout') !== false || stripos($errorLower, '10060') !== false) {
+        if (stripos($errorLower, 'connect') !== false || stripos($errorLower, 'timeout') !== false || stripos($errorLower, '10060') !== false || stripos($errorLower, 'connection refused') !== false || stripos($errorLower, 'error 111') !== false) {
+            $host = $this->config['host'];
             $port = $this->config['port'];
             $encryption = $this->config['encryption'];
+            $hostLower = strtolower(trim($host));
             $altPort = $port == 587 ? 465 : 587;
             $altEncryption = $encryption == 'tls' ? 'ssl' : 'tls';
             
-            return "Connection timeout (Error 10060). Solutions:\n1. Check firewall allows outbound connections on port {$port}\n2. Try alternative: Port {$altPort} with {$altEncryption} encryption\n3. Verify host '{$this->config['host']}' is correct\n4. Check internet connection\n5. Contact network administrator if behind corporate firewall";
+            // Check if localhost is being used
+            if (in_array($hostLower, ['127.0.0.1', 'localhost', '::1', '0.0.0.0'])) {
+                return "Connection refused - You're using localhost ({$host}) which won't work in production.\n\nFor production setup:\n1. Use a real SMTP server (smtp.gmail.com, smtp-mail.outlook.com, etc.)\n2. Ensure firewall allows outbound connections on port {$port}\n3. Verify server can reach the SMTP server\n4. Check if your hosting provider blocks SMTP ports\n5. For Gmail: Use App Password (not regular password)";
+            }
+            
+            return "Connection timeout/refused. Solutions:\n1. Check firewall allows outbound connections on port {$port}\n2. Try alternative: Port {$altPort} with {$altEncryption} encryption\n3. Verify host '{$host}' is correct (not localhost for production)\n4. Check internet connection\n5. Contact network administrator if behind corporate firewall\n6. For production: Use a real SMTP server (not localhost)";
         }
         
         if (stripos($errorLower, 'authentication') !== false || stripos($errorLower, 'login') !== false) {
