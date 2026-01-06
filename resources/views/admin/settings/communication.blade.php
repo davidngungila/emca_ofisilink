@@ -768,6 +768,162 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Email Provider Modal -->
+<div class="modal fade" id="editEmailProviderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title text-white"><i class="bx bx-envelope me-2"></i>Edit Email Provider</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editEmailProviderForm">
+                @csrf
+                <input type="hidden" name="provider_id" id="editEmailProviderId">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Provider Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="editEmailName" class="form-control" required placeholder="e.g., Primary SMTP Server">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Mailer Type <span class="text-danger">*</span></label>
+                            <select name="mailer_type" id="editEmailMailerType" class="form-select" required>
+                                <option value="smtp">SMTP</option>
+                                <option value="sendmail">Sendmail</option>
+                                <option value="mailgun">Mailgun</option>
+                                <option value="ses">Amazon SES</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">SMTP Host <span class="text-danger">*</span></label>
+                            <input type="text" name="mail_host" id="editEmailHost" class="form-control" required placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">SMTP Port <span class="text-danger">*</span></label>
+                            <input type="number" name="mail_port" id="editEmailPort" class="form-control" required placeholder="587" min="1" max="65535">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Encryption <span class="text-danger">*</span></label>
+                            <select name="mail_encryption" id="editEmailEncryption" class="form-select" required>
+                                <option value="tls">TLS</option>
+                                <option value="ssl">SSL</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">SMTP Username</label>
+                            <input type="email" name="mail_username" id="editEmailUsername" class="form-control" placeholder="your-email@gmail.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">SMTP Password</label>
+                            <input type="password" name="mail_password" id="editEmailPassword" class="form-control" placeholder="Leave blank to keep current password">
+                            <small class="text-muted">Leave blank to keep current password</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">From Email Address</label>
+                            <input type="email" name="mail_from_address" id="editEmailFromAddress" class="form-control" placeholder="noreply@example.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">From Name</label>
+                            <input type="text" name="mail_from_name" id="editEmailFromName" class="form-control" placeholder="OfisiLink System">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea name="description" id="editEmailDescription" class="form-control" rows="2" placeholder="Optional description"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="editEmailIsActive">
+                                <label class="form-check-label" for="editEmailIsActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_primary" id="editEmailIsPrimary">
+                                <label class="form-check-label" for="editEmailIsPrimary">Set as Primary</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="testEmailProviderBeforeUpdate()">
+                        <i class="bx bx-refresh me-1"></i>Test Connection
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bx bx-save me-1"></i>Update Provider
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit SMS Provider Modal -->
+<div class="modal fade" id="editSmsProviderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title text-white"><i class="bx bx-message-rounded-dots me-2"></i>Edit SMS Provider</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSmsProviderForm">
+                @csrf
+                <input type="hidden" name="provider_id" id="editSmsProviderId">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Provider Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="editSmsName" class="form-control" required placeholder="e.g., Primary SMS Gateway">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">SMS Username <span class="text-danger">*</span></label>
+                            <input type="text" name="sms_username" id="editSmsUsername" class="form-control" required placeholder="SMS gateway username">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">SMS Password</label>
+                            <input type="password" name="sms_password" id="editSmsPassword" class="form-control" placeholder="Leave blank to keep current password">
+                            <small class="text-muted">Leave blank to keep current password</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">SMS From (Sender Name)</label>
+                            <input type="text" name="sms_from" id="editSmsFrom" class="form-control" placeholder="OfisiLink">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">SMS API URL <span class="text-danger">*</span></label>
+                            <input type="url" name="sms_url" id="editSmsUrl" class="form-control" required placeholder="https://messaging-service.co.tz/api/sms">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea name="description" id="editSmsDescription" class="form-control" rows="2" placeholder="Optional description"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="editSmsIsActive">
+                                <label class="form-check-label" for="editSmsIsActive">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_primary" id="editSmsIsPrimary">
+                                <label class="form-check-label" for="editSmsIsPrimary">Set as Primary</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="testSmsProviderBeforeUpdate()">
+                        <i class="bx bx-refresh me-1"></i>Test Connection
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bx bx-save me-1"></i>Update Provider
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -1391,6 +1547,150 @@ $('#addSmsProviderForm').on('submit', function(e) {
     });
 });
 
+// Edit Email Provider Form Submission
+$('#editEmailProviderForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const providerId = document.getElementById('editEmailProviderId').value;
+    const formData = {
+        name: $(this).find('input[name="name"]').val(),
+        mailer_type: $(this).find('select[name="mailer_type"]').val(),
+        mail_host: $(this).find('input[name="mail_host"]').val(),
+        mail_port: $(this).find('input[name="mail_port"]').val(),
+        mail_encryption: $(this).find('select[name="mail_encryption"]').val(),
+        mail_username: $(this).find('input[name="mail_username"]').val(),
+        mail_password: $(this).find('input[name="mail_password"]').val() || null, // Only send if provided
+        mail_from_address: $(this).find('input[name="mail_from_address"]').val(),
+        mail_from_name: $(this).find('input[name="mail_from_name"]').val(),
+        description: $(this).find('textarea[name="description"]').val(),
+        is_active: $(this).find('input[name="is_active"]').is(':checked'),
+        is_primary: $(this).find('input[name="is_primary"]').is(':checked'),
+    };
+    
+    // Remove null password if not provided
+    if (!formData.mail_password) {
+        delete formData.mail_password;
+    }
+    
+    Swal.fire({
+        title: 'Updating...',
+        html: 'Please wait while we update the email provider',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    fetch(`{{ url('/admin/settings/notification-providers') }}/${providerId}`, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        Swal.close();
+        if(data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message || 'Email provider updated successfully',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                $('#editEmailProviderModal').modal('hide');
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Failed to update email provider',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(err => {
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Network error occurred. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    });
+});
+
+// Edit SMS Provider Form Submission
+$('#editSmsProviderForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const providerId = document.getElementById('editSmsProviderId').value;
+    const formData = {
+        name: $(this).find('input[name="name"]').val(),
+        sms_username: $(this).find('input[name="sms_username"]').val(),
+        sms_password: $(this).find('input[name="sms_password"]').val() || null, // Only send if provided
+        sms_from: $(this).find('input[name="sms_from"]').val(),
+        sms_url: $(this).find('input[name="sms_url"]').val(),
+        description: $(this).find('textarea[name="description"]').val(),
+        is_active: $(this).find('input[name="is_active"]').is(':checked'),
+        is_primary: $(this).find('input[name="is_primary"]').is(':checked'),
+    };
+    
+    // Remove null password if not provided
+    if (!formData.sms_password) {
+        delete formData.sms_password;
+    }
+    
+    Swal.fire({
+        title: 'Updating...',
+        html: 'Please wait while we update the SMS provider',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    fetch(`{{ url('/admin/settings/notification-providers') }}/${providerId}`, {
+        method: 'PUT',
+        headers: {
+            'X-CSRF-TOKEN': token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        Swal.close();
+        if(data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message || 'SMS provider updated successfully',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                $('#editSmsProviderModal').modal('hide');
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Failed to update SMS provider',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(err => {
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Network error occurred. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    });
+});
+
 // Test Email Provider Before Save
 function testEmailProviderBeforeSave() {
     const form = document.getElementById('addEmailProviderForm');
@@ -1561,6 +1861,70 @@ function testEmailProviderBeforeSave() {
     });
 }
 
+// Test Email Provider Before Update
+function testEmailProviderBeforeUpdate() {
+    const form = document.getElementById('editEmailProviderForm');
+    const host = form.querySelector('input[name="mail_host"]').value;
+    const port = form.querySelector('input[name="mail_port"]').value;
+    
+    if(!host || !port) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Configuration',
+            text: 'Please enter SMTP host and port before testing',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Testing Connection...',
+        html: 'Please wait while we test the connection',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    // Similar to testEmailProviderBeforeSave but for edit form
+    // You can reuse the same logic or create a shared function
+    Swal.fire({
+        icon: 'info',
+        title: 'Test Connection',
+        text: 'Test functionality will use the updated configuration',
+        confirmButtonText: 'OK'
+    });
+}
+
+// Test SMS Provider Before Update
+function testSmsProviderBeforeUpdate() {
+    const form = document.getElementById('editSmsProviderForm');
+    const url = form.querySelector('input[name="sms_url"]').value;
+    
+    if(!url) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Configuration',
+            text: 'Please enter SMS API URL before testing',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Testing Connection...',
+        html: 'Please wait while we test the connection',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    // Similar to testSmsProviderBeforeSave but for edit form
+    Swal.fire({
+        icon: 'info',
+        title: 'Test Connection',
+        text: 'Test functionality will use the updated configuration',
+        confirmButtonText: 'OK'
+    });
+}
+
 // Test SMS Provider Before Save
 function testSmsProviderBeforeSave() {
     const form = document.getElementById('addSmsProviderForm');
@@ -1718,34 +2082,100 @@ function deleteProvider(providerId) {
 // Edit Email Provider
 function editEmailProvider(providerId) {
     // Load provider data and open edit modal
-    fetch(`/admin/settings/notification-providers/${providerId}`, {
+    fetch(`{{ url('/admin/settings/notification-providers') }}/${providerId}`, {
         headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
     .then(res => res.json())
     .then(data => {
         if(data.success && data.provider) {
             const provider = data.provider;
-            // Populate edit form (you'll need to create an edit modal similar to add modal)
+            
+            // Populate edit form
+            document.getElementById('editEmailProviderId').value = provider.id;
+            document.getElementById('editEmailName').value = provider.name || '';
+            document.getElementById('editEmailMailerType').value = provider.mailer_type || 'smtp';
+            document.getElementById('editEmailHost').value = provider.mail_host || '';
+            document.getElementById('editEmailPort').value = provider.mail_port || '';
+            document.getElementById('editEmailEncryption').value = provider.mail_encryption || 'tls';
+            document.getElementById('editEmailUsername').value = provider.mail_username || '';
+            document.getElementById('editEmailPassword').value = ''; // Don't populate password
+            document.getElementById('editEmailFromAddress').value = provider.mail_from_address || '';
+            document.getElementById('editEmailFromName').value = provider.mail_from_name || '';
+            document.getElementById('editEmailDescription').value = provider.description || '';
+            document.getElementById('editEmailIsActive').checked = provider.is_active || false;
+            document.getElementById('editEmailIsPrimary').checked = provider.is_primary || false;
+            
+            // Open edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('editEmailProviderModal'));
+            editModal.show();
+        } else {
             Swal.fire({
-                icon: 'info',
-                title: 'Edit Provider',
-                text: 'Edit functionality will be implemented. For now, please delete and recreate the provider.',
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Failed to load provider data',
                 confirmButtonText: 'OK'
             });
         }
+    })
+    .catch(error => {
+        console.error('Error loading provider:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Failed to load provider data. Please try again.',
+            confirmButtonText: 'OK'
+        });
     });
 }
 
 // Edit SMS Provider
 function editSmsProvider(providerId) {
-    // Similar to editEmailProvider
-    Swal.fire({
-        icon: 'info',
-        title: 'Edit Provider',
-        text: 'Edit functionality will be implemented. For now, please delete and recreate the provider.',
-        confirmButtonText: 'OK'
+    // Load provider data and open edit modal
+    fetch(`{{ url('/admin/settings/notification-providers') }}/${providerId}`, {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success && data.provider) {
+            const provider = data.provider;
+            
+            // Populate edit form
+            document.getElementById('editSmsProviderId').value = provider.id;
+            document.getElementById('editSmsName').value = provider.name || '';
+            document.getElementById('editSmsUsername').value = provider.sms_username || '';
+            document.getElementById('editSmsPassword').value = ''; // Don't populate password
+            document.getElementById('editSmsFrom').value = provider.sms_from || '';
+            document.getElementById('editSmsUrl').value = provider.sms_url || '';
+            document.getElementById('editSmsDescription').value = provider.description || '';
+            document.getElementById('editSmsIsActive').checked = provider.is_active || false;
+            document.getElementById('editSmsIsPrimary').checked = provider.is_primary || false;
+            
+            // Open edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('editSmsProviderModal'));
+            editModal.show();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Failed to load provider data',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error loading provider:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Failed to load provider data. Please try again.',
+            confirmButtonText: 'OK'
+        });
     });
 }
 

@@ -1622,27 +1622,33 @@ class SettingsController extends Controller
      */
     public function updateNotificationProvider(Request $request, NotificationProvider $provider)
     {
-        $request->validate([
+        // Build validation rules based on provider type
+        $rules = [
             'name' => 'required|string|max:255',
-            'is_active' => 'boolean',
-            'is_primary' => 'boolean',
-            'priority' => 'integer|min:0|max:100',
+            'is_active' => 'sometimes|boolean',
+            'is_primary' => 'sometimes|boolean',
+            'priority' => 'sometimes|integer|min:0|max:100',
             'description' => 'nullable|string|max:1000',
-            // Email fields
-            'mailer_type' => 'required_if:type,email|nullable|string|in:smtp,sendmail,mailgun,ses',
-            'mail_host' => 'required_if:type,email|nullable|string|max:255',
-            'mail_port' => 'required_if:type,email|nullable|integer|min:1|max:65535',
-            'mail_username' => 'nullable|string|max:255',
-            'mail_password' => 'nullable|string|max:255',
-            'mail_encryption' => 'required_if:type,email|nullable|string|in:tls,ssl',
-            'mail_from_address' => 'required_if:type,email|nullable|email|max:255',
-            'mail_from_name' => 'required_if:type,email|nullable|string|max:255',
-            // SMS fields
-            'sms_username' => 'required_if:type,sms|nullable|string|max:255',
-            'sms_password' => 'required_if:type,sms|nullable|string|max:255',
-            'sms_from' => 'required_if:type,sms|nullable|string|max:100',
-            'sms_url' => 'required_if:type,sms|nullable|url|max:500',
-        ]);
+        ];
+        
+        // Add validation rules based on provider type
+        if ($provider->type === 'email') {
+            $rules['mailer_type'] = 'sometimes|required|string|in:smtp,sendmail,mailgun,ses';
+            $rules['mail_host'] = 'sometimes|required|string|max:255';
+            $rules['mail_port'] = 'sometimes|required|integer|min:1|max:65535';
+            $rules['mail_username'] = 'nullable|string|max:255';
+            $rules['mail_password'] = 'nullable|string|max:255';
+            $rules['mail_encryption'] = 'sometimes|required|string|in:tls,ssl';
+            $rules['mail_from_address'] = 'nullable|email|max:255';
+            $rules['mail_from_name'] = 'nullable|string|max:255';
+        } else {
+            $rules['sms_username'] = 'sometimes|required|string|max:255';
+            $rules['sms_password'] = 'nullable|string|max:255';
+            $rules['sms_from'] = 'nullable|string|max:100';
+            $rules['sms_url'] = 'sometimes|required|url|max:500';
+        }
+        
+        $request->validate($rules);
 
         try {
             DB::beginTransaction();
