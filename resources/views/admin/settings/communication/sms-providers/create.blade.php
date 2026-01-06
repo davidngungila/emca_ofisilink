@@ -275,7 +275,54 @@ function testSmsProvider() {
             phone: testPhone
         })
     })
-    .then(res => res.json())
+    .then(async res => {
+        // Check if response is OK
+        if (!res.ok) {
+            const errorText = await res.text();
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                errorData = {
+                    success: false,
+                    message: `Server error (${res.status}): ${errorText || res.statusText}`,
+                    error: errorText || res.statusText
+                };
+            }
+            throw new Error(JSON.stringify(errorData));
+        }
+        
+        // Check content type
+        const contentType = res.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await res.text();
+            throw new Error(JSON.stringify({
+                success: false,
+                message: 'Server returned non-JSON response',
+                error: text || 'Invalid response format'
+            }));
+        }
+        
+        // Parse JSON
+        const text = await res.text();
+        if (!text || text.trim() === '') {
+            throw new Error(JSON.stringify({
+                success: false,
+                message: 'Server returned empty response',
+                error: 'Empty response from server'
+            }));
+        }
+        
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error(JSON.stringify({
+                success: false,
+                message: 'Failed to parse server response',
+                error: `JSON parse error: ${e.message}. Response: ${text.substring(0, 200)}`
+            }));
+        }
+    })
     .then(data => {
         Swal.close();
         
@@ -316,19 +363,51 @@ function testSmsProvider() {
     })
     .catch(err => {
         Swal.close();
+        
+        let errorMessage = 'Network error occurred. Please try again.';
+        let errorDetails = '';
+        
+        // Try to parse error message if it's JSON
+        try {
+            const errorData = JSON.parse(err.message);
+            if (errorData.message) {
+                errorMessage = errorData.message;
+            }
+            if (errorData.error) {
+                errorDetails = errorData.error;
+            }
+        } catch (e) {
+            // If not JSON, use the original error message
+            errorMessage = err.message || 'Network error occurred. Please try again.';
+        }
+        
         document.getElementById('connectionStatus').innerHTML = `
             <div class="text-danger">
                 <i class="bx bx-x-circle fs-1"></i>
-                <p class="mt-2 mb-0 fw-bold">Network Error</p>
-                <p class="text-muted small">Please try again</p>
+                <p class="mt-2 mb-0 fw-bold">Connection Failed</p>
+                <p class="text-muted small">Please check your configuration</p>
+            </div>
+        `;
+        
+        document.getElementById('testResult').style.display = 'block';
+        document.getElementById('testResultContent').innerHTML = `
+            <div class="alert alert-danger mb-0">
+                <i class="bx bx-x-circle me-2"></i>
+                <strong>Failed!</strong> ${errorMessage}
+                ${errorDetails ? '<br><small class="text-muted d-block mt-2"><strong>Details:</strong> ' + errorDetails + '</small>' : ''}
             </div>
         `;
         
         Swal.fire({
             icon: 'error',
-            title: 'Network Error',
-            text: 'Network error occurred. Please try again.',
-            confirmButtonText: 'OK'
+            title: 'Test Failed',
+            html: `
+                <p>${errorMessage}</p>
+                ${errorDetails ? '<p class="text-muted small mt-2">' + errorDetails + '</p>' : ''}
+                <p class="text-muted small mt-3">Please check your SMS configuration and try again.</p>
+            `,
+            confirmButtonText: 'OK',
+            width: '500px'
         });
     });
 }
