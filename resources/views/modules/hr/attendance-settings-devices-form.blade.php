@@ -197,7 +197,7 @@
             <div class="card border-info mb-0">
                 <div class="card-header bg-info bg-opacity-10">
                     <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="deviceIsOnlineMode" name="is_online_mode" value="1" {{ old('is_online_mode', $device->is_online_mode ?? false) ? 'checked' : '' }}>
+                        <input class="form-check-input" type="checkbox" id="deviceIsOnlineMode" name="is_online_mode" value="1" {{ old('is_online_mode', ($device && $device->is_online_mode) ? true : false) ? 'checked' : '' }}>
                         <label class="form-check-label fw-bold" for="deviceIsOnlineMode">
                             <i class="bx bx-globe me-1"></i>Online Mode (Remote Access)
                         </label>
@@ -270,7 +270,7 @@
 
             <div class="mb-3">
                 <label for="deviceNotes" class="form-label">Notes</label>
-                <textarea class="form-control @error('notes') is-invalid @enderror" id="deviceNotes" name="notes" rows="3">{{ old('notes', $device->notes ?? '') }}</textarea>
+                <textarea class="form-control @error('notes') is-invalid @enderror" id="deviceNotes" name="notes" rows="3">{{ old('notes', ($device && $device->notes) ? $device->notes : '') }}</textarea>
                 @error('notes')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -278,7 +278,7 @@
 
             <div class="mb-3">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="deviceIsActive" name="is_active" value="1" {{ old('is_active', $device->is_active ?? true) ? 'checked' : '' }}>
+                    <input class="form-check-input" type="checkbox" id="deviceIsActive" name="is_active" value="1" {{ old('is_active', ($device && isset($device->is_active)) ? $device->is_active : true) ? 'checked' : '' }}>
                     <label class="form-check-label" for="deviceIsActive">
                         Active
                     </label>
