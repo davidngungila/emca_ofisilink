@@ -165,6 +165,11 @@ class AttendanceSettingsController extends Controller
             $device = AttendanceDevice::with(['location'])->findOrFail($id);
             $locations = AttendanceLocation::where('is_active', true)->orderBy('name')->get();
             
+            // Ensure device has all required properties
+            if (!$device) {
+                abort(404, 'Device not found');
+            }
+            
             return view('modules.hr.attendance-settings-devices-form', [
                 'device' => $device,
                 'locations' => $locations,
@@ -173,10 +178,14 @@ class AttendanceSettingsController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::error('Device not found for edit: ' . $id);
             abort(404, 'Device not found');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error loading device for edit: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
-            return response()->view('errors.500', ['message' => 'Error loading device: ' . $e->getMessage()], 500);
+            Log::error('Device ID: ' . $id);
+            Log::error('Error class: ' . get_class($e));
+            
+            // Return a simple error response
+            return response('Error loading device: ' . $e->getMessage() . '. Check logs for details.', 500);
         }
     }
 
