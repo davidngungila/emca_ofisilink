@@ -229,7 +229,7 @@ class AttendanceController extends Controller
         
         // Extract device connection details from database, fallback to config
         if ($device) {
-            $deviceIp = $device->ip_address ?? config('zkteco.ip', '192.168.100.108');
+            $deviceIp = $device->getConnectionIp() ?? config('zkteco.ip', '192.168.100.108');
             $devicePort = $device->port ?? config('zkteco.port', 4370);
             $deviceCommKey = isset($device->settings['comm_key']) ? $device->settings['comm_key'] : config('zkteco.password', 0);
         } else {

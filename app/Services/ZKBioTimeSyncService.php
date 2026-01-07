@@ -244,8 +244,8 @@ class ZKBioTimeSyncService
                 }
             }
 
-            // Build query based on device IP
-            $deviceIp = $device->ip_address;
+            // Build query based on device IP (uses public IP if online mode is enabled)
+            $deviceIp = $device->getConnectionIp();
             $fromDateStr = $fromDate->format('Y-m-d H:i:s');
             $toDateStr = $toDate->format('Y-m-d H:i:s');
 

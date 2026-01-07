@@ -89,7 +89,8 @@ class SyncAttendanceDevices extends Command
      */
     private function syncDevice(AttendanceDevice $device)
     {
-        $this->line("Syncing device: {$device->name} ({$device->ip_address})...");
+        $connectionIp = $device->getConnectionIp();
+        $this->line("Syncing device: {$device->name} ({$connectionIp})...");
         
         try {
             $zkbioSyncService = new ZKBioTimeSyncService();

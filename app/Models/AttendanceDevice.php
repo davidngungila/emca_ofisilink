@@ -19,9 +19,11 @@ class AttendanceDevice extends Model
         'serial_number',
         'location_id',
         'ip_address',
+        'public_ip_address',
         'mac_address',
         'port',
         'connection_type',
+        'is_online_mode',
         'connection_config',
         'is_active',
         'is_online',
@@ -37,6 +39,7 @@ class AttendanceDevice extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'is_online' => 'boolean',
+        'is_online_mode' => 'boolean',
         'last_sync_at' => 'datetime',
         'connection_config' => 'array',
         'capabilities' => 'array',
@@ -130,5 +133,17 @@ class AttendanceDevice extends Model
         return [
             self::TYPE_BIOMETRIC => 'ZKTeco UF200-S Biometric',
         ];
+    }
+
+    /**
+     * Get the IP address to use for connection
+     * Returns public IP if online mode is enabled, otherwise returns local IP
+     */
+    public function getConnectionIp()
+    {
+        if ($this->is_online_mode && $this->public_ip_address) {
+            return $this->public_ip_address;
+        }
+        return $this->ip_address;
     }
 }

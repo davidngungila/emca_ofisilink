@@ -253,7 +253,7 @@ class AttendanceSettingsController extends Controller
         
         // Extract device connection details from database, fallback to config
         if ($device) {
-            $deviceIp = $device->ip_address ?? config('zkteco.ip', '192.168.100.108');
+            $deviceIp = $device->getConnectionIp() ?? config('zkteco.ip', '192.168.100.108');
             $devicePort = $device->port ?? config('zkteco.port', 4370);
             $deviceCommKey = isset($device->settings['comm_key']) ? $device->settings['comm_key'] : config('zkteco.password', 0);
         } else {
@@ -517,9 +517,11 @@ class AttendanceSettingsController extends Controller
             'serial_number' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:attendance_locations,id',
             'ip_address' => 'nullable|ip',
+            'public_ip_address' => 'nullable|ip|required_if:is_online_mode,1',
             'mac_address' => 'nullable|string|max:17',
             'port' => 'nullable|integer|min:1|max:65535',
             'connection_type' => 'required|string|in:network,usb,bluetooth,wifi',
+            'is_online_mode' => 'boolean',
             'connection_config' => 'nullable|array',
             'capabilities' => 'nullable|array',
             'settings' => 'nullable|array',
@@ -544,9 +546,11 @@ class AttendanceSettingsController extends Controller
                 'serial_number' => $request->serial_number,
                 'location_id' => $request->location_id,
                 'ip_address' => $request->ip_address,
+                'public_ip_address' => $request->public_ip_address,
                 'mac_address' => $request->mac_address,
                 'port' => $request->port,
                 'connection_type' => $request->connection_type,
+                'is_online_mode' => $request->is_online_mode ?? false,
                 'connection_config' => $request->connection_config,
                 'capabilities' => $request->capabilities,
                 'settings' => $request->settings,
@@ -586,9 +590,11 @@ class AttendanceSettingsController extends Controller
             'serial_number' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:attendance_locations,id',
             'ip_address' => 'nullable|ip',
+            'public_ip_address' => 'nullable|ip|required_if:is_online_mode,1',
             'mac_address' => 'nullable|string|max:17',
             'port' => 'nullable|integer|min:1|max:65535',
             'connection_type' => 'required|string|in:network,usb,bluetooth,wifi',
+            'is_online_mode' => 'boolean',
             'connection_config' => 'nullable|array',
             'capabilities' => 'nullable|array',
             'settings' => 'nullable|array',
@@ -614,9 +620,11 @@ class AttendanceSettingsController extends Controller
                 'serial_number' => $request->serial_number,
                 'location_id' => $request->location_id,
                 'ip_address' => $request->ip_address,
+                'public_ip_address' => $request->public_ip_address,
                 'mac_address' => $request->mac_address,
                 'port' => $request->port,
                 'connection_type' => $request->connection_type,
+                'is_online_mode' => $request->is_online_mode ?? false,
                 'connection_config' => $request->connection_config,
                 'capabilities' => $request->capabilities,
                 'settings' => $request->settings,
@@ -671,8 +679,24 @@ class AttendanceSettingsController extends Controller
         try {
             $device = AttendanceDevice::findOrFail($id);
             
-            // Test connection
-            $isOnline = $this->testDeviceConnection($device);
+            // Get connection IP (uses public IP if online mode is enabled)
+            $connectionIp = $device->getConnectionIp();
+            if (!$connectionIp) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Device IP address is not configured'
+                ], 400);
+            }
+            
+            // Actually test the connection using ZKTecoService
+            $zktecoService = new \App\Services\ZKTecoService(
+                $connectionIp,
+                $device->port ?? 4370,
+                $device->settings['comm_key'] ?? 0
+            );
+            
+            $testResult = $zktecoService->testConnection();
+            $isOnline = $testResult['success'] ?? false;
             
             // Update device status
             if ($isOnline) {
@@ -689,20 +713,39 @@ class AttendanceSettingsController extends Controller
                 $isOnline ? 'test_success' : 'test_failed',
                 "Device connection test: {$device->name} - " . ($isOnline ? 'Online' : 'Offline'),
                 $device,
-                ['ip_address' => $device->ip_address, 'is_online' => $isOnline]
+                ['ip_address' => $connectionIp, 'is_online' => $isOnline]
             );
+            
+            // Build response message with device info if available
+            $message = $isOnline ? 'Device is online and connected' : ($testResult['message'] ?? 'Device is offline or unreachable');
+            if ($isOnline && isset($testResult['device_info'])) {
+                $deviceInfo = $testResult['device_info'];
+                $message .= "\n\nIP: {$connectionIp}\n";
+                $message .= "Port: " . ($device->port ?? 4370) . "\n";
+                if (isset($deviceInfo['model'])) {
+                    $message .= "Model: {$deviceInfo['model']}\n";
+                }
+                if (isset($deviceInfo['firmware'])) {
+                    $message .= "Firmware: {$deviceInfo['firmware']}";
+                }
+            }
             
             return response()->json([
                 'success' => true,
                 'is_online' => $isOnline,
-                'message' => $isOnline ? 'Device is online and connected' : 'Device is offline or unreachable',
+                'message' => $message,
                 'last_sync' => $device->last_sync_at ? $device->last_sync_at->format('Y-m-d H:i:s') : null,
                 'device' => $device,
+                'device_info' => $testResult['device_info'] ?? null,
             ]);
         } catch (\Exception $e) {
             Log::error('Test device error: ' . $e->getMessage());
             
             if (isset($device)) {
+                // Mark device as offline on error
+                $device->is_online = false;
+                $device->save();
+                
                 ActivityLogService::log(
                     'test_error',
                     "Device connection test failed: {$device->name} - " . $e->getMessage(),
@@ -1884,7 +1927,7 @@ class AttendanceSettingsController extends Controller
                 }
                 
                 // Check IP connectivity (basic ping test)
-                if ($device->ip_address && $isFailed) {
+                if ($device->getConnectionIp() && $isFailed) {
                     // In production, you might want to actually ping the device
                     // For now, we'll just mark it based on sync status
                 }
@@ -1893,7 +1936,7 @@ class AttendanceSettingsController extends Controller
                     $failedDevices[] = [
                         'id' => $device->id,
                         'name' => $device->name,
-                        'ip_address' => $device->ip_address,
+                        'ip_address' => $device->getConnectionIp(),
                         'device_id' => $device->device_id,
                         'last_sync_at' => $device->last_sync_at ? $device->last_sync_at->diffForHumans() : 'Never',
                         'error_message' => $errorMessage,
@@ -1974,7 +2017,10 @@ class AttendanceSettingsController extends Controller
      */
     private function testDeviceConnection($device)
     {
-        if (!$device->ip_address) {
+        // Get the correct IP address (public if online mode is enabled)
+        $ipAddress = $device->getConnectionIp();
+        
+        if (!$ipAddress) {
             return false;
         }
         
@@ -2088,6 +2134,8 @@ class AttendanceSettingsController extends Controller
                 case 2:
                     $device->connection_type = $request->connection_type ?? 'network';
                     $device->ip_address = $request->ip_address;
+                    $device->public_ip_address = $request->public_ip_address;
+                    $device->is_online_mode = $request->is_online_mode ?? false;
                     $device->port = $request->port ?? 4370;
                     $device->sync_interval_minutes = $request->sync_interval_minutes ?? 5;
                     break;
@@ -2335,13 +2383,14 @@ class AttendanceSettingsController extends Controller
                 }
             }
 
-            // Check if device is online and accessible
-            if (!$device->ip_address) {
+            // Get connection IP (uses public IP if online mode is enabled)
+            $connectionIp = $device->getConnectionIp();
+            if (!$connectionIp) {
                 throw new \Exception('Device IP address is not configured');
             }
 
             // Get connection parameters
-            $deviceIp = $request->ip_address ?? $device->ip_address;
+            $deviceIp = $request->ip_address ?? $connectionIp;
             $devicePort = $request->port ?? $device->port ?? 4370;
             $commKey = $request->comm_key ?? $device->settings['comm_key'] ?? 0;
             
@@ -2378,7 +2427,7 @@ class AttendanceSettingsController extends Controller
                 'enroll_id' => $enrollId,
                 'uid' => $uid,
                 'device_id' => $device->id,
-                'device_ip' => $device->ip_address
+                'device_ip' => $device->getConnectionIp()
             ]);
 
             $registrationResult = $zktecoService->registerUser(
@@ -2504,7 +2553,7 @@ class AttendanceSettingsController extends Controller
                 try {
                     // Initialize ZKTeco service
                     $zktecoService = new \App\Services\ZKTecoService(
-                        $device->ip_address,
+                        $device->getConnectionIp(),
                         $device->port ?? 4370,
                         $device->settings['comm_key'] ?? 0
                     );
@@ -2891,7 +2940,8 @@ class AttendanceSettingsController extends Controller
         try {
             $device = AttendanceDevice::findOrFail($id);
             
-            if (!$device->ip_address) {
+            $connectionIp = $device->getConnectionIp();
+            if (!$connectionIp) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Device IP address is not configured'
@@ -2900,7 +2950,7 @@ class AttendanceSettingsController extends Controller
 
             // Use ZKTecoService to sync directly from device
             $zktecoService = new \App\Services\ZKTecoService(
-                $device->ip_address,
+                $connectionIp,
                 $device->port ?? 4370,
                 $device->settings['comm_key'] ?? 0
             );

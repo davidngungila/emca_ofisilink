@@ -202,10 +202,14 @@ function loadDevices() {
                 const statusText = device.is_online ? 'Online' : 'Offline';
                 const lastSync = device.last_sync_at ? new Date(device.last_sync_at).toLocaleString() : 'Never';
                 
+                const ipDisplay = device.is_online_mode && device.public_ip_address 
+                    ? '<span title="Online Mode: ' + device.public_ip_address + '">' + device.public_ip_address + ' <i class="bx bx-globe text-info" title="Online Mode"></i></span>'
+                    : (device.ip_address || 'N/A');
+                
                 html += '<tr>';
                 html += '<td><strong>' + (device.name || 'N/A') + '</strong></td>';
                 html += '<td><code>' + (device.device_id || 'N/A') + '</code></td>';
-                html += '<td>' + (device.ip_address || 'N/A') + '</td>';
+                html += '<td>' + ipDisplay + '</td>';
                 html += '<td>' + (device.port || '4370') + '</td>';
                 html += '<td>' + (device.location?.name || 'N/A') + '</td>';
                 html += '<td><span class="' + statusClass + '"><i class="bx ' + statusIcon + ' me-1"></i>' + statusText + '</span></td>';
@@ -241,6 +245,7 @@ function testDevice(deviceId) {
     // Test device connection logic
     Swal.fire({
         title: 'Testing Connection...',
+        text: 'Please wait while we test the device connection...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -256,16 +261,58 @@ function testDevice(deviceId) {
     .then(response => response.json())
     .then(data => {
         Swal.close();
-        if (data.success) {
-            Swal.fire('Success!', data.message, 'success');
+        if (data.success && data.is_online) {
+            // Format message with device info
+            let html = '<div style="text-align: left;">';
+            html += '<p><strong>' + data.message.split('\n')[0] + '</strong></p>';
+            if (data.device_info) {
+                html += '<hr style="margin: 10px 0;">';
+                html += '<p style="margin: 5px 0;"><strong>IP:</strong> ' + (data.device_info.ip || data.device?.ip_address || 'N/A') + '</p>';
+                html += '<p style="margin: 5px 0;"><strong>Port:</strong> ' + (data.device?.port || '4370') + '</p>';
+                if (data.device_info.model) {
+                    html += '<p style="margin: 5px 0;"><strong>Model:</strong> ' + data.device_info.model + '</p>';
+                }
+                if (data.device_info.firmware) {
+                    html += '<p style="margin: 5px 0;"><strong>Firmware:</strong> ' + data.device_info.firmware + '</p>';
+                }
+            }
+            html += '</div>';
+            
+            Swal.fire({
+                title: 'Success!',
+                html: html,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            });
+            // Reload devices to update status
+            loadDevices();
+        } else if (data.success && !data.is_online) {
+            Swal.fire({
+                title: 'Device Offline',
+                text: data.message || 'Device is offline or unreachable',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+            // Reload devices to update status
             loadDevices();
         } else {
-            Swal.fire('Error!', data.message, 'error');
+            Swal.fire({
+                title: 'Error!',
+                text: data.message || 'Failed to test device connection',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     })
     .catch(error => {
         Swal.close();
-        Swal.fire('Error!', 'Failed to test device connection', 'error');
+        console.error('Test device error:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: 'Failed to test device connection. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
     });
 }
 
@@ -358,6 +405,22 @@ function openDeviceModal(deviceId = null) {
                 document.getElementById('deviceSettings').value = device.settings ? JSON.stringify(device.settings, null, 2) : '';
                 document.getElementById('deviceNotes').value = device.notes || '';
                 document.getElementById('deviceIsActive').checked = device.is_active !== false;
+                
+                // Online mode fields
+                const onlineModeToggle = document.getElementById('deviceIsOnlineMode');
+                const onlineModeFields = document.getElementById('onlineModeFields');
+                const publicIpField = document.getElementById('devicePublicIpAddress');
+                if (onlineModeToggle && onlineModeFields && publicIpField) {
+                    onlineModeToggle.checked = device.is_online_mode || false;
+                    publicIpField.value = device.public_ip_address || '';
+                    if (onlineModeToggle.checked) {
+                        onlineModeFields.style.display = 'block';
+                        publicIpField.setAttribute('required', 'required');
+                    } else {
+                        onlineModeFields.style.display = 'none';
+                        publicIpField.removeAttribute('required');
+                    }
+                }
             }
         })
         .catch(error => {
@@ -377,6 +440,27 @@ function openDeviceModal(deviceId = null) {
 function setupDeviceForm() {
     const form = document.getElementById('deviceForm');
     if (!form) return;
+    
+    // Setup online mode toggle
+    const onlineModeToggle = document.getElementById('deviceIsOnlineMode');
+    const onlineModeFields = document.getElementById('onlineModeFields');
+    const publicIpField = document.getElementById('devicePublicIpAddress');
+    
+    if (onlineModeToggle && onlineModeFields) {
+        onlineModeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                onlineModeFields.style.display = 'block';
+                if (publicIpField) {
+                    publicIpField.setAttribute('required', 'required');
+                }
+            } else {
+                onlineModeFields.style.display = 'none';
+                if (publicIpField) {
+                    publicIpField.removeAttribute('required');
+                }
+            }
+        });
+    }
     
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -413,8 +497,9 @@ function setupDeviceForm() {
             return;
         }
         
-        // Convert checkbox to boolean
+        // Convert checkboxes to boolean
         data.is_active = document.getElementById('deviceIsActive').checked;
+        data.is_online_mode = document.getElementById('deviceIsOnlineMode').checked;
         
         const url = deviceId 
             ? `/attendance-settings/devices/${deviceId}`
@@ -541,9 +626,19 @@ function viewDeviceDetails(deviceId) {
                             <div class="card-body">
                                 <table class="table table-sm table-borderless mb-0">
                                     <tr>
-                                        <th width="40%">IP Address:</th>
+                                        <th width="40%">Online Mode:</th>
+                                        <td>${device.is_online_mode ? '<span class="badge bg-info"><i class="bx bx-globe me-1"></i>Enabled</span>' : '<span class="badge bg-secondary">Disabled (Local)</span>'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Local IP Address:</th>
                                         <td>${device.ip_address || 'N/A'}</td>
                                     </tr>
+                                    ${device.is_online_mode && device.public_ip_address ? `
+                                    <tr>
+                                        <th>Public IP Address:</th>
+                                        <td><strong class="text-info">${device.public_ip_address} <i class="bx bx-globe"></i></strong></td>
+                                    </tr>
+                                    ` : ''}
                                     <tr>
                                         <th>Port:</th>
                                         <td>${device.port || 'N/A'}</td>
