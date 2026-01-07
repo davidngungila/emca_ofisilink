@@ -647,11 +647,18 @@ function viewDeviceDetails(deviceId) {
     fetch(`/attendance-settings/devices/${deviceId}`, {
         headers: {
             'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Device data:', data); // Debug log
         if (data.success && data.device) {
             const device = data.device;
             const statusClass = device.is_online ? 'text-success' : 'text-danger';
@@ -845,11 +852,16 @@ function viewDeviceDetails(deviceId) {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error loading device details:', error);
+        let errorMessage = 'Failed to load device details';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
         content.innerHTML = `
             <div class="alert alert-danger">
                 <i class="bx bx-error-circle me-2"></i>
-                <strong>Error:</strong> Failed to load device details
+                <strong>Error:</strong> ${errorMessage}
+                <br><small class="text-muted">Check browser console for more details</small>
             </div>
         `;
     });
@@ -868,6 +880,7 @@ function editDeviceFromView() {
 }
 </script>
 @endpush
+
 
 
 

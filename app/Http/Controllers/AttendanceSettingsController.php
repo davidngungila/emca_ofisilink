@@ -229,12 +229,25 @@ class AttendanceSettingsController extends Controller
             ], 403);
         }
         
-        $device = AttendanceDevice::with(['location', 'creator', 'updater'])->findOrFail($id);
-        
-        return response()->json([
-            'success' => true,
-            'device' => $device
-        ]);
+        try {
+            $device = AttendanceDevice::with(['location', 'creator', 'updater'])->findOrFail($id);
+            
+            return response()->json([
+                'success' => true,
+                'device' => $device
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Device not found'
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Error getting device: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading device: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
