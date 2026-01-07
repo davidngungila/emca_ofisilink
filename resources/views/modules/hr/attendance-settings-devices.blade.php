@@ -16,7 +16,7 @@
                 <a href="{{ route('modules.hr.attendance.settings') }}" class="btn btn-outline-secondary me-2">
                     <i class="bx bx-arrow-back me-1"></i> Back to Settings
                 </a>
-                <a href="{{ route('attendance-settings.devices.create') }}" class="btn btn-primary">
+                <a href="{{ route('modules.hr.attendance.settings.devices.create') }}" class="btn btn-primary">
                     <i class="bx bx-plus me-1"></i> Add Device
                 </a>
             </div>

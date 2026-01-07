@@ -56,7 +56,7 @@
         </div>
     @endif
 
-    <form action="{{ $mode === 'create' ? route('attendance-settings.devices.store') : ($device ? route('attendance-settings.devices.update', $device->id) : '#') }}" method="POST" id="deviceForm">
+    <form action="{{ $mode === 'create' ? route('attendance-settings.devices.store') : ($device ? route('attendance-settings.devices.update', $device->id) : route('attendance-settings.devices.store')) }}" method="POST" id="deviceForm">
         @csrf
         @if($mode === 'edit' && $device)
             @method('PUT')

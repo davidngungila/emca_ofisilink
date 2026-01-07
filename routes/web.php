@@ -422,6 +422,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/attendance', [App\Http\Controllers\AttendanceController::class, 'index'])->name('modules.hr.attendance');
     Route::get('/modules/hr/attendance/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance/settings/devices/create', [App\Http\Controllers\AttendanceSettingsController::class, 'createDevice'])->name('modules.hr.attendance.settings.devices.create')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance/settings/devices/{id}/edit', [App\Http\Controllers\AttendanceSettingsController::class, 'editDevice'])->name('modules.hr.attendance.settings.devices.edit')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/schedules', [App\Http\Controllers\AttendanceSettingsController::class, 'schedules'])->name('modules.hr.attendance.settings.schedules')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/policies', [App\Http\Controllers\AttendanceSettingsController::class, 'policies'])->name('modules.hr.attendance.settings.policies')->middleware('role:HR Officer,System Admin');
