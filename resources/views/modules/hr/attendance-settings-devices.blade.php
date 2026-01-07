@@ -163,40 +163,26 @@ const locations = @json($locations ?? []);
 let currentDeviceId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadDevices();
+    // Use devicesData if available (from server-side), otherwise fetch
+    if (devicesData && devicesData.length >= 0) {
+        displayDevices(devicesData);
+    } else {
+        loadDevices();
+    }
     setupDeviceForm();
 });
 
-function loadDevices() {
+function displayDevices(devices) {
     const tbody = document.getElementById('devicesList');
     if (!tbody) return;
 
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="8" class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </td>
-        </tr>
-    `;
+    if (!devices || devices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No devices found</p></td></tr>';
+        return;
+    }
 
-    fetch('/attendance-settings/devices', {
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.devices) {
-            if (data.devices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No devices found</p></td></tr>';
-                return;
-            }
-
-            let html = '';
-            data.devices.forEach(device => {
+    let html = '';
+    devices.forEach(device => {
                 const statusClass = device.is_online ? 'status-online' : 'status-offline';
                 const statusIcon = device.is_online ? 'bx-check-circle' : 'bx-x-circle';
                 const statusText = device.is_online ? 'Online' : 'Offline';
@@ -225,14 +211,51 @@ function loadDevices() {
                 html += '</tr>';
             });
 
-            tbody.innerHTML = html;
+    tbody.innerHTML = html;
+}
+
+function loadDevices() {
+    const tbody = document.getElementById('devicesList');
+    if (!tbody) return;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    fetch('/attendance-settings/devices', {
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Devices data:', data); // Debug log
+        if (data.success && data.devices) {
+            displayDevices(data.devices);
         } else {
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">Failed to load devices</p></td></tr>';
         }
     })
     .catch(error => {
         console.error('Error loading devices:', error);
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">Failed to load devices</p></td></tr>';
+        let errorMessage = 'Failed to load devices';
+        if (error.message) {
+            errorMessage += ': ' + error.message;
+        }
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">' + errorMessage + '</p><p class="text-muted small">Check browser console for details</p></td></tr>';
     });
 }
 
