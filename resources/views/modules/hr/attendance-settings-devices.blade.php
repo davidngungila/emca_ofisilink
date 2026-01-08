@@ -202,7 +202,7 @@ function displayDevices(devices) {
                 html += '<td><small class="text-muted">' + lastSync + '</small></td>';
                 html += '<td>';
                 html += '<div class="btn-group" role="group">';
-                html += '<button class="btn btn-sm btn-outline-info" onclick="viewDeviceDetails(' + device.id + ')" title="View More"><i class="bx bx-show"></i></button> ';
+                html += '<a href="/modules/hr/attendance/settings/devices/' + device.id + '/show" class="btn btn-sm btn-outline-info" title="View More"><i class="bx bx-show"></i></a> ';
                 html += '<a href="/modules/hr/attendance/settings/devices/' + device.id + '/edit" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bx bx-edit"></i></a> ';
                 html += '<button class="btn btn-sm btn-outline-warning" onclick="testDevice(' + device.id + ')" title="Test Connection"><i class="bx bx-wifi"></i></button> ';
                 html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteDevice(' + device.id + ', \'' + (device.name || '').replace(/'/g, "\\'") + '\')" title="Delete"><i class="bx bx-trash"></i></button>';

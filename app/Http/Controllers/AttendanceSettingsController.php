@@ -230,7 +230,16 @@ class AttendanceSettingsController extends Controller
         }
         
         try {
-            $device = AttendanceDevice::with(['location', 'creator', 'updater'])->findOrFail($id);
+            // Load device with relationships, but handle missing relationships gracefully
+            $device = AttendanceDevice::with(['location'])->findOrFail($id);
+            
+            // Load creator and updater separately to avoid errors if they don't exist
+            if ($device->created_by) {
+                $device->load('creator');
+            }
+            if ($device->updated_by) {
+                $device->load('updater');
+            }
             
             return response()->json([
                 'success' => true,
@@ -243,10 +252,44 @@ class AttendanceSettingsController extends Controller
             ], 404);
         } catch (\Exception $e) {
             Log::error('Error getting device: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading device: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Show device details page
+     */
+    public function showDevice($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
+            abort(403, 'Unauthorized');
+        }
+        
+        try {
+            $device = AttendanceDevice::with(['location'])->findOrFail($id);
+            
+            // Load relationships separately to avoid errors
+            if ($device->created_by) {
+                $device->load('creator');
+            }
+            if ($device->updated_by) {
+                $device->load('updater');
+            }
+            
+            return view('modules.hr.attendance-settings-devices-show', [
+                'device' => $device
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(404, 'Device not found');
+        } catch (\Exception $e) {
+            Log::error('Error loading device for show: ' . $e->getMessage());
+            abort(500, 'Error loading device. Please check the logs.');
         }
     }
 

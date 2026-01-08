@@ -71,6 +71,10 @@ class NotificationService
     /**
      * Send notification to user(s) via all channels
      * 
+     * NOTE: SMS notifications are queued for asynchronous processing to prevent
+     * slow SMS API responses from delaying the main operation. SMS will be sent
+     * in the background after the operation completes successfully.
+     * 
      * @param array|int $userIds User ID(s) to notify
      * @param string $message Message to send
      * @param string|null $link Optional link for in-app notification
@@ -111,26 +115,34 @@ class NotificationService
                 $this->sendPushNotification($user->id, $message, $link, $data);
             }
 
-            // 3. SMS Notification - check both mobile and phone fields (skip if requested)
+            // 3. SMS Notification - Queue SMS to be sent asynchronously after operation completes
+            // This prevents SMS API delays from slowing down the main operation
             if (!$skipSMS) {
                 $phone = $user->mobile ?? $user->phone;
                 if ($phone) {
                     try {
-                        $smsResult = $this->sendSMS($phone, $message);
-                        if ($smsResult) {
-                            // Log SMS sent activity
-                            ActivityLogService::logSMSSent($phone, $message, Auth::id(), $user->id, [
-                                'notification_type' => 'multi_channel',
-                                'link' => $link,
-                            ]);
-                        }
+                        // Dispatch SMS to queue for asynchronous processing
+                        \App\Jobs\SendSMSJob::dispatch(
+                            $phone,
+                            $message,
+                            $user->id,
+                            $link,
+                            $this->smsProvider ? $this->smsProvider->id : null,
+                            'multi_channel'
+                        )->onQueue('sms'); // Use dedicated SMS queue if available
+                        
+                        Log::debug('SMS queued for sending', [
+                            'user_id' => $user->id,
+                            'phone' => $phone,
+                            'message_length' => strlen($message)
+                        ]);
                     } catch (\Exception $e) {
-                        Log::warning('SMS sending failed in notify method', [
+                        Log::warning('Failed to queue SMS', [
                             'user_id' => $user->id,
                             'phone' => $phone,
                             'error' => $e->getMessage()
                         ]);
-                        // Continue with other notifications even if SMS fails
+                        // Continue with other notifications even if SMS queuing fails
                     }
                 }
             }
@@ -197,9 +209,43 @@ class NotificationService
 
     /**
      * Send SMS using GET method with URL parameters - as per provided example
+     * 
+     * @param string $phoneNumber Phone number to send SMS to
+     * @param string $message SMS message content
+     * @param NotificationProvider|null $provider SMS provider to use (null for default)
+     * @param bool $queue If true, queue SMS for asynchronous sending (recommended for bulk operations)
+     * @return bool|void Returns true if sent/queued successfully, false on failure. Returns void if queued.
      */
-    public function sendSMS(string $phoneNumber, string $message, ?NotificationProvider $provider = null)
+    public function sendSMS(string $phoneNumber, string $message, ?NotificationProvider $provider = null, bool $queue = false)
     {
+        // If queuing is requested, dispatch to queue and return immediately
+        if ($queue) {
+            try {
+                \App\Jobs\SendSMSJob::dispatch(
+                    $phoneNumber,
+                    $message,
+                    Auth::id(),
+                    null,
+                    $provider ? $provider->id : null,
+                    'direct_queued'
+                )->onQueue('sms');
+                
+                Log::debug('SMS queued for direct send', [
+                    'phone' => $phoneNumber,
+                    'message_length' => strlen($message)
+                ]);
+                
+                return true; // Return true immediately when queued
+            } catch (\Exception $e) {
+                Log::error('Failed to queue SMS', [
+                    'phone' => $phoneNumber,
+                    'error' => $e->getMessage()
+                ]);
+                return false;
+            }
+        }
+        
+        // Continue with synchronous sending for immediate delivery
         try {
             // Use provided provider or fallback to default
             $provider = $provider ?? $this->smsProvider;

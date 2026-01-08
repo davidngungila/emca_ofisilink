@@ -423,6 +423,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/attendance/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/devices/create', [App\Http\Controllers\AttendanceSettingsController::class, 'createDevice'])->name('modules.hr.attendance.settings.devices.create')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance/settings/devices/{id}/show', [App\Http\Controllers\AttendanceSettingsController::class, 'showDevice'])->name('modules.hr.attendance.settings.devices.show')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/devices/{id}/edit', [App\Http\Controllers\AttendanceSettingsController::class, 'editDevice'])->name('modules.hr.attendance.settings.devices.edit')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/schedules', [App\Http\Controllers\AttendanceSettingsController::class, 'schedules'])->name('modules.hr.attendance.settings.schedules')->middleware('role:HR Officer,System Admin');
@@ -635,6 +636,10 @@ Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('
     // API endpoints
     Route::post('/employees/list', [App\Http\Controllers\AttendanceSettingsController::class, 'getEmployeesList'])->name('get-employees-list');
     
+    // Devices
+    Route::get('/devices/{id}', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevice'])->name('devices.show');
+    Route::get('/devices/{id}/test', [App\Http\Controllers\AttendanceSettingsController::class, 'testDevice'])->name('devices.test');
+    
     // Locations
     Route::get('/locations', [App\Http\Controllers\AttendanceSettingsController::class, 'getLocations'])->name('locations.index');
     Route::post('/locations', [App\Http\Controllers\AttendanceSettingsController::class, 'storeLocation'])->name('locations.store');
@@ -645,6 +650,7 @@ Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('
     Route::get('/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevices'])->name('devices.index');
     Route::get('/devices/create', [App\Http\Controllers\AttendanceSettingsController::class, 'createDevice'])->name('devices.create');
     Route::get('/devices/{id}/edit', [App\Http\Controllers\AttendanceSettingsController::class, 'editDevice'])->name('devices.edit');
+    Route::get('/devices/{id}/show', [App\Http\Controllers\AttendanceSettingsController::class, 'showDevice'])->name('devices.show.page');
     Route::get('/devices/{id}', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevice'])->name('devices.show');
     Route::post('/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'storeDevice'])->name('devices.store');
     Route::put('/devices/{id}', [App\Http\Controllers\AttendanceSettingsController::class, 'updateDevice'])->name('devices.update');
