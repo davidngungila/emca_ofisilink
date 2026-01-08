@@ -1,6 +1,10 @@
-# Fix Git Merge Conflict on cPanel Server
+# Fix Git Merge Conflict and Diverging Branches on cPanel Server
 
-The error indicates that the server has local uncommitted changes to `EmployeeController.php`. 
+This guide helps resolve common git deployment issues on cPanel servers.
+
+## Error 1: Diverging Branches (Fast-forward not possible)
+
+This error occurs when the server branch and remote branch have diverged (different commits).
 
 ## Solution Options:
 
@@ -43,15 +47,83 @@ git fetch origin
 git reset --hard origin/main
 ```
 
-## Recommended Approach:
+## Error 2: Diverging Branches (Fast-forward not possible)
+
+When branches have diverged, you need to merge or rebase:
+
+### Option A: Merge (Recommended for server deployments)
+```bash
+# Fetch latest changes
+git fetch origin
+
+# Merge remote changes (creates a merge commit)
+git merge --no-ff origin/main -m "Merge remote changes"
+
+# If conflicts occur, resolve them:
+git add .
+git commit -m "Resolve merge conflicts"
+git push origin main
+```
+
+### Option B: Rebase (Cleaner history, but rewrites commits)
+```bash
+# Fetch latest changes
+git fetch origin
+
+# Rebase local commits on top of remote
+git rebase origin/main
+
+# If conflicts occur, resolve them:
+git add .
+git rebase --continue
+
+# Force push (only if you're sure no one else is working on this branch)
+git push origin main --force
+```
+
+### Option C: Reset to Remote (Discard server changes - Use with caution)
+```bash
+# WARNING: This will discard all local server changes!
+git fetch origin
+git reset --hard origin/main
+```
+
+## Recommended Approach for Diverging Branches:
+
+**For Production Servers (Safest):**
+```bash
+# 1. Fetch latest changes
+git fetch origin
+
+# 2. Stash any uncommitted changes
+git stash
+
+# 3. Merge with no-ff to preserve history
+git merge --no-ff origin/main -m "Merge remote changes from deployment"
+
+# 4. If conflicts occur, resolve them manually
+# 5. Push the merge commit
+git push origin main
+```
+
+**Quick Fix Script:**
+Use the provided `deploy-fix.sh` script:
+```bash
+chmod +x deploy-fix.sh
+./deploy-fix.sh
+```
+
+## General Recommended Approach:
+
 Since your local repository is clean and up-to-date, the safest approach is:
 
-1. **Backup the server's EmployeeController.php** (in case it has important changes)
-2. **Discard the server changes** and pull fresh:
+1. **Backup the server's changes** (in case it has important modifications)
+2. **Use merge strategy** to combine changes:
    ```bash
-   git checkout -- app/Http/Controllers/EmployeeController.php
-   git pull origin main
+   git fetch origin
+   git merge --no-ff origin/main -m "Merge remote changes"
+   git push origin main
    ```
 
-This will ensure the server has the exact same code as your repository.
+This will ensure the server has all the latest code while preserving any server-specific changes.
 
