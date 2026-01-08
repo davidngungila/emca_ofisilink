@@ -34,6 +34,24 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Bulk Upload Section -->
+                <div class="card-body border-bottom bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1"><i class="bx bx-upload me-2"></i>Bulk Employee Registration</h6>
+                            <p class="text-muted mb-0 small">Upload an Excel file to register multiple employees at once</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="downloadExcelTemplate()">
+                                <i class="bx bx-download"></i> Download Template
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="showBulkUploadModal()">
+                                <i class="bx bx-upload"></i> Upload Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="card-body">
                     <!-- Progress Bar -->
                     <div class="mb-4">
@@ -543,7 +561,183 @@
 </div>
 @endsection
 
+<!-- Bulk Upload Modal -->
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-labelledby="bulkUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="bulkUploadModalLabel">
+                    <i class="bx bx-upload me-2"></i>Bulk Employee Registration
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bx bx-info-circle me-2"></i>
+                    <strong>Instructions:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Download the Excel template to see the required format</li>
+                        <li>Fill in employee information in the template</li>
+                        <li>Upload the completed Excel file</li>
+                        <li>Required fields: Name, Email, Phone, Department</li>
+                        <li>Employee ID will be auto-generated if not provided</li>
+                    </ul>
+                </div>
+                
+                <form id="bulkUploadForm" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="excelFile" class="form-label">Select Excel File (.xlsx, .xls)</label>
+                        <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx,.xls" required>
+                        <small class="text-muted">Maximum file size: 10MB</small>
+                    </div>
+                    
+                    <div id="uploadProgress" style="display: none;">
+                        <div class="progress mb-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 id="uploadProgressBar" 
+                                 style="width: 0%">
+                                <span id="uploadProgressText">0%</span>
+                            </div>
+                        </div>
+                        <div id="uploadStatus" class="text-center"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="uploadBulkEmployees()" id="uploadBtn">
+                    <i class="bx bx-upload me-1"></i>Upload & Process
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
+<script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<script>
+function showBulkUploadModal() {
+    const modal = new bootstrap.Modal(document.getElementById('bulkUploadModal'));
+    modal.show();
+}
+
+function downloadExcelTemplate() {
+    window.location.href = '{{ route("modules.hr.employees.bulk.template") }}';
+}
+
+function uploadBulkEmployees() {
+    const fileInput = document.getElementById('excelFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        Swal.fire('Error', 'Please select an Excel file to upload', 'error');
+        return;
+    }
+    
+    // Validate file type
+    const validExtensions = ['.xlsx', '.xls'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!validExtensions.includes(fileExtension)) {
+        Swal.fire('Error', 'Please upload a valid Excel file (.xlsx or .xls)', 'error');
+        return;
+    }
+    
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        Swal.fire('Error', 'File size exceeds 10MB limit', 'error');
+        return;
+    }
+    
+    // Show progress
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadStatus').innerHTML = '<i class="bx bx-loader bx-spin"></i> Processing file...';
+    
+    // Create FormData
+    const formData = new FormData();
+    formData.append('excel_file', file);
+    formData.append('_token', '{{ csrf_token() }}');
+    
+    // Upload file
+    fetch('{{ route("modules.hr.employees.bulk.upload") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('uploadBtn').disabled = false;
+        
+        if (data.success) {
+            let html = `
+                <div class="text-start">
+                    <h5 class="text-success mb-3"><i class="bx bx-check-circle"></i> Bulk Upload Completed!</h5>
+                    <div class="mb-2"><strong>Total Processed:</strong> ${data.total || 0}</div>
+                    <div class="mb-2"><strong>Successfully Created:</strong> <span class="text-success">${data.created || 0}</span></div>
+                    <div class="mb-2"><strong>Failed:</strong> <span class="text-danger">${data.failed || 0}</span></div>
+                    <div class="mb-2"><strong>Skipped:</strong> <span class="text-warning">${data.skipped || 0}</span></div>
+            `;
+            
+            if (data.errors && data.errors.length > 0) {
+                html += `
+                    <div class="mt-3">
+                        <strong>Errors:</strong>
+                        <ul class="list-unstyled mt-2" style="max-height: 200px; overflow-y: auto;">
+                `;
+                data.errors.forEach(error => {
+                    html += `<li class="text-danger small">${error}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            if (data.warnings && data.warnings.length > 0) {
+                html += `
+                    <div class="mt-3">
+                        <strong>Warnings:</strong>
+                        <ul class="list-unstyled mt-2" style="max-height: 200px; overflow-y: auto;">
+                `;
+                data.warnings.forEach(warning => {
+                    html += `<li class="text-warning small">${warning}</li>`;
+                });
+                html += `</ul></div>`;
+            }
+            
+            html += `</div>`;
+            
+            Swal.fire({
+                title: 'Upload Complete!',
+                html: html,
+                icon: 'success',
+                width: '600px',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Close modal and reload page
+                bootstrap.Modal.getInstance(document.getElementById('bulkUploadModal')).hide();
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Upload Failed',
+                html: `<p>${data.message || 'An error occurred during upload'}</p>
+                       ${data.errors ? '<ul class="text-start mt-2">' + data.errors.map(e => '<li class="text-danger">' + e + '</li>').join('') + '</ul>' : ''}`,
+                icon: 'error',
+                width: '600px'
+            });
+        }
+    })
+    .catch(error => {
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('uploadBtn').disabled = false;
+        console.error('Upload error:', error);
+        Swal.fire('Error', 'Failed to upload file. Please try again.', 'error');
+    });
+}
+</script>
 <script>
 let currentStepIndex = 0;
 const steps = ['personal', 'employment', 'emergency', 'family', 'next-of-kin', 'referees', 'education', 'banking', 'deductions', 'profile', 'documents', 'statutory'];

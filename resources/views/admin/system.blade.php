@@ -765,6 +765,7 @@
                         <li><strong>Password Protection:</strong> <code>Ofisilink</code> (case-sensitive) - for database access</li>
                         <li><strong>Filename:</strong> Includes timestamp and current year (e.g., ofisilink_backup_20250101_120000_2025.sql)</li>
                         <li><strong>Notifications:</strong> Automatic SMS and Email (with attachment) to all System Administrators and davidngungila@gmail.com</li>
+                        <li><strong>Email Testing:</strong> <button class="btn btn-sm btn-outline-info" onclick="testEmailConfiguration()"><i class="bx bx-envelope"></i> Test Email Configuration</button></li>
                         <li><strong>Auto-cleanup:</strong> Old backups are automatically removed based on retention policy</li>
                         <li><strong>Fallback:</strong> Uses Laravel DB connection if mysqldump is unavailable</li>
                     </ul>
@@ -1081,9 +1082,9 @@ function loadBackupsList() {
                             <td class="text-center">
                                 <div class="btn-group" role="group">
                                     ${backup.download_url ? `
-                                        <a href="${backup.download_url}" class="btn btn-sm btn-primary" download>
+                                        <button onclick="downloadBackupWithToken('${backup.filename}')" class="btn btn-sm btn-primary" title="Download backup file">
                                             <i class="bx bx-download"></i> Download
-                                        </a>
+                                        </button>
                                     ` : `
                                         <span class="btn btn-sm btn-secondary" disabled title="File not available">
                                             <i class="bx bx-x"></i> Not Available
@@ -1155,6 +1156,46 @@ function saveBackupSchedule() {
     })
     .catch(err => {
         Swal.fire('Error', 'Network error occurred. Please try again.', 'error');
+    });
+}
+
+function downloadBackupWithToken(filename) {
+    // Show loading state
+    Swal.fire({
+        title: 'Preparing download...',
+        text: 'Please wait while we generate a secure download link...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+    
+    // Generate download token
+    fetch('{{ route("admin.system.backup.token.generate") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ file: filename })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        if (data.success && data.download_url) {
+            // Use token-based download URL to bypass ModSecurity
+            window.location.href = data.download_url;
+        } else {
+            // Fallback to direct download if token generation fails
+            const directUrl = '{{ route("admin.system.backup.download", ["file" => "PLACEHOLDER"]) }}'.replace('PLACEHOLDER', encodeURIComponent(filename));
+            window.location.href = directUrl;
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        console.error('Token generation error:', error);
+        // Fallback to direct download
+        const directUrl = '{{ route("admin.system.backup.download", ["file" => "PLACEHOLDER"]) }}'.replace('PLACEHOLDER', encodeURIComponent(filename));
+        window.location.href = directUrl;
     });
 }
 
@@ -1926,6 +1967,100 @@ function loadBackupStats() {
         const container = document.getElementById('backupStatsContainer');
         if (container) {
             container.style.display = 'block';
+        }
+    });
+}
+
+function testEmailConfiguration() {
+    Swal.fire({
+        title: 'Test Email Configuration',
+        html: `
+            <div class="mb-3">
+                <label for="testEmail" class="form-label">Test Email Address</label>
+                <input type="email" class="form-control" id="testEmail" placeholder="Enter email address" value="{{ Auth::user()->email ?? 'davidngungila@gmail.com' }}">
+                <small class="text-muted">A test email will be sent to this address</small>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Send Test Email',
+        cancelButtonText: 'Cancel',
+        didOpen: () => {
+            const input = document.getElementById('testEmail');
+            if (input) {
+                input.focus();
+            }
+        },
+        preConfirm: () => {
+            const email = document.getElementById('testEmail').value;
+            if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                Swal.showValidationMessage('Please enter a valid email address');
+                return false;
+            }
+            return email;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const testEmail = result.value;
+            
+            Swal.fire({
+                title: 'Sending test email...',
+                text: 'Please wait while we test your email configuration...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            
+            fetch('{{ route("admin.system.test.email") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ email: testEmail })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        html: `
+                            <p>${data.message}</p>
+                            ${data.details ? `
+                                <div class="mt-3 text-start">
+                                    <small class="text-muted">
+                                        <strong>Configuration Used:</strong><br>
+                                        Host: ${data.details.config?.host || 'N/A'}<br>
+                                        Port: ${data.details.config?.port || 'N/A'}<br>
+                                        Encryption: ${data.details.config?.encryption || 'N/A'}<br>
+                                        From: ${data.details.config?.from_address || 'N/A'}
+                                    </small>
+                                </div>
+                            ` : ''}
+                        `,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Email Test Failed',
+                        html: `
+                            <p>${data.message}</p>
+                            ${data.details?.error ? `<p class="text-danger mt-2"><small>${data.details.error}</small></p>` : ''}
+                            ${data.details?.suggestion ? `<p class="text-info mt-2"><small><strong>Suggestion:</strong><br>${data.details.suggestion.replace(/\n/g, '<br>')}</small></p>` : ''}
+                        `,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to test email configuration: ' + error.message,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            });
         }
     });
 }

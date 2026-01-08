@@ -408,7 +408,476 @@
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])
 
+    <!-- Advertisement Pop-up Modal -->
+    <div class="modal fade" id="advertisementModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow-lg" style="border: none; border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-0 pb-0" id="advertisementModalHeader" style="padding: 1.5rem 1.5rem 0.5rem;">
+                    <div class="d-flex align-items-center justify-content-center w-100 position-relative">
+                        <div class="text-center">
+                            <h4 class="modal-title mb-1 fw-bold text-white" id="advertisementModalTitle" style="font-size: 1.25rem;">
+                                <i class="bx bx-bullhorn me-2"></i>Announcement
+                            </h4>
+                            <small class="text-white-50" id="advertisementDate" style="opacity: 0.9;"></small>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white position-absolute end-0" data-bs-dismiss="modal" aria-label="Close" id="modalCloseBtn" style="display: none;"></button>
+                    </div>
+                </div>
+                <div class="modal-body" id="advertisementModalBody" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+                    <div id="advertisementContent" class="mb-4" style="
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 1.5rem;
+                        border: 1px solid #e9ecef;
+                    ">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Attachments Section -->
+                    <div id="advertisementAttachments" class="mb-3" style="display: none;">
+                        <h6 class="mb-2 fw-semibold">
+                            <i class="bx bx-paperclip me-1"></i>Attachments
+                        </h6>
+                        <div id="attachmentsList" class="row g-2"></div>
+                    </div>
+                    
+                    <!-- Comment Section -->
+                    <div id="advertisementCommentSection" class="mt-4 pt-3 border-top">
+                        <label for="advertisementComment" class="form-label fw-semibold mb-2">
+                            <i class="bx bx-comment-dots me-1 text-primary"></i>Your Feedback (Optional)
+                        </label>
+                        <textarea class="form-control" id="advertisementComment" rows="4" 
+                                  placeholder="Share your thoughts, questions, or feedback about this announcement..."></textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">
+                                <i class="bx bx-info-circle me-1"></i>Your comments help us improve our communications
+                            </small>
+                            <small class="text-muted" id="commentCharCount">0 / 500</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0" id="advertisementModalFooter" style="padding: 0 1.5rem 1.5rem;">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="closeBtn" style="display: none;">
+                        <i class="bx bx-x me-1"></i>Close
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg px-4" id="acknowledgeBtn" onclick="acknowledgeAdvertisement()" style="display: none;">
+                        <i class="bx bx-check-circle me-2"></i>Mark as Read
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @stack('scripts')
+    
+    <!-- Advertisement Pop-up Script -->
+    <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+    <script>
+    let currentAdvertisementId = null;
+    let advertisementQueue = [];
+    let isProcessingAdvertisements = false;
+
+    // Check for unacknowledged advertisements on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait a bit for page to fully load
+        setTimeout(() => {
+            checkForAdvertisements();
+        }, 1000);
+    });
+
+    function checkForAdvertisements() {
+        if (isProcessingAdvertisements) return;
+        
+        isProcessingAdvertisements = true;
+        
+        fetch('{{ route("advertisements.unacknowledged") }}', {
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            isProcessingAdvertisements = false;
+            
+            if (data.success && data.advertisements && data.advertisements.length > 0) {
+                advertisementQueue = data.advertisements;
+                showNextAdvertisement();
+            }
+        })
+        .catch(error => {
+            isProcessingAdvertisements = false;
+            console.error('Error checking advertisements:', error);
+        });
+    }
+
+    function showNextAdvertisement() {
+        if (advertisementQueue.length === 0) return;
+        
+        const advertisement = advertisementQueue.shift();
+        currentAdvertisementId = advertisement.id;
+        
+        // Set modal header color based on priority
+        const header = document.getElementById('advertisementModalHeader');
+        const priorityClass = advertisement.priority === 'urgent' ? 'bg-danger text-white' : 
+                             advertisement.priority === 'important' ? 'bg-warning text-dark' : 
+                             'bg-info text-white';
+        header.className = 'modal-header ' + priorityClass;
+        
+        // Set title
+        document.getElementById('advertisementModalTitle').innerHTML = 
+            `<i class="bx bx-bullhorn me-2"></i>${advertisement.title}`;
+        
+        // Set advertisement content in the content div with proper formatting
+        const contentDiv = document.getElementById('advertisementContent');
+        if (contentDiv) {
+            // Format content with proper paragraph breaks and advanced styling
+            let formattedContent = advertisement.content || '';
+            
+            // If content doesn't have HTML tags, format it properly
+            if (!formattedContent.includes('<p>') && !formattedContent.includes('<div>') && !formattedContent.includes('<h')) {
+                // Split by double line breaks for paragraphs
+                let paragraphs = formattedContent.split(/\n\n+/).filter(p => p.trim().length > 0);
+                
+                // If no double breaks, try splitting by single breaks but group related lines
+                if (paragraphs.length <= 1) {
+                    const lines = formattedContent.split(/\n/).filter(p => p.trim().length > 0);
+                    paragraphs = [];
+                    let currentPara = '';
+                    
+                    lines.forEach((line, index) => {
+                        line = line.trim();
+                        // Check if line is a heading indicator
+                        if (line.match(/^[📖🔹•▪▫]\s/) || line.match(/^[A-Z][^.!?]*:$/)) {
+                            if (currentPara) {
+                                paragraphs.push(currentPara);
+                                currentPara = '';
+                            }
+                            paragraphs.push(line);
+                        } else if (line.length > 0) {
+                            if (currentPara) {
+                                currentPara += ' ' + line;
+                            } else {
+                                currentPara = line;
+                            }
+                            // Start new paragraph if line ends with period or is long
+                            if (line.match(/[.!?]$/) || index === lines.length - 1) {
+                                paragraphs.push(currentPara);
+                                currentPara = '';
+                            }
+                        }
+                    });
+                    if (currentPara) paragraphs.push(currentPara);
+                }
+                
+                // Wrap each paragraph with proper formatting
+                formattedContent = paragraphs.map(p => {
+                    p = p.trim();
+                    if (!p) return '';
+                    
+                    // Handle special markers
+                    if (p.match(/^[📖🔹•▪▫]\s/)) {
+                        const text = p.replace(/^[📖🔹•▪▫]\s*/, '');
+                        return `<p class="fw-semibold text-primary mb-2"><i class="bx bx-info-circle me-1"></i>${text}</p>`;
+                    }
+                    // Handle headings (short lines or lines ending with colon)
+                    if (p.match(/^[A-Z][^.!?]*:$/) && p.length < 100) {
+                        return `<h5 class="fw-bold text-dark mb-3 mt-4">${p.replace(':', '')}</h5>`;
+                    }
+                    // Regular paragraph
+                    return `<p class="mb-3">${p}</p>`;
+                }).filter(p => p).join('');
+            } else {
+                // Content already has HTML, ensure proper spacing
+                formattedContent = formattedContent
+                    .replace(/(<\/p>)\s*(<p>)/g, '$1$2')
+                    .replace(/(<\/h[1-6]>)\s*(<p>)/g, '$1$2');
+            }
+            
+            contentDiv.innerHTML = `
+                <div class="advertisement-content">
+                    ${formattedContent}
+                </div>
+                <style>
+                    #advertisementContent .advertisement-content {
+                        line-height: 1.9;
+                        font-size: 1.05rem;
+                        color: #495057;
+                    }
+                    #advertisementContent .advertisement-content p {
+                        margin-bottom: 1.2rem;
+                        text-align: justify;
+                        word-wrap: break-word;
+                        text-indent: 0;
+                        line-height: 1.9;
+                    }
+                    #advertisementContent .advertisement-content p:first-child {
+                        margin-top: 0;
+                    }
+                    #advertisementContent .advertisement-content p:last-child {
+                        margin-bottom: 0;
+                    }
+                    #advertisementContent .advertisement-content p.fw-semibold {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 0.75rem 1rem;
+                        border-radius: 6px;
+                        margin: 1rem 0;
+                        text-align: left;
+                    }
+                    #advertisementContent .advertisement-content h1, 
+                    #advertisementContent .advertisement-content h2, 
+                    #advertisementContent .advertisement-content h3, 
+                    #advertisementContent .advertisement-content h4, 
+                    #advertisementContent .advertisement-content h5, 
+                    #advertisementContent .advertisement-content h6 {
+                        margin-top: 1.5rem;
+                        margin-bottom: 1rem;
+                        font-weight: 600;
+                        color: #212529;
+                        line-height: 1.4;
+                    }
+                    #advertisementContent .advertisement-content h1:first-child,
+                    #advertisementContent .advertisement-content h2:first-child,
+                    #advertisementContent .advertisement-content h3:first-child,
+                    #advertisementContent .advertisement-content h4:first-child,
+                    #advertisementContent .advertisement-content h5:first-child {
+                        margin-top: 0;
+                    }
+                    #advertisementContent .advertisement-content ul, 
+                    #advertisementContent .advertisement-content ol {
+                        margin-bottom: 1.2rem;
+                        padding-left: 2rem;
+                        margin-top: 0.5rem;
+                    }
+                    #advertisementContent .advertisement-content li {
+                        margin-bottom: 0.6rem;
+                        line-height: 1.7;
+                    }
+                    #advertisementContent .advertisement-content strong {
+                        font-weight: 600;
+                        color: #212529;
+                    }
+                    #advertisementContent .advertisement-content em {
+                        font-style: italic;
+                    }
+                    #advertisementContent .advertisement-content blockquote {
+                        border-left: 4px solid #0d6efd;
+                        padding: 1rem 1rem 1rem 1.5rem;
+                        margin: 1.5rem 0;
+                        font-style: italic;
+                        color: #6c757d;
+                        background: #f8f9fa;
+                        border-radius: 4px;
+                    }
+                    #advertisementContent .advertisement-content img {
+                        max-width: 100%;
+                        height: auto;
+                        border-radius: 8px;
+                        margin: 1rem 0;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    }
+                    #advertisementContent .advertisement-content a {
+                        color: #0d6efd;
+                        text-decoration: none;
+                        font-weight: 500;
+                    }
+                    #advertisementContent .advertisement-content a:hover {
+                        text-decoration: underline;
+                    }
+                </style>
+            `;
+        }
+        
+        // Handle attachments
+        const attachmentsSection = document.getElementById('advertisementAttachments');
+        const attachmentsList = document.getElementById('attachmentsList');
+        if (advertisement.attachments && advertisement.attachments.length > 0) {
+            attachmentsList.innerHTML = '';
+            advertisement.attachments.forEach((att, index) => {
+                const fileType = att.type || 'file';
+                const icon = fileType.includes('image') ? 'bx-image' : 
+                           fileType.includes('pdf') ? 'bx-file-blank' : 'bx-file';
+                const badgeColor = fileType.includes('image') ? 'bg-primary' : 
+                                 fileType.includes('pdf') ? 'bg-danger' : 'bg-secondary';
+                
+                attachmentsList.innerHTML += `
+                    <div class="col-md-6">
+                        <div class="card border h-100" style="transition: all 0.3s;">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <span class="badge ${badgeColor} rounded-circle p-2">
+                                            <i class="bx ${icon} fs-5"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-0 text-truncate" style="max-width: 200px;" title="${att.name}">
+                                            ${att.name}
+                                        </h6>
+                                        <small class="text-muted">${fileType}</small>
+                                    </div>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <a href="${att.url || '#'}" target="_blank" class="btn btn-sm btn-outline-primary" title="View">
+                                            <i class="bx bx-show"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            attachmentsSection.style.display = 'block';
+        } else {
+            attachmentsSection.style.display = 'none';
+        }
+        
+        // Show comment section and clear previous comment
+        const commentSection = document.getElementById('advertisementCommentSection');
+        const commentField = document.getElementById('advertisementComment');
+        if (commentSection) {
+            commentSection.style.display = 'block';
+        }
+        if (commentField) {
+            commentField.value = ''; // Clear previous comments
+            updateCommentCharCount();
+            // Add character counter event listener if not already added
+            commentField.removeEventListener('input', updateCommentCharCount);
+            commentField.addEventListener('input', updateCommentCharCount);
+            commentField.setAttribute('maxlength', '500');
+        }
+        
+        // Show/hide acknowledge button and close button
+        const acknowledgeBtn = document.getElementById('acknowledgeBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        
+        if (advertisement.require_acknowledgment) {
+            acknowledgeBtn.style.display = 'inline-block';
+            if (closeBtn) closeBtn.style.display = 'none';
+            if (modalCloseBtn) modalCloseBtn.style.display = 'none'; // Prevent closing without acknowledgment
+        } else {
+            acknowledgeBtn.style.display = 'none';
+            if (closeBtn) closeBtn.style.display = 'inline-block';
+            if (modalCloseBtn) modalCloseBtn.style.display = 'block';
+        }
+        
+        // Update date if available
+        const dateElement = document.getElementById('advertisementDate');
+        if (dateElement) {
+            dateElement.textContent = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('advertisementModal'));
+        modal.show();
+        
+        // Handle modal close - show next if available
+        const modalElement = document.getElementById('advertisementModal');
+        modalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
+            modalElement.removeEventListener('hidden.bs.modal', onModalHidden);
+            // Show next advertisement if available
+            if (advertisementQueue.length > 0) {
+                setTimeout(() => showNextAdvertisement(), 500);
+            }
+        }, { once: true });
+    }
+
+    function updateCommentCharCount() {
+        const commentField = document.getElementById('advertisementComment');
+        const charCount = document.getElementById('commentCharCount');
+        if (commentField && charCount) {
+            const length = commentField.value.length;
+            charCount.textContent = length + ' / 500';
+            if (length > 450) {
+                charCount.classList.add('text-warning');
+                charCount.classList.remove('text-muted');
+            } else {
+                charCount.classList.remove('text-warning');
+                charCount.classList.add('text-muted');
+            }
+        }
+    }
+    
+    function previewAttachment(url, type, name) {
+        if (type.includes('image')) {
+            window.open(url, '_blank');
+        } else if (type.includes('pdf')) {
+            window.open(url, '_blank');
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+    
+    function acknowledgeAdvertisement() {
+        if (!currentAdvertisementId) return;
+        
+        const btn = document.getElementById('acknowledgeBtn');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bx bx-loader bx-spin me-2"></i>Processing...';
+        
+        // Get comment if provided
+        const commentField = document.getElementById('advertisementComment');
+        const comment = commentField ? commentField.value.trim() : '';
+        
+        // Build the acknowledge URL
+        const acknowledgeUrl = '{{ url("/advertisements") }}/' + currentAdvertisementId + '/acknowledge';
+        fetch(acknowledgeUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                notes: comment || null
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('advertisementModal'));
+                modal.hide();
+                
+                // Show next advertisement if available
+                if (advertisementQueue.length > 0) {
+                    setTimeout(() => showNextAdvertisement(), 500);
+                }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Failed to acknowledge advertisement',
+                    confirmButtonColor: '#d33'
+                });
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        })
+        .catch(error => {
+            console.error('Error acknowledging advertisement:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while processing your acknowledgment. Please try again.',
+                confirmButtonColor: '#d33'
+            });
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        });
+    }
+    </script>
     <script>
     (function(){
       const notifCount = document.getElementById('notifCount');

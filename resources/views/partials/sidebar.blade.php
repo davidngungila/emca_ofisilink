@@ -169,6 +169,18 @@
       </li>
       @endif
       
+      <!-- Advertisements - HR, Manager, System Admin -->
+      @php
+        $isManager = in_array('Manager', $userRoles);
+      @endphp
+      @if($isHR || $isManager || $isSystemAdmin)
+      <li class="menu-item {{ request()->routeIs('advertisements.*') ? 'active' : '' }}">
+        <a href="{{ route('advertisements.index') }}" class="menu-link">
+          <div data-i18n="Advertisements" style="font-weight: bold;">Advertisements</div>
+        </a>
+      </li>
+      @endif
+      
     </ul>
   </li>
 

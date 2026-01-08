@@ -19,19 +19,66 @@ class EmailService
     }
 
     /**
-     * Load email configuration from environment or config
+     * Load email configuration from NotificationProvider, SystemSettings, or environment
      */
     protected function loadConfig()
     {
-        $this->config = [
-            'host' => env('MAIL_HOST', 'smtp.gmail.com'),
-            'port' => env('MAIL_PORT', 587),
-            'username' => env('MAIL_USERNAME', 'davidngungila@gmail.com'),
-            'password' => env('MAIL_PASSWORD', 'vlxcdpwaizofnti'), // Gmail app password (spaces removed: vlxc dwpw aizo fnti)
-            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
-            'from_address' => env('MAIL_FROM_ADDRESS', 'davidngungila@gmail.com'),
-            'from_name' => env('MAIL_FROM_NAME', 'OfisiLink System'),
-        ];
+        try {
+            // Try to get email provider from database
+            $emailProvider = null;
+            if (class_exists(\App\Models\NotificationProvider::class)) {
+                $emailProvider = \App\Models\NotificationProvider::getPrimary('email');
+            }
+            
+            if ($emailProvider) {
+                // Use provider settings
+                $this->config = [
+                    'host' => $emailProvider->mail_host ?? env('MAIL_HOST', 'smtp.gmail.com'),
+                    'port' => $emailProvider->mail_port ?? env('MAIL_PORT', 587),
+                    'username' => $emailProvider->mail_username ?? env('MAIL_USERNAME', ''),
+                    'password' => $emailProvider->mail_password ?? env('MAIL_PASSWORD', ''),
+                    'encryption' => $emailProvider->mail_encryption ?? env('MAIL_ENCRYPTION', 'tls'),
+                    'from_address' => $emailProvider->mail_from_address ?? env('MAIL_FROM_ADDRESS', ''),
+                    'from_name' => $emailProvider->mail_from_name ?? env('MAIL_FROM_NAME', 'OfisiLink System'),
+                ];
+            } else {
+                // Fallback to SystemSettings
+                if (class_exists(\App\Models\SystemSetting::class)) {
+                    $this->config = [
+                        'host' => \App\Models\SystemSetting::getValue('mail_host') ?: env('MAIL_HOST', 'smtp.gmail.com'),
+                        'port' => \App\Models\SystemSetting::getValue('mail_port') ?: env('MAIL_PORT', 587),
+                        'username' => \App\Models\SystemSetting::getValue('mail_username') ?: env('MAIL_USERNAME', ''),
+                        'password' => \App\Models\SystemSetting::getValue('mail_password') ?: env('MAIL_PASSWORD', ''),
+                        'encryption' => \App\Models\SystemSetting::getValue('mail_encryption') ?: env('MAIL_ENCRYPTION', 'tls'),
+                        'from_address' => \App\Models\SystemSetting::getValue('mail_from_address') ?: env('MAIL_FROM_ADDRESS', ''),
+                        'from_name' => \App\Models\SystemSetting::getValue('mail_from_name') ?: env('MAIL_FROM_NAME', 'OfisiLink System'),
+                    ];
+                } else {
+                    // Final fallback to env
+                    $this->config = [
+                        'host' => env('MAIL_HOST', 'smtp.gmail.com'),
+                        'port' => env('MAIL_PORT', 587),
+                        'username' => env('MAIL_USERNAME', 'davidngungila@gmail.com'),
+                        'password' => env('MAIL_PASSWORD', 'vlxcdpwaizofnti'),
+                        'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+                        'from_address' => env('MAIL_FROM_ADDRESS', 'davidngungila@gmail.com'),
+                        'from_name' => env('MAIL_FROM_NAME', 'OfisiLink System'),
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            // If database tables don't exist yet, use env fallback
+            Log::warning('EmailService: Could not load config from database, using env: ' . $e->getMessage());
+            $this->config = [
+                'host' => env('MAIL_HOST', 'smtp.gmail.com'),
+                'port' => env('MAIL_PORT', 587),
+                'username' => env('MAIL_USERNAME', 'davidngungila@gmail.com'),
+                'password' => env('MAIL_PASSWORD', 'vlxcdpwaizofnti'),
+                'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+                'from_address' => env('MAIL_FROM_ADDRESS', 'davidngungila@gmail.com'),
+                'from_name' => env('MAIL_FROM_NAME', 'OfisiLink System'),
+            ];
+        }
     }
 
     /**
@@ -433,7 +480,13 @@ class EmailService
                     return [
                         'success' => true,
                         'message' => 'Test email sent successfully!',
-                        'error' => null
+                        'error' => null,
+                        'config' => [
+                            'host' => $this->config['host'],
+                            'port' => $this->config['port'],
+                            'encryption' => $this->config['encryption'],
+                            'from_address' => $this->config['from_address'],
+                        ]
                     ];
                 } else {
                     $errorInfo = $this->mailer->ErrorInfo ?? 'Unknown error';

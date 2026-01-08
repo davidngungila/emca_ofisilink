@@ -405,6 +405,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/employees', [EmployeeController::class, 'index'])->name('modules.hr.employees');
     Route::get('/modules/hr/employees/register', [EmployeeController::class, 'create'])->name('modules.hr.employees.register');
     Route::post('/modules/hr/employees/register', [EmployeeController::class, 'store'])->name('modules.hr.employees.store');
+    Route::get('/modules/hr/employees/bulk/template', [EmployeeController::class, 'downloadBulkTemplate'])->name('modules.hr.employees.bulk.template');
+    Route::post('/modules/hr/employees/bulk/upload', [EmployeeController::class, 'bulkUploadEmployees'])->name('modules.hr.employees.bulk.upload');
+    
+    // Advertisements / Announcements
+    Route::get('/modules/advertisements', [App\Http\Controllers\AdvertisementController::class, 'index'])->name('advertisements.index')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/modules/advertisements/create', [App\Http\Controllers\AdvertisementController::class, 'create'])->name('advertisements.create')->middleware('role:System Admin,HR Officer,Manager');
+    Route::post('/modules/advertisements', [App\Http\Controllers\AdvertisementController::class, 'store'])->name('advertisements.store')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/modules/advertisements/{id}', [App\Http\Controllers\AdvertisementController::class, 'show'])->name('advertisements.show')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/modules/advertisements/{id}/edit', [App\Http\Controllers\AdvertisementController::class, 'edit'])->name('advertisements.edit')->middleware('role:System Admin,HR Officer,Manager');
+    Route::put('/modules/advertisements/{id}', [App\Http\Controllers\AdvertisementController::class, 'update'])->name('advertisements.update')->middleware('role:System Admin,HR Officer,Manager');
+    Route::delete('/modules/advertisements/{id}', [App\Http\Controllers\AdvertisementController::class, 'destroy'])->name('advertisements.destroy')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/advertisements/unacknowledged', [App\Http\Controllers\AdvertisementController::class, 'getUnacknowledged'])->name('advertisements.unacknowledged');
+    Route::post('/advertisements/{id}/acknowledge', [App\Http\Controllers\AdvertisementController::class, 'acknowledge'])->name('advertisements.acknowledge');
+    Route::get('/advertisements/{id}/acknowledgment-stats', [App\Http\Controllers\AdvertisementController::class, 'getAcknowledgmentStats'])->name('advertisements.acknowledgment-stats')->middleware('role:System Admin,HR Officer,Manager');
     Route::get('/modules/hr/employees/{userId}/review', [EmployeeController::class, 'review'])->name('modules.hr.employees.review');
     Route::post('/modules/hr/employees/{userId}/finalize', [EmployeeController::class, 'finalize'])->name('modules.hr.employees.finalize');
     Route::get('/modules/hr/employees/{userId}/registration-pdf', [EmployeeController::class, 'generateRegistrationPDF'])->name('modules.hr.employees.registration-pdf');
@@ -1050,8 +1064,11 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::post('system/backup-now', [SystemController::class, 'backupNow'])->name('admin.system.backup.now');
         Route::get('system/backup/list', [SystemController::class, 'listBackups'])->name('admin.system.backup.list');
         Route::get('system/backup/download/{file}', [SystemController::class, 'downloadBackup'])->name('admin.system.backup.download');
+        Route::get('system/backup/token/{token}', [SystemController::class, 'downloadBackupByToken'])->name('admin.system.backup.download.token');
+        Route::post('system/backup/token/generate', [SystemController::class, 'generateDownloadToken'])->name('admin.system.backup.token.generate');
         Route::post('system/backup/schedule', [SystemController::class, 'updateBackupSchedule'])->name('admin.system.backup.schedule');
         Route::delete('system/backup/{backup}', [SystemController::class, 'deleteBackup'])->name('admin.system.backup.delete');
+        Route::post('system/test-email', [SystemController::class, 'testEmail'])->name('admin.system.test.email');
         // System User Management
         Route::post('system/users', [SystemController::class, 'getUsers'])->name('admin.system.users');
         Route::post('system/users/{user}/block', [SystemController::class, 'blockUser'])->name('admin.system.users.block');
