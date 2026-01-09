@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'View Advertisement')
+@section('title', 'View notice')
 
 @section('breadcrumb')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title mb-0">Advertisement Details</h4>
-                <p class="text-muted">View advertisement information and statistics</p>
+                <h4 class="card-title mb-0">notice Details</h4>
+                <p class="text-muted">View notice information and statistics</p>
             </div>
         </div>
     </div>
@@ -23,13 +23,13 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bx bx-bullhorn me-2"></i>{{ $advertisement->title }}
+                        <i class="bx bx-bullhorn me-2"></i>{{ $notice->title }}
                     </h5>
                     <div>
-                        <a href="{{ route('advertisements.edit', $advertisement->id) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ route('notices.edit', $notice->id) }}" class="btn btn-sm btn-primary">
                             <i class="bx bx-edit me-1"></i>Edit
                         </a>
-                        <a href="{{ route('advertisements.index') }}" class="btn btn-sm btn-secondary">
+                        <a href="{{ route('notices.index') }}" class="btn btn-sm btn-secondary">
                             <i class="bx bx-arrow-back me-1"></i>Back
                         </a>
                     </div>
@@ -41,12 +41,12 @@
                             <table class="table table-sm table-borderless">
                                 <tr>
                                     <th width="40%">Priority:</th>
-                                    <td><span class="badge {{ $advertisement->getPriorityBadgeClass() }}">{{ ucfirst($advertisement->priority) }}</span></td>
+                                    <td><span class="badge {{ $notice->getPriorityBadgeClass() }}">{{ ucfirst($notice->priority) }}</span></td>
                                 </tr>
                                 <tr>
                                     <th>Status:</th>
                                     <td>
-                                        @if($advertisement->isCurrentlyActive())
+                                        @if($notice->isCurrentlyActive())
                                             <span class="badge bg-success">Active</span>
                                         @else
                                             <span class="badge bg-secondary">Inactive</span>
@@ -56,7 +56,7 @@
                                 <tr>
                                     <th>Target:</th>
                                     <td>
-                                        @if($advertisement->show_to_all)
+                                        @if($notice->show_to_all)
                                             <span class="badge bg-info">All Users</span>
                                         @else
                                             <span class="badge bg-secondary">Selected Roles</span>
@@ -65,45 +65,45 @@
                                 </tr>
                                 <tr>
                                     <th>Start Date:</th>
-                                    <td>{{ $advertisement->start_date ? $advertisement->start_date->format('Y-m-d') : 'Immediate' }}</td>
+                                    <td>{{ $notice->start_date ? $notice->start_date->format('Y-m-d') : 'Immediate' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Expiry Date:</th>
-                                    <td>{{ $advertisement->expiry_date ? $advertisement->expiry_date->format('Y-m-d') : 'No Expiry' }}</td>
+                                    <td>{{ $notice->expiry_date ? $notice->expiry_date->format('Y-m-d') : 'No Expiry' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Require Acknowledgment:</th>
-                                    <td>{{ $advertisement->require_acknowledgment ? 'Yes' : 'No' }}</td>
+                                    <td>{{ $notice->require_acknowledgment ? 'Yes' : 'No' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Allow Re-display:</th>
-                                    <td>{{ $advertisement->allow_redisplay ? 'Yes' : 'No' }}</td>
+                                    <td>{{ $notice->allow_redisplay ? 'Yes' : 'No' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Created By:</th>
-                                    <td>{{ $advertisement->creator->name ?? 'N/A' }}</td>
+                                    <td>{{ $notice->creator->name ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Created At:</th>
-                                    <td>{{ $advertisement->created_at->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $notice->created_at->format('Y-m-d H:i:s') }}</td>
                                 </tr>
                                 <tr>
                                     <th>Updated At:</th>
-                                    <td>{{ $advertisement->updated_at->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $notice->updated_at->format('Y-m-d H:i:s') }}</td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
                             <h6>Content</h6>
                             <div class="border rounded p-3" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
-                                {!! $advertisement->content !!}
+                                {!! $notice->content !!}
                             </div>
                             
-                            @if($advertisement->attachments && count($advertisement->attachments) > 0)
+                            @if($notice->attachments && count($notice->attachments) > 0)
                             <div class="mt-3">
                                 <h6>Attachments</h6>
                                 <div class="row g-2">
-                                    @foreach($advertisement->getAttachmentUrls() as $attachment)
+                                    @foreach($notice->getAttachmentUrls() as $attachment)
                                     <div class="col-md-6">
                                         <div class="card">
                                             <div class="card-body p-2">
@@ -154,7 +154,7 @@
                                 <div class="col-md-4">
                                     <div class="card text-center">
                                         <div class="card-body">
-                                            <h3 class="text-success" id="acknowledgedCount">{{ $advertisement->acknowledgments->count() }}</h3>
+                                            <h3 class="text-success" id="acknowledgedCount">{{ $notice->acknowledgments->count() }}</h3>
                                             <p class="mb-0">Acknowledged</p>
                                         </div>
                                     </div>
@@ -256,7 +256,7 @@ function previewFile(url, type, name) {
 }
 
 function loadAcknowledgmentDetails() {
-    fetch('{{ route("advertisements.acknowledgment-stats", $advertisement->id) }}', {
+    fetch('{{ route("notices.acknowledgment-stats", $notice->id) }}', {
         headers: {
             'Accept': 'application/json'
         }

@@ -408,23 +408,23 @@
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])
 
-    <!-- Advertisement Pop-up Modal -->
-    <div class="modal fade" id="advertisementModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- Notice Pop-up Modal -->
+    <div class="modal fade" id="noticeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content shadow-lg" style="border: none; border-radius: 12px; overflow: hidden;">
-                <div class="modal-header border-0 pb-0" id="advertisementModalHeader" style="padding: 1.5rem 1.5rem 0.5rem;">
+                <div class="modal-header border-0 pb-0" id="noticeModalHeader" style="padding: 1.5rem 1.5rem 0.5rem;">
                     <div class="d-flex align-items-center justify-content-center w-100 position-relative">
                         <div class="text-center">
-                            <h4 class="modal-title mb-1 fw-bold text-white" id="advertisementModalTitle" style="font-size: 1.25rem;">
-                                <i class="bx bx-bullhorn me-2"></i>Announcement
+                            <h4 class="modal-title mb-1 fw-bold text-white" id="noticeModalTitle" style="font-size: 1.25rem;">
+                                <i class="bx bx-bullhorn me-2"></i>Notice
                             </h4>
-                            <small class="text-white-50" id="advertisementDate" style="opacity: 0.9;"></small>
+                            <small class="text-white-50" id="noticeDate" style="opacity: 0.9;"></small>
                         </div>
                         <button type="button" class="btn-close btn-close-white position-absolute end-0" data-bs-dismiss="modal" aria-label="Close" id="modalCloseBtn" style="display: none;"></button>
                     </div>
                 </div>
-                <div class="modal-body" id="advertisementModalBody" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
-                    <div id="advertisementContent" class="mb-4" style="
+                <div class="modal-body" id="noticeModalBody" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+                    <div id="noticeContent" class="mb-4" style="
                         background: #f8f9fa;
                         border-radius: 8px;
                         padding: 1.5rem;
@@ -438,7 +438,7 @@
                     </div>
                     
                     <!-- Attachments Section -->
-                    <div id="advertisementAttachments" class="mb-3" style="display: none;">
+                    <div id="noticeAttachments" class="mb-3" style="display: none;">
                         <h6 class="mb-2 fw-semibold">
                             <i class="bx bx-paperclip me-1"></i>Attachments
                         </h6>
@@ -446,11 +446,11 @@
                     </div>
                     
                     <!-- Comment Section -->
-                    <div id="advertisementCommentSection" class="mt-4 pt-3 border-top">
-                        <label for="advertisementComment" class="form-label fw-semibold mb-2">
+                    <div id="noticeCommentSection" class="mt-4 pt-3 border-top">
+                        <label for="noticeComment" class="form-label fw-semibold mb-2">
                             <i class="bx bx-comment-dots me-1 text-primary"></i>Your Feedback (Optional)
                         </label>
-                        <textarea class="form-control" id="advertisementComment" rows="4" 
+                        <textarea class="form-control" id="noticeComment" rows="4" 
                                   placeholder="Share your thoughts, questions, or feedback about this announcement..."></textarea>
                         <div class="d-flex justify-content-between align-items-center mt-2">
                             <small class="text-muted">
@@ -460,11 +460,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0" id="advertisementModalFooter" style="padding: 0 1.5rem 1.5rem;">
+                <div class="modal-footer border-0 pt-0" id="noticeModalFooter" style="padding: 0 1.5rem 1.5rem;">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="closeBtn" style="display: none;">
                         <i class="bx bx-x me-1"></i>Close
                     </button>
-                    <button type="button" class="btn btn-primary btn-lg px-4" id="acknowledgeBtn" onclick="acknowledgeAdvertisement()" style="display: none;">
+                    <button type="button" class="btn btn-primary btn-lg px-4" id="acknowledgeBtn" onclick="acknowledgeNotice()" style="display: none;">
                         <i class="bx bx-check-circle me-2"></i>Mark as Read
                     </button>
                 </div>
@@ -474,27 +474,27 @@
 
     @stack('scripts')
     
-    <!-- Advertisement Pop-up Script -->
+    <!-- Notice Pop-up Script -->
     <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
     <script>
-    let currentAdvertisementId = null;
-    let advertisementQueue = [];
-    let isProcessingAdvertisements = false;
+    let currentNoticeId = null;
+    let noticeQueue = [];
+    let isProcessingNotices = false;
 
-    // Check for unacknowledged advertisements on page load
+    // Check for unacknowledged notices on page load
     document.addEventListener('DOMContentLoaded', function() {
         // Wait a bit for page to fully load
         setTimeout(() => {
-            checkForAdvertisements();
+            checkForNotices();
         }, 1000);
     });
 
-    function checkForAdvertisements() {
-        if (isProcessingAdvertisements) return;
+    function checkForNotices() {
+        if (isProcessingNotices) return;
         
-        isProcessingAdvertisements = true;
+        isProcessingNotices = true;
         
-        fetch('{{ route("advertisements.unacknowledged") }}', {
+        fetch('{{ route("notices.unacknowledged") }}', {
             headers: {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -502,41 +502,41 @@
         })
         .then(response => response.json())
         .then(data => {
-            isProcessingAdvertisements = false;
+            isProcessingNotices = false;
             
-            if (data.success && data.advertisements && data.advertisements.length > 0) {
-                advertisementQueue = data.advertisements;
-                showNextAdvertisement();
+            if (data.success && data.notices && data.notices.length > 0) {
+                noticeQueue = data.notices;
+                showNextNotice();
             }
         })
         .catch(error => {
-            isProcessingAdvertisements = false;
-            console.error('Error checking advertisements:', error);
+            isProcessingNotices = false;
+            console.error('Error checking notices:', error);
         });
     }
 
-    function showNextAdvertisement() {
-        if (advertisementQueue.length === 0) return;
+    function showNextNotice() {
+        if (noticeQueue.length === 0) return;
         
-        const advertisement = advertisementQueue.shift();
-        currentAdvertisementId = advertisement.id;
+        const notice = noticeQueue.shift();
+        currentNoticeId = notice.id;
         
         // Set modal header color based on priority
-        const header = document.getElementById('advertisementModalHeader');
-        const priorityClass = advertisement.priority === 'urgent' ? 'bg-danger text-white' : 
-                             advertisement.priority === 'important' ? 'bg-warning text-dark' : 
+        const header = document.getElementById('noticeModalHeader');
+        const priorityClass = notice.priority === 'urgent' ? 'bg-danger text-white' : 
+                             notice.priority === 'important' ? 'bg-warning text-dark' : 
                              'bg-info text-white';
         header.className = 'modal-header ' + priorityClass;
         
         // Set title
-        document.getElementById('advertisementModalTitle').innerHTML = 
-            `<i class="bx bx-bullhorn me-2"></i>${advertisement.title}`;
+        document.getElementById('noticeModalTitle').innerHTML = 
+            `<i class="bx bx-bullhorn me-2"></i>${notice.title}`;
         
-        // Set advertisement content in the content div with proper formatting
-        const contentDiv = document.getElementById('advertisementContent');
+        // Set notice content in the content div with proper formatting
+        const contentDiv = document.getElementById('noticeContent');
         if (contentDiv) {
             // Format content with proper paragraph breaks and advanced styling
-            let formattedContent = advertisement.content || '';
+            let formattedContent = notice.content || '';
             
             // If content doesn't have HTML tags, format it properly
             if (!formattedContent.includes('<p>') && !formattedContent.includes('<div>') && !formattedContent.includes('<h')) {
@@ -599,29 +599,29 @@
             }
             
             contentDiv.innerHTML = `
-                <div class="advertisement-content">
+                <div class="notice-content">
                     ${formattedContent}
                 </div>
                 <style>
-                    #advertisementContent .advertisement-content {
+                    #noticeContent .notice-content {
                         line-height: 1.9;
                         font-size: 1.05rem;
                         color: #495057;
                     }
-                    #advertisementContent .advertisement-content p {
+                    #noticeContent .notice-content p {
                         margin-bottom: 1.2rem;
                         text-align: justify;
                         word-wrap: break-word;
                         text-indent: 0;
                         line-height: 1.9;
                     }
-                    #advertisementContent .advertisement-content p:first-child {
+                    #noticeContent .notice-content p:first-child {
                         margin-top: 0;
                     }
-                    #advertisementContent .advertisement-content p:last-child {
+                    #noticeContent .notice-content p:last-child {
                         margin-bottom: 0;
                     }
-                    #advertisementContent .advertisement-content p.fw-semibold {
+                    #noticeContent .notice-content p.fw-semibold {
                         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                         color: white;
                         padding: 0.75rem 1rem;
@@ -629,43 +629,43 @@
                         margin: 1rem 0;
                         text-align: left;
                     }
-                    #advertisementContent .advertisement-content h1, 
-                    #advertisementContent .advertisement-content h2, 
-                    #advertisementContent .advertisement-content h3, 
-                    #advertisementContent .advertisement-content h4, 
-                    #advertisementContent .advertisement-content h5, 
-                    #advertisementContent .advertisement-content h6 {
+                    #noticeContent .notice-content h1, 
+                    #noticeContent .notice-content h2, 
+                    #noticeContent .notice-content h3, 
+                    #noticeContent .notice-content h4, 
+                    #noticeContent .notice-content h5, 
+                    #noticeContent .notice-content h6 {
                         margin-top: 1.5rem;
                         margin-bottom: 1rem;
                         font-weight: 600;
                         color: #212529;
                         line-height: 1.4;
                     }
-                    #advertisementContent .advertisement-content h1:first-child,
-                    #advertisementContent .advertisement-content h2:first-child,
-                    #advertisementContent .advertisement-content h3:first-child,
-                    #advertisementContent .advertisement-content h4:first-child,
-                    #advertisementContent .advertisement-content h5:first-child {
+                    #noticeContent .notice-content h1:first-child,
+                    #noticeContent .notice-content h2:first-child,
+                    #noticeContent .notice-content h3:first-child,
+                    #noticeContent .notice-content h4:first-child,
+                    #noticeContent .notice-content h5:first-child {
                         margin-top: 0;
                     }
-                    #advertisementContent .advertisement-content ul, 
-                    #advertisementContent .advertisement-content ol {
+                    #noticeContent .notice-content ul, 
+                    #noticeContent .notice-content ol {
                         margin-bottom: 1.2rem;
                         padding-left: 2rem;
                         margin-top: 0.5rem;
                     }
-                    #advertisementContent .advertisement-content li {
+                    #noticeContent .notice-content li {
                         margin-bottom: 0.6rem;
                         line-height: 1.7;
                     }
-                    #advertisementContent .advertisement-content strong {
+                    #noticeContent .notice-content strong {
                         font-weight: 600;
                         color: #212529;
                     }
-                    #advertisementContent .advertisement-content em {
+                    #noticeContent .notice-content em {
                         font-style: italic;
                     }
-                    #advertisementContent .advertisement-content blockquote {
+                    #noticeContent .notice-content blockquote {
                         border-left: 4px solid #0d6efd;
                         padding: 1rem 1rem 1rem 1.5rem;
                         margin: 1.5rem 0;
@@ -674,19 +674,19 @@
                         background: #f8f9fa;
                         border-radius: 4px;
                     }
-                    #advertisementContent .advertisement-content img {
+                    #noticeContent .notice-content img {
                         max-width: 100%;
                         height: auto;
                         border-radius: 8px;
                         margin: 1rem 0;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                     }
-                    #advertisementContent .advertisement-content a {
+                    #noticeContent .notice-content a {
                         color: #0d6efd;
                         text-decoration: none;
                         font-weight: 500;
                     }
-                    #advertisementContent .advertisement-content a:hover {
+                    #noticeContent .notice-content a:hover {
                         text-decoration: underline;
                     }
                 </style>
@@ -694,11 +694,11 @@
         }
         
         // Handle attachments
-        const attachmentsSection = document.getElementById('advertisementAttachments');
+        const attachmentsSection = document.getElementById('noticeAttachments');
         const attachmentsList = document.getElementById('attachmentsList');
-        if (advertisement.attachments && advertisement.attachments.length > 0) {
+        if (notice.attachments && notice.attachments.length > 0) {
             attachmentsList.innerHTML = '';
-            advertisement.attachments.forEach((att, index) => {
+            notice.attachments.forEach((att, index) => {
                 const fileType = att.type || 'file';
                 const icon = fileType.includes('image') ? 'bx-image' : 
                            fileType.includes('pdf') ? 'bx-file-blank' : 'bx-file';
@@ -738,8 +738,8 @@
         }
         
         // Show comment section and clear previous comment
-        const commentSection = document.getElementById('advertisementCommentSection');
-        const commentField = document.getElementById('advertisementComment');
+        const commentSection = document.getElementById('noticeCommentSection');
+        const commentField = document.getElementById('noticeComment');
         if (commentSection) {
             commentSection.style.display = 'block';
         }
@@ -757,7 +757,7 @@
         const closeBtn = document.getElementById('closeBtn');
         const modalCloseBtn = document.getElementById('modalCloseBtn');
         
-        if (advertisement.require_acknowledgment) {
+        if (notice.require_acknowledgment) {
             acknowledgeBtn.style.display = 'inline-block';
             if (closeBtn) closeBtn.style.display = 'none';
             if (modalCloseBtn) modalCloseBtn.style.display = 'none'; // Prevent closing without acknowledgment
@@ -768,7 +768,7 @@
         }
         
         // Update date if available
-        const dateElement = document.getElementById('advertisementDate');
+        const dateElement = document.getElementById('noticeDate');
         if (dateElement) {
             dateElement.textContent = new Date().toLocaleDateString('en-US', { 
                 year: 'numeric', 
@@ -778,22 +778,22 @@
         }
         
         // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('advertisementModal'));
+        const modal = new bootstrap.Modal(document.getElementById('noticeModal'));
         modal.show();
         
         // Handle modal close - show next if available
-        const modalElement = document.getElementById('advertisementModal');
+        const modalElement = document.getElementById('noticeModal');
         modalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
             modalElement.removeEventListener('hidden.bs.modal', onModalHidden);
-            // Show next advertisement if available
-            if (advertisementQueue.length > 0) {
-                setTimeout(() => showNextAdvertisement(), 500);
+            // Show next notice if available
+            if (noticeQueue.length > 0) {
+                setTimeout(() => showNextNotice(), 500);
             }
         }, { once: true });
     }
 
     function updateCommentCharCount() {
-        const commentField = document.getElementById('advertisementComment');
+        const commentField = document.getElementById('noticeComment');
         const charCount = document.getElementById('commentCharCount');
         if (commentField && charCount) {
             const length = commentField.value.length;
@@ -818,8 +818,8 @@
         }
     }
     
-    function acknowledgeAdvertisement() {
-        if (!currentAdvertisementId) return;
+    function acknowledgeNotice() {
+        if (!currentNoticeId) return;
         
         const btn = document.getElementById('acknowledgeBtn');
         const originalHtml = btn.innerHTML;
@@ -827,11 +827,11 @@
         btn.innerHTML = '<i class="bx bx-loader bx-spin me-2"></i>Processing...';
         
         // Get comment if provided
-        const commentField = document.getElementById('advertisementComment');
+        const commentField = document.getElementById('noticeComment');
         const comment = commentField ? commentField.value.trim() : '';
         
         // Build the acknowledge URL
-        const acknowledgeUrl = '{{ url("/advertisements") }}/' + currentAdvertisementId + '/acknowledge';
+        const acknowledgeUrl = '{{ url("/notices") }}/' + currentNoticeId + '/acknowledge';
         fetch(acknowledgeUrl, {
             method: 'POST',
             headers: {
@@ -847,18 +847,18 @@
         .then(data => {
             if (data.success) {
                 // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('advertisementModal'));
+                const modal = bootstrap.Modal.getInstance(document.getElementById('noticeModal'));
                 modal.hide();
                 
-                // Show next advertisement if available
-                if (advertisementQueue.length > 0) {
-                    setTimeout(() => showNextAdvertisement(), 500);
+                // Show next notice if available
+                if (noticeQueue.length > 0) {
+                    setTimeout(() => showNextNotice(), 500);
                 }
             } else {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: data.message || 'Failed to acknowledge advertisement',
+                    text: data.message || 'Failed to acknowledge notice',
                     confirmButtonColor: '#d33'
                 });
                 btn.disabled = false;
@@ -866,7 +866,7 @@
             }
         })
         .catch(error => {
-            console.error('Error acknowledging advertisement:', error);
+            console.error('Error acknowledging notice:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',

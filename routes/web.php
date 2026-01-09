@@ -408,17 +408,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/employees/bulk/template', [EmployeeController::class, 'downloadBulkTemplate'])->name('modules.hr.employees.bulk.template');
     Route::post('/modules/hr/employees/bulk/upload', [EmployeeController::class, 'bulkUploadEmployees'])->name('modules.hr.employees.bulk.upload');
     
-    // Advertisements / Announcements
-    Route::get('/modules/advertisements', [App\Http\Controllers\AdvertisementController::class, 'index'])->name('advertisements.index')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/modules/advertisements/create', [App\Http\Controllers\AdvertisementController::class, 'create'])->name('advertisements.create')->middleware('role:System Admin,HR Officer,Manager');
-    Route::post('/modules/advertisements', [App\Http\Controllers\AdvertisementController::class, 'store'])->name('advertisements.store')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/modules/advertisements/{id}', [App\Http\Controllers\AdvertisementController::class, 'show'])->name('advertisements.show')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/modules/advertisements/{id}/edit', [App\Http\Controllers\AdvertisementController::class, 'edit'])->name('advertisements.edit')->middleware('role:System Admin,HR Officer,Manager');
-    Route::put('/modules/advertisements/{id}', [App\Http\Controllers\AdvertisementController::class, 'update'])->name('advertisements.update')->middleware('role:System Admin,HR Officer,Manager');
-    Route::delete('/modules/advertisements/{id}', [App\Http\Controllers\AdvertisementController::class, 'destroy'])->name('advertisements.destroy')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/advertisements/unacknowledged', [App\Http\Controllers\AdvertisementController::class, 'getUnacknowledged'])->name('advertisements.unacknowledged');
-    Route::post('/advertisements/{id}/acknowledge', [App\Http\Controllers\AdvertisementController::class, 'acknowledge'])->name('advertisements.acknowledge');
-    Route::get('/advertisements/{id}/acknowledgment-stats', [App\Http\Controllers\AdvertisementController::class, 'getAcknowledgmentStats'])->name('advertisements.acknowledgment-stats')->middleware('role:System Admin,HR Officer,Manager');
+    // Notices / Announcements
+    Route::get('/modules/notices', [App\Http\Controllers\NoticeController::class, 'index'])->name('notices.index')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/modules/notices/create', [App\Http\Controllers\NoticeController::class, 'create'])->name('notices.create')->middleware('role:System Admin,HR Officer,Manager');
+    Route::post('/modules/notices', [App\Http\Controllers\NoticeController::class, 'store'])->name('notices.store')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/modules/notices/{id}', [App\Http\Controllers\NoticeController::class, 'show'])->name('notices.show')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/modules/notices/{id}/edit', [App\Http\Controllers\NoticeController::class, 'edit'])->name('notices.edit')->middleware('role:System Admin,HR Officer,Manager');
+    Route::put('/modules/notices/{id}', [App\Http\Controllers\NoticeController::class, 'update'])->name('notices.update')->middleware('role:System Admin,HR Officer,Manager');
+    Route::delete('/modules/notices/{id}', [App\Http\Controllers\NoticeController::class, 'destroy'])->name('notices.destroy')->middleware('role:System Admin,HR Officer,Manager');
+    Route::get('/notices/unacknowledged', [App\Http\Controllers\NoticeController::class, 'getUnacknowledged'])->name('notices.unacknowledged');
+    Route::post('/notices/{id}/acknowledge', [App\Http\Controllers\NoticeController::class, 'acknowledge'])->name('notices.acknowledge');
+    Route::get('/notices/{id}/acknowledgment-stats', [App\Http\Controllers\NoticeController::class, 'getAcknowledgmentStats'])->name('notices.acknowledgment-stats')->middleware('role:System Admin,HR Officer,Manager');
     Route::get('/modules/hr/employees/{userId}/review', [EmployeeController::class, 'review'])->name('modules.hr.employees.review');
     Route::post('/modules/hr/employees/{userId}/finalize', [EmployeeController::class, 'finalize'])->name('modules.hr.employees.finalize');
     Route::get('/modules/hr/employees/{userId}/registration-pdf', [EmployeeController::class, 'generateRegistrationPDF'])->name('modules.hr.employees.registration-pdf');

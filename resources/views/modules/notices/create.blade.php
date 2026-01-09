@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Create Advertisement')
+@section('title', 'Create notice')
 
 @section('breadcrumb')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title mb-0">Create New Advertisement / Announcement</h4>
+                <h4 class="card-title mb-0">Create New notice / Announcement</h4>
                 <p class="text-muted">Create a new system-wide announcement</p>
             </div>
         </div>
@@ -23,11 +23,11 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bx bx-bullhorn me-2"></i>Advertisement Details
+                        <i class="bx bx-bullhorn me-2"></i>notice Details
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form id="advertisementForm" method="POST" action="{{ route('advertisements.store') }}" enctype="multipart/form-data">
+                    <form id="noticeForm" method="POST" action="{{ route('notices.store') }}" enctype="multipart/form-data">
                         @csrf
                         
                         <div class="row g-3">
@@ -134,16 +134,16 @@
                                     <input class="form-check-input" type="checkbox" name="allow_redisplay" id="allow_redisplay" value="1"
                                            {{ old('allow_redisplay', false) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="allow_redisplay">Allow Re-display if Updated</label>
-                                    <small class="text-muted d-block">If checked, users will see the advertisement again if it's updated after they acknowledged it</small>
+                                    <small class="text-muted d-block">If checked, users will see the notice again if it's updated after they acknowledged it</small>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bx bx-save me-1"></i>Create Advertisement
+                                <i class="bx bx-save me-1"></i>Create notice
                             </button>
-                            <a href="{{ route('advertisements.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('notices.index') }}" class="btn btn-secondary">
                                 <i class="bx bx-arrow-back me-1"></i>Cancel
                             </a>
                         </div>

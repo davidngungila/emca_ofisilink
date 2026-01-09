@@ -169,14 +169,14 @@
       </li>
       @endif
       
-      <!-- Advertisements - HR, Manager, System Admin -->
+      <!-- Notices - HR, Manager, System Admin -->
       @php
         $isManager = in_array('Manager', $userRoles);
       @endphp
       @if($isHR || $isManager || $isSystemAdmin)
-      <li class="menu-item {{ request()->routeIs('advertisements.*') ? 'active' : '' }}">
-        <a href="{{ route('advertisements.index') }}" class="menu-link">
-          <div data-i18n="Advertisements" style="font-weight: bold;">Advertisements</div>
+      <li class="menu-item {{ request()->routeIs('notices.*') ? 'active' : '' }}">
+        <a href="{{ route('notices.index') }}" class="menu-link">
+          <div data-i18n="Notices" style="font-weight: bold;">Notices</div>
         </a>
       </li>
       @endif

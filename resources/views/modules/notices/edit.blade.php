@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Advertisement')
+@section('title', 'Edit notice')
 
 @section('breadcrumb')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title mb-0">Edit Advertisement / Announcement</h4>
-                <p class="text-muted">Update advertisement details</p>
+                <h4 class="card-title mb-0">Edit notice / Announcement</h4>
+                <p class="text-muted">Update notice details</p>
             </div>
         </div>
     </div>
@@ -23,11 +23,11 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bx bx-bullhorn me-2"></i>Advertisement Details
+                        <i class="bx bx-bullhorn me-2"></i>notice Details
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form id="advertisementForm" method="POST" action="{{ route('advertisements.update', $advertisement->id) }}" enctype="multipart/form-data">
+                    <form id="noticeForm" method="POST" action="{{ route('notices.update', $notice->id) }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
@@ -35,7 +35,7 @@
                             <div class="col-md-12">
                                 <label class="form-label">Title <span class="text-danger">*</span></label>
                                 <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" 
-                                       value="{{ old('title', $advertisement->title) }}" required>
+                                       value="{{ old('title', $notice->title) }}" required>
                                 @error('title')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -44,18 +44,18 @@
                             <div class="col-md-12">
                                 <label class="form-label">Content <span class="text-danger">*</span></label>
                                 <textarea name="content" class="form-control @error('content') is-invalid @enderror" 
-                                          rows="8" required>{{ old('content', $advertisement->content) }}</textarea>
+                                          rows="8" required>{{ old('content', $notice->content) }}</textarea>
                                 <small class="text-muted">HTML is supported</small>
                                 @error('content')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             
-                            @if($advertisement->attachments && count($advertisement->attachments) > 0)
+                            @if($notice->attachments && count($notice->attachments) > 0)
                             <div class="col-md-12">
                                 <label class="form-label">Current Attachments</label>
                                 <div class="row g-2">
-                                    @foreach($advertisement->attachments as $index => $attachment)
+                                    @foreach($notice->attachments as $index => $attachment)
                                     <div class="col-md-4">
                                         <div class="card">
                                             <div class="card-body p-2">
@@ -96,9 +96,9 @@
                             <div class="col-md-4">
                                 <label class="form-label">Priority <span class="text-danger">*</span></label>
                                 <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
-                                    <option value="normal" {{ old('priority', $advertisement->priority) == 'normal' ? 'selected' : '' }}>Normal</option>
-                                    <option value="important" {{ old('priority', $advertisement->priority) == 'important' ? 'selected' : '' }}>Important</option>
-                                    <option value="urgent" {{ old('priority', $advertisement->priority) == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                                    <option value="normal" {{ old('priority', $notice->priority) == 'normal' ? 'selected' : '' }}>Normal</option>
+                                    <option value="important" {{ old('priority', $notice->priority) == 'important' ? 'selected' : '' }}>Important</option>
+                                    <option value="urgent" {{ old('priority', $notice->priority) == 'urgent' ? 'selected' : '' }}>Urgent</option>
                                 </select>
                                 @error('priority')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -108,7 +108,7 @@
                             <div class="col-md-4">
                                 <label class="form-label">Start Date</label>
                                 <input type="date" name="start_date" class="form-control @error('start_date') is-invalid @enderror" 
-                                       value="{{ old('start_date', $advertisement->start_date?->format('Y-m-d')) }}">
+                                       value="{{ old('start_date', $notice->start_date?->format('Y-m-d')) }}">
                                 <small class="text-muted">Leave empty to start immediately</small>
                                 @error('start_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -118,7 +118,7 @@
                             <div class="col-md-4">
                                 <label class="form-label">Expiry Date</label>
                                 <input type="date" name="expiry_date" class="form-control @error('expiry_date') is-invalid @enderror" 
-                                       value="{{ old('expiry_date', $advertisement->expiry_date?->format('Y-m-d')) }}">
+                                       value="{{ old('expiry_date', $notice->expiry_date?->format('Y-m-d')) }}">
                                 <small class="text-muted">Leave empty for no expiry</small>
                                 @error('expiry_date')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -128,7 +128,7 @@
                             <div class="col-md-12">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" name="is_active" id="is_active" 
-                                           {{ old('is_active', $advertisement->is_active) ? 'checked' : '' }}>
+                                           {{ old('is_active', $notice->is_active) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="is_active">Active</label>
                                 </div>
                             </div>
@@ -136,17 +136,17 @@
                             <div class="col-md-12">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" name="show_to_all" id="show_to_all" 
-                                           {{ old('show_to_all', $advertisement->show_to_all) ? 'checked' : '' }} onchange="toggleTargetRoles()">
+                                           {{ old('show_to_all', $notice->show_to_all) ? 'checked' : '' }} onchange="toggleTargetRoles()">
                                     <label class="form-check-label" for="show_to_all">Show to All Users</label>
                                 </div>
                             </div>
                             
-                            <div class="col-md-12" id="targetRolesSection" style="display: {{ $advertisement->show_to_all ? 'none' : 'block' }};">
+                            <div class="col-md-12" id="targetRolesSection" style="display: {{ $notice->show_to_all ? 'none' : 'block' }};">
                                 <label class="form-label">Target Roles</label>
                                 <select name="target_roles[]" class="form-select" multiple size="5">
                                     @foreach($roles as $role)
                                     <option value="{{ $role->id }}" 
-                                            {{ in_array($role->id, old('target_roles', $advertisement->target_roles ?? [])) ? 'selected' : '' }}>
+                                            {{ in_array($role->id, old('target_roles', $notice->target_roles ?? [])) ? 'selected' : '' }}>
                                         {{ $role->name }}
                                     </option>
                                     @endforeach
@@ -157,7 +157,7 @@
                             <div class="col-md-12">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" name="require_acknowledgment" id="require_acknowledgment" 
-                                           {{ old('require_acknowledgment', $advertisement->require_acknowledgment) ? 'checked' : '' }}>
+                                           {{ old('require_acknowledgment', $notice->require_acknowledgment) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="require_acknowledgment">Require Acknowledgment</label>
                                 </div>
                             </div>
@@ -165,18 +165,18 @@
                             <div class="col-md-12">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" name="allow_redisplay" id="allow_redisplay" 
-                                           {{ old('allow_redisplay', $advertisement->allow_redisplay) ? 'checked' : '' }}>
+                                           {{ old('allow_redisplay', $notice->allow_redisplay) ? 'checked' : '' }}>
                                     <label class="form-check-label" for="allow_redisplay">Allow Re-display if Updated</label>
-                                    <small class="text-muted d-block">If checked, users will see the advertisement again if it's updated after they acknowledged it</small>
+                                    <small class="text-muted d-block">If checked, users will see the notice again if it's updated after they acknowledged it</small>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="bx bx-save me-1"></i>Update Advertisement
+                                <i class="bx bx-save me-1"></i>Update notice
                             </button>
-                            <a href="{{ route('advertisements.index') }}" class="btn btn-secondary">
+                            <a href="{{ route('notices.index') }}" class="btn btn-secondary">
                                 <i class="bx bx-arrow-back me-1"></i>Cancel
                             </a>
                         </div>

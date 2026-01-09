@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Advertisements / Announcements')
+@section('title', 'notices / Announcements')
 
 @section('breadcrumb')
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title mb-0">Advertisements / Announcements</h4>
-                <p class="text-muted">Manage system-wide announcements and advertisements</p>
+                <h4 class="card-title mb-0">notices / Announcements</h4>
+                <p class="text-muted">Manage system-wide announcements and notices</p>
             </div>
         </div>
     </div>
@@ -37,15 +37,15 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">
-                        <i class="bx bx-bullhorn me-2"></i>All Advertisements
+                        <i class="bx bx-bullhorn me-2"></i>All notices
                     </h5>
-                    <a href="{{ route('advertisements.create') }}" class="btn btn-primary">
-                        <i class="bx bx-plus me-1"></i>Create New Advertisement
+                    <a href="{{ route('notices.create') }}" class="btn btn-primary">
+                        <i class="bx bx-plus me-1"></i>Create New notice
                     </a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-hover" id="advertisementsTable">
+                        <table class="table table-hover" id="noticesTable">
                             <thead>
                                 <tr>
                                     <th>Title</th>
@@ -60,7 +60,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($advertisements as $ad)
+                                @forelse($notices as $ad)
                                 <tr>
                                     <td>
                                         <strong class="d-block" title="{{ $ad->title }}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
@@ -100,13 +100,13 @@
                                     <td>{{ $ad->creator->name ?? 'N/A' }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('advertisements.show', $ad->id) }}" class="btn btn-sm btn-outline-info" title="View">
+                                            <a href="{{ route('notices.show', $ad->id) }}" class="btn btn-sm btn-outline-info" title="View">
                                                 <i class="bx bx-show"></i>
                                             </a>
-                                            <a href="{{ route('advertisements.edit', $ad->id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <a href="{{ route('notices.edit', $ad->id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                                 <i class="bx bx-edit"></i>
                                             </a>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteAdvertisement({{ $ad->id }})" title="Delete">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deletenotice({{ $ad->id }})" title="Delete">
                                                 <i class="bx bx-trash"></i>
                                             </button>
                                         </div>
@@ -115,8 +115,8 @@
                                 @empty
                                 <tr>
                                     <td colspan="9" class="text-center text-muted py-4">
-                                        <i class="bx bx-info-circle"></i> No advertisements found. 
-                                        <a href="{{ route('advertisements.create') }}">Create one now</a>
+                                        <i class="bx bx-info-circle"></i> No notices found. 
+                                        <a href="{{ route('notices.create') }}">Create one now</a>
                                     </td>
                                 </tr>
                                 @endforelse
@@ -125,7 +125,7 @@
                     </div>
                     
                     <div class="mt-3">
-                        {{ $advertisements->links() }}
+                        {{ $notices->links() }}
                     </div>
                 </div>
             </div>
@@ -156,9 +156,9 @@
 @push('scripts')
 <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <script>
-function deleteAdvertisement(id) {
+function deletenotice(id) {
     Swal.fire({
-        title: 'Delete Advertisement?',
+        title: 'Delete notice?',
         text: 'This action cannot be undone',
         icon: 'warning',
         showCancelButton: true,
@@ -167,7 +167,7 @@ function deleteAdvertisement(id) {
         confirmButtonText: 'Yes, delete it!'
     }).then((result) => {
         if (result.isConfirmed) {
-            const deleteUrl = '{{ url("/modules/advertisements") }}/' + id;
+            const deleteUrl = '{{ url("/modules/notices") }}/' + id;
             fetch(deleteUrl, {
                 method: 'DELETE',
                 headers: {
@@ -178,11 +178,11 @@ function deleteAdvertisement(id) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire('Deleted!', 'Advertisement has been deleted.', 'success').then(() => {
+                    Swal.fire('Deleted!', 'notice has been deleted.', 'success').then(() => {
                         location.reload();
                     });
                 } else {
-                    Swal.fire('Error!', data.message || 'Failed to delete advertisement', 'error');
+                    Swal.fire('Error!', data.message || 'Failed to delete notice', 'error');
                 }
             })
             .catch(error => {
@@ -199,7 +199,7 @@ function viewAcknowledgmentStats(id) {
     content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
     modal.show();
     
-    const statsUrl = '{{ url("/advertisements") }}/' + id + '/acknowledgment-stats';
+    const statsUrl = '{{ url("/notices") }}/' + id + '/acknowledgment-stats';
     fetch(statsUrl, {
         headers: {
             'Accept': 'application/json'
