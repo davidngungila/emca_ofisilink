@@ -120,15 +120,23 @@ class Notice extends Model
     }
 
     /**
-     * Get status badge class for display
+     * Get status badge class for display (accessor)
      */
     public function getPriorityBadgeClassAttribute(): string
     {
         return match($this->priority) {
-            'urgent' => 'danger',
-            'important' => 'warning',
-            default => 'info',
+            'urgent' => 'bg-danger',
+            'important' => 'bg-warning',
+            default => 'bg-info',
         };
+    }
+
+    /**
+     * Get priority badge class (method for backward compatibility)
+     */
+    public function getPriorityBadgeClass(): string
+    {
+        return $this->priority_badge_class;
     }
 
     /**
