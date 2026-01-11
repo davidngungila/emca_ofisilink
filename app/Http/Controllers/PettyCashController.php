@@ -3127,13 +3127,7 @@ class PettyCashController extends Controller
     public function details($pettyCash)
     {
         try {
-            $voucher = PettyCashVoucher::with([
-                'lines', 
-                'creator.primaryDepartment', 
-                'accountant', 
-                'hod', 
-                'ceo'
-            ])->findOrFail($pettyCash);
+            $voucher = PettyCashVoucher::with(['lines', 'creator', 'accountant', 'hod', 'ceo'])->findOrFail($pettyCash);
             
             $html = view('modules.finance.partials.petty-details', ['voucher' => $voucher])->render();
             
@@ -3141,17 +3135,8 @@ class PettyCashController extends Controller
                 'success' => true,
                 'html' => $html
             ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            \Log::error('Petty cash voucher not found: ' . $pettyCash);
-            return response()->json([
-                'success' => false,
-                'message' => 'Voucher not found.'
-            ], 404);
         } catch (\Exception $e) {
-            \Log::error('Petty cash details error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'voucher_id' => $pettyCash
-            ]);
+            \Log::error('Petty cash details error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading details: ' . $e->getMessage()

@@ -58,10 +58,6 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('landing');
 
-// Webhook routes (no authentication required, but signature verification)
-Route::post('/webhook/github', [App\Http\Controllers\WebhookController::class, 'github'])->name('webhook.github');
-Route::post('/webhook/test', [App\Http\Controllers\WebhookController::class, 'test'])->name('webhook.test')->middleware('auth'); // Test endpoint requires auth
-
 // Public Careers/Jobs Page
 Route::get('/careers', [App\Http\Controllers\RecruitmentController::class, 'publicCareers'])->name('careers');
 Route::view('/landing', 'public.landing')->name('public.landing');
@@ -72,13 +68,6 @@ Route::post('/api/jobs/apply', [App\Http\Controllers\RecruitmentController::clas
 Route::get('/storage/photos/{filename}', [\App\Http\Controllers\AccountSettingsController::class, 'servePhoto'])
     ->where('filename', '[^/]+\.(jpg|jpeg|png|gif|webp)')
     ->name('storage.photos');
-
-// Serve activity report attachments - requires authentication for permission checks
-Route::get('/storage/activity_reports/{reportId}/{filename}', [\App\Http\Controllers\TaskController::class, 'serveAttachment'])
-    ->middleware('auth')
-    ->where('reportId', '[0-9]+')
-    ->where('filename', '[^/]+')
-    ->name('storage.activity-reports');
 
 
 // Test route to check infinite loading
@@ -207,7 +196,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{meeting}/minutes/edit', [MeetingController::class, 'editMinutes'])->name('minutes.edit');
         Route::get('/{meeting}/minutes/preview', [MeetingController::class, 'previewMinutesPage'])->name('minutes.preview');
         Route::get('/{meeting}/minutes/pdf', [MeetingController::class, 'generateMinutesPdf'])->name('minutes.pdf');
-        Route::get('/{meeting}/minutes/approval', [MeetingController::class, 'minutesApproval'])->name('minutes.approval');
         
         // AJAX endpoints
         Route::post('/ajax', [MeetingController::class, 'ajax'])->name('ajax');
@@ -370,28 +358,11 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Task Management Routes
-    Route::prefix('modules/tasks')->name('modules.tasks.')->group(function () {
-        Route::get('/', [App\Http\Controllers\TaskController::class, 'index'])->name('index');
-        Route::get('/create', [App\Http\Controllers\TaskController::class, 'create'])->name('create');
-        Route::get('/analytics', [App\Http\Controllers\TaskController::class, 'analytics'])->name('analytics');
-        Route::get('/categories', [App\Http\Controllers\TaskController::class, 'categories'])->name('categories');
-        Route::get('/reports', [App\Http\Controllers\TaskController::class, 'reports'])->name('reports');
-        Route::get('/reports/pending-approval', [App\Http\Controllers\TaskController::class, 'pendingApprovalReports'])->name('reports.pending-approval');
-        Route::get('/reports/{id}', [App\Http\Controllers\TaskController::class, 'showReport'])->name('reports.show');
-        Route::get('/activities/{activityId}/report', [App\Http\Controllers\TaskController::class, 'reportProgress'])->name('activities.report');
-        Route::get('/activities/{activityId}', [App\Http\Controllers\TaskController::class, 'showActivity'])->name('activities.show');
-        Route::get('/activities/{activityId}/edit', [App\Http\Controllers\TaskController::class, 'editActivity'])->name('activities.edit');
-        // Static routes first (before dynamic routes)
-        Route::get('/analytics-pdf', [App\Http\Controllers\TaskController::class, 'analyticsPdf'])->name('analytics.pdf');
-        Route::get('/pdf', [App\Http\Controllers\TaskController::class, 'generatePdf'])->name('pdf');
-        Route::post('/action', [App\Http\Controllers\TaskController::class, 'action'])->name('action');
-        
-        // Dynamic routes (with parameters) - must come after static routes
-        Route::get('/{taskId}/activities/create', [App\Http\Controllers\TaskController::class, 'createActivity'])->name('activities.create');
-        Route::get('/{id}/report-pdf', [App\Http\Controllers\TaskController::class, 'generateTaskReportPdf'])->name('report-pdf');
-        Route::get('/{id}/edit', [App\Http\Controllers\TaskController::class, 'edit'])->name('edit');
-        Route::get('/{id}', [App\Http\Controllers\TaskController::class, 'show'])->name('show');
-    });
+    Route::get('/modules/tasks', [App\Http\Controllers\TaskController::class, 'index'])->name('modules.tasks');
+    Route::get('/modules/tasks/create', [App\Http\Controllers\TaskController::class, 'create'])->name('modules.tasks.create');
+    Route::post('/modules/tasks/action', [App\Http\Controllers\TaskController::class, 'action'])->name('modules.tasks.action');
+    Route::get('/modules/tasks/pdf', [App\Http\Controllers\TaskController::class, 'generatePdf'])->name('modules.tasks.pdf');
+    Route::get('/modules/tasks/analytics-pdf', [App\Http\Controllers\TaskController::class, 'analyticsPdf'])->name('modules.tasks.analytics.pdf');
     
     // Assessments Module Routes
     Route::get('/modules/assessments', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.assessments');
@@ -409,20 +380,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/employees', [EmployeeController::class, 'index'])->name('modules.hr.employees');
     Route::get('/modules/hr/employees/register', [EmployeeController::class, 'create'])->name('modules.hr.employees.register');
     Route::post('/modules/hr/employees/register', [EmployeeController::class, 'store'])->name('modules.hr.employees.store');
-    Route::get('/modules/hr/employees/bulk/template', [EmployeeController::class, 'downloadBulkTemplate'])->name('modules.hr.employees.bulk.template');
-    Route::post('/modules/hr/employees/bulk/upload', [EmployeeController::class, 'bulkUploadEmployees'])->name('modules.hr.employees.bulk.upload');
-    
-    // Notices / Announcements
-    Route::get('/modules/notices', [App\Http\Controllers\NoticeController::class, 'index'])->name('notices.index')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/modules/notices/create', [App\Http\Controllers\NoticeController::class, 'create'])->name('notices.create')->middleware('role:System Admin,HR Officer,Manager');
-    Route::post('/modules/notices', [App\Http\Controllers\NoticeController::class, 'store'])->name('notices.store')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/modules/notices/{id}', [App\Http\Controllers\NoticeController::class, 'show'])->name('notices.show')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/modules/notices/{id}/edit', [App\Http\Controllers\NoticeController::class, 'edit'])->name('notices.edit')->middleware('role:System Admin,HR Officer,Manager');
-    Route::put('/modules/notices/{id}', [App\Http\Controllers\NoticeController::class, 'update'])->name('notices.update')->middleware('role:System Admin,HR Officer,Manager');
-    Route::delete('/modules/notices/{id}', [App\Http\Controllers\NoticeController::class, 'destroy'])->name('notices.destroy')->middleware('role:System Admin,HR Officer,Manager');
-    Route::get('/notices/unacknowledged', [App\Http\Controllers\NoticeController::class, 'getUnacknowledged'])->name('notices.unacknowledged');
-    Route::post('/notices/{id}/acknowledge', [App\Http\Controllers\NoticeController::class, 'acknowledge'])->name('notices.acknowledge');
-    Route::get('/notices/{id}/acknowledgment-stats', [App\Http\Controllers\NoticeController::class, 'getAcknowledgmentStats'])->name('notices.acknowledgment-stats')->middleware('role:System Admin,HR Officer,Manager');
     Route::get('/modules/hr/employees/{userId}/review', [EmployeeController::class, 'review'])->name('modules.hr.employees.review');
     Route::post('/modules/hr/employees/{userId}/finalize', [EmployeeController::class, 'finalize'])->name('modules.hr.employees.finalize');
     Route::get('/modules/hr/employees/{userId}/registration-pdf', [EmployeeController::class, 'generateRegistrationPDF'])->name('modules.hr.employees.registration-pdf');
@@ -440,9 +397,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/attendance', [App\Http\Controllers\AttendanceController::class, 'index'])->name('modules.hr.attendance');
     Route::get('/modules/hr/attendance/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/devices/create', [App\Http\Controllers\AttendanceSettingsController::class, 'createDevice'])->name('modules.hr.attendance.settings.devices.create')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/devices/{id}/show', [App\Http\Controllers\AttendanceSettingsController::class, 'showDevice'])->name('modules.hr.attendance.settings.devices.show')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/devices/{id}/edit', [App\Http\Controllers\AttendanceSettingsController::class, 'editDevice'])->name('modules.hr.attendance.settings.devices.edit')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/schedules', [App\Http\Controllers\AttendanceSettingsController::class, 'schedules'])->name('modules.hr.attendance.settings.schedules')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/policies', [App\Http\Controllers\AttendanceSettingsController::class, 'policies'])->name('modules.hr.attendance.settings.policies')->middleware('role:HR Officer,System Admin');
@@ -654,10 +608,6 @@ Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('
     // API endpoints
     Route::post('/employees/list', [App\Http\Controllers\AttendanceSettingsController::class, 'getEmployeesList'])->name('get-employees-list');
     
-    // Devices
-    Route::get('/devices/{id}', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevice'])->name('devices.show');
-    Route::get('/devices/{id}/test', [App\Http\Controllers\AttendanceSettingsController::class, 'testDevice'])->name('devices.test');
-    
     // Locations
     Route::get('/locations', [App\Http\Controllers\AttendanceSettingsController::class, 'getLocations'])->name('locations.index');
     Route::post('/locations', [App\Http\Controllers\AttendanceSettingsController::class, 'storeLocation'])->name('locations.store');
@@ -666,9 +616,6 @@ Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('
     
     // Devices
     Route::get('/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevices'])->name('devices.index');
-    Route::get('/devices/create', [App\Http\Controllers\AttendanceSettingsController::class, 'createDevice'])->name('devices.create');
-    Route::get('/devices/{id}/edit', [App\Http\Controllers\AttendanceSettingsController::class, 'editDevice'])->name('devices.edit');
-    Route::get('/devices/{id}/show', [App\Http\Controllers\AttendanceSettingsController::class, 'showDevice'])->name('devices.show.page');
     Route::get('/devices/{id}', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevice'])->name('devices.show');
     Route::post('/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'storeDevice'])->name('devices.store');
     Route::put('/devices/{id}', [App\Http\Controllers\AttendanceSettingsController::class, 'updateDevice'])->name('devices.update');
@@ -796,15 +743,6 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::delete('/deductions/{deductionId}', [PayrollController::class, 'deleteDeduction'])->name('deductions.delete');
         Route::post('/deductions/bulk', [PayrollController::class, 'createBulkDeductions'])->name('deductions.bulk');
         Route::post('/deductions/bulk/preview', [PayrollController::class, 'calculateBulkDeductionPreview'])->name('deductions.bulk.preview');
-        
-        // Formula Management Routes
-        Route::get('/formulas', [PayrollController::class, 'showFormulasManagement'])->name('formulas.index');
-        Route::get('/formulas/{formulaId}', [PayrollController::class, 'showFormulaDetail'])->name('formulas.show');
-        Route::get('/formulas-api', [PayrollController::class, 'getFormulas'])->name('formulas.api');
-        Route::put('/formulas/{formulaId}', [PayrollController::class, 'updateFormula'])->name('formulas.update');
-        Route::post('/formulas/{formulaId}/lock', [PayrollController::class, 'lockFormula'])->name('formulas.lock');
-        Route::post('/formulas/{formulaId}/unlock-otp', [PayrollController::class, 'generateUnlockOtp'])->name('formulas.unlock-otp');
-        Route::post('/formulas/{formulaId}/unlock', [PayrollController::class, 'unlockFormula'])->name('formulas.unlock');
         
         // Overtime Management Routes
         Route::get('/overtime', [App\Http\Controllers\PayrollOvertimeController::class, 'index'])->name('overtime.index');
@@ -1068,11 +1006,8 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::post('system/backup-now', [SystemController::class, 'backupNow'])->name('admin.system.backup.now');
         Route::get('system/backup/list', [SystemController::class, 'listBackups'])->name('admin.system.backup.list');
         Route::get('system/backup/download/{file}', [SystemController::class, 'downloadBackup'])->name('admin.system.backup.download');
-        Route::get('system/backup/token/{token}', [SystemController::class, 'downloadBackupByToken'])->name('admin.system.backup.download.token');
-        Route::post('system/backup/token/generate', [SystemController::class, 'generateDownloadToken'])->name('admin.system.backup.token.generate');
         Route::post('system/backup/schedule', [SystemController::class, 'updateBackupSchedule'])->name('admin.system.backup.schedule');
         Route::delete('system/backup/{backup}', [SystemController::class, 'deleteBackup'])->name('admin.system.backup.delete');
-        Route::post('system/test-email', [SystemController::class, 'testEmail'])->name('admin.system.test.email');
         // System User Management
         Route::post('system/users', [SystemController::class, 'getUsers'])->name('admin.system.users');
         Route::post('system/users/{user}/block', [SystemController::class, 'blockUser'])->name('admin.system.users.block');
@@ -1177,20 +1112,12 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::get('settings/communication/check-sms', [SettingsController::class, 'checkSMSStatus'])->name('admin.settings.communication.check-sms');
         
         // Notification Providers Management
-        // Notification Provider Pages
-        Route::get('settings/communication/email-providers/create', [SettingsController::class, 'createEmailProvider'])->name('admin.settings.communication.email-providers.create');
-        Route::get('settings/communication/sms-providers/create', [SettingsController::class, 'createSmsProvider'])->name('admin.settings.communication.sms-providers.create');
-        Route::get('settings/communication/email-providers/{provider}/edit', [SettingsController::class, 'editEmailProvider'])->name('admin.settings.communication.email-providers.edit');
-        Route::get('settings/communication/sms-providers/{provider}/edit', [SettingsController::class, 'editSmsProvider'])->name('admin.settings.communication.sms-providers.edit');
-        
-        // Notification Provider API
         Route::get('settings/notification-providers', [SettingsController::class, 'getNotificationProviders'])->name('admin.settings.notification-providers');
         Route::get('settings/notification-providers/{provider}', [SettingsController::class, 'getNotificationProvider'])->name('admin.settings.notification-providers.show');
         Route::post('settings/notification-providers', [SettingsController::class, 'storeNotificationProvider'])->name('admin.settings.notification-providers.store');
         Route::put('settings/notification-providers/{provider}', [SettingsController::class, 'updateNotificationProvider'])->name('admin.settings.notification-providers.update');
         Route::delete('settings/notification-providers/{provider}', [SettingsController::class, 'deleteNotificationProvider'])->name('admin.settings.notification-providers.delete');
         Route::post('settings/notification-providers/{provider}/set-primary', [SettingsController::class, 'setPrimaryProvider'])->name('admin.settings.notification-providers.set-primary');
-        Route::post('settings/notification-providers/{provider}/toggle-status', [SettingsController::class, 'toggleProviderStatus'])->name('admin.settings.notification-providers.toggle-status');
         Route::post('settings/notification-providers/{provider}/test', [SettingsController::class, 'testNotificationProvider'])->name('admin.settings.notification-providers.test');
         
         // Activity Log

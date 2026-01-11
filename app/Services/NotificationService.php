@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Mail\Message;
 
 class NotificationService
@@ -29,51 +28,35 @@ class NotificationService
     public function __construct()
     {
         try {
-            // Check if tables exist before querying (for migration scenarios)
-            $tablesExist = Schema::hasTable('notification_providers') && 
-                          Schema::hasTable('system_settings');
+            // Get primary providers from database
+            $this->smsProvider = NotificationProvider::getPrimary('sms');
+            $this->emailProvider = NotificationProvider::getPrimary('email');
             
-            if ($tablesExist) {
-                // Get primary providers from database
-                $this->smsProvider = NotificationProvider::getPrimary('sms');
-                $this->emailProvider = NotificationProvider::getPrimary('email');
-                
-                // Fallback to SystemSetting if no provider found
-                if ($this->smsProvider) {
-                    $this->smsUsername = $this->smsProvider->sms_username;
-                    $this->smsPassword = $this->smsProvider->sms_password;
-                    $this->smsFrom = $this->smsProvider->sms_from;
-                    $this->smsUrl = $this->smsProvider->sms_url;
-                } else {
-                    // Fallback to SystemSetting, then env
-                    $this->smsUsername = SystemSetting::getValue('sms_username') ?: env('SMS_USERNAME', 'emcatechn');
-                    $this->smsPassword = SystemSetting::getValue('sms_password') ?: env('SMS_PASSWORD', 'Emca@#12');
-                    $this->smsFrom = SystemSetting::getValue('sms_from') ?: env('SMS_FROM', 'OfisiLink');
-                    $this->smsUrl = SystemSetting::getValue('sms_url') ?: env('SMS_URL', 'https://messaging-service.co.tz/link/sms/v1/text/single');
-                }
+            // Fallback to SystemSetting if no provider found
+            if ($this->smsProvider) {
+                $this->smsUsername = $this->smsProvider->sms_username;
+                $this->smsPassword = $this->smsProvider->sms_password;
+                $this->smsFrom = $this->smsProvider->sms_from;
+                $this->smsUrl = $this->smsProvider->sms_url;
             } else {
-                // Tables don't exist yet, use env fallback
-                $this->smsUsername = env('SMS_USERNAME', 'emcatechn');
-                $this->smsPassword = env('SMS_PASSWORD', 'Emca@#12');
-                $this->smsFrom = env('SMS_FROM', 'OfisiLink');
-                $this->smsUrl = env('SMS_URL', 'https://messaging-service.co.tz/link/sms/v1/text/single');
+                // Fallback to SystemSetting, then env
+                $this->smsUsername = SystemSetting::getValue('sms_username') ?: env('SMS_USERNAME', 'emcatechn');
+                $this->smsPassword = SystemSetting::getValue('sms_password') ?: env('SMS_PASSWORD', 'Emca@#12');
+                $this->smsFrom = SystemSetting::getValue('sms_from') ?: env('SMS_FROM', 'OfisiLink');
+                $this->smsUrl = SystemSetting::getValue('sms_url') ?: env('SMS_URL', 'https://messaging-service.co.tz/link/sms/v1/text/single');
             }
         } catch (\Exception $e) {
             // Table might not exist yet, use fallback
-            Log::warning('NotificationProvider table not available, using env fallback: ' . $e->getMessage());
-            $this->smsUsername = env('SMS_USERNAME', 'emcatechn');
-            $this->smsPassword = env('SMS_PASSWORD', 'Emca@#12');
-            $this->smsFrom = env('SMS_FROM', 'OfisiLink');
-            $this->smsUrl = env('SMS_URL', 'https://messaging-service.co.tz/link/sms/v1/text/single');
+            Log::warning('NotificationProvider table not available, using SystemSetting fallback: ' . $e->getMessage());
+            $this->smsUsername = SystemSetting::getValue('sms_username') ?: env('SMS_USERNAME', 'emcatechn');
+            $this->smsPassword = SystemSetting::getValue('sms_password') ?: env('SMS_PASSWORD', 'Emca@#12');
+            $this->smsFrom = SystemSetting::getValue('sms_from') ?: env('SMS_FROM', 'OfisiLink');
+            $this->smsUrl = SystemSetting::getValue('sms_url') ?: env('SMS_URL', 'https://messaging-service.co.tz/link/sms/v1/text/single');
         }
     }
 
     /**
      * Send notification to user(s) via all channels
-     * 
-     * NOTE: SMS notifications are queued for asynchronous processing to prevent
-     * slow SMS API responses from delaying the main operation. SMS will be sent
-     * in the background after the operation completes successfully.
      * 
      * @param array|int $userIds User ID(s) to notify
      * @param string $message Message to send
@@ -115,34 +98,26 @@ class NotificationService
                 $this->sendPushNotification($user->id, $message, $link, $data);
             }
 
-            // 3. SMS Notification - Queue SMS to be sent asynchronously after operation completes
-            // This prevents SMS API delays from slowing down the main operation
+            // 3. SMS Notification - check both mobile and phone fields (skip if requested)
             if (!$skipSMS) {
                 $phone = $user->mobile ?? $user->phone;
                 if ($phone) {
                     try {
-                        // Dispatch SMS to queue for asynchronous processing
-                        \App\Jobs\SendSMSJob::dispatch(
-                            $phone,
-                            $message,
-                            $user->id,
-                            $link,
-                            $this->smsProvider ? $this->smsProvider->id : null,
-                            'multi_channel'
-                        )->onQueue('sms'); // Use dedicated SMS queue if available
-                        
-                        Log::debug('SMS queued for sending', [
-                            'user_id' => $user->id,
-                            'phone' => $phone,
-                            'message_length' => strlen($message)
-                        ]);
+                        $smsResult = $this->sendSMS($phone, $message);
+                        if ($smsResult) {
+                            // Log SMS sent activity
+                            ActivityLogService::logSMSSent($phone, $message, Auth::id(), $user->id, [
+                                'notification_type' => 'multi_channel',
+                                'link' => $link,
+                            ]);
+                        }
                     } catch (\Exception $e) {
-                        Log::warning('Failed to queue SMS', [
+                        Log::warning('SMS sending failed in notify method', [
                             'user_id' => $user->id,
                             'phone' => $phone,
                             'error' => $e->getMessage()
                         ]);
-                        // Continue with other notifications even if SMS queuing fails
+                        // Continue with other notifications even if SMS fails
                     }
                 }
             }
@@ -209,43 +184,9 @@ class NotificationService
 
     /**
      * Send SMS using GET method with URL parameters - as per provided example
-     * 
-     * @param string $phoneNumber Phone number to send SMS to
-     * @param string $message SMS message content
-     * @param NotificationProvider|null $provider SMS provider to use (null for default)
-     * @param bool $queue If true, queue SMS for asynchronous sending (recommended for bulk operations)
-     * @return bool|void Returns true if sent/queued successfully, false on failure. Returns void if queued.
      */
-    public function sendSMS(string $phoneNumber, string $message, ?NotificationProvider $provider = null, bool $queue = false)
+    public function sendSMS(string $phoneNumber, string $message, ?NotificationProvider $provider = null)
     {
-        // If queuing is requested, dispatch to queue and return immediately
-        if ($queue) {
-            try {
-                \App\Jobs\SendSMSJob::dispatch(
-                    $phoneNumber,
-                    $message,
-                    Auth::id(),
-                    null,
-                    $provider ? $provider->id : null,
-                    'direct_queued'
-                )->onQueue('sms');
-                
-                Log::debug('SMS queued for direct send', [
-                    'phone' => $phoneNumber,
-                    'message_length' => strlen($message)
-                ]);
-                
-                return true; // Return true immediately when queued
-            } catch (\Exception $e) {
-                Log::error('Failed to queue SMS', [
-                    'phone' => $phoneNumber,
-                    'error' => $e->getMessage()
-                ]);
-                return false;
-            }
-        }
-        
-        // Continue with synchronous sending for immediate delivery
         try {
             // Use provided provider or fallback to default
             $provider = $provider ?? $this->smsProvider;

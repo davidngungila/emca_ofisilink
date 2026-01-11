@@ -3,7 +3,7 @@
     <div class="col-md-8">
       <h5 class="mb-1">Petty Cash Request #{{ $voucher->voucher_no }}</h5>
       <div class="text-muted">
-        Submitted {{ $voucher->created_at->format('M d, Y H:i') }} by {{ $voucher->creator->name ?? 'Unknown User' }}
+        Submitted {{ $voucher->created_at->format('M d, Y H:i') }} by {{ $voucher->creator->name }}
       </div>
     </div>
     <div class="col-md-4 text-md-end mt-2 mt-md-0">
@@ -36,7 +36,7 @@
             <dt class="col-5">Payee</dt>
             <dd class="col-7">{{ $voucher->payee }}</dd>
             <dt class="col-5">Department</dt>
-            <dd class="col-7">{{ optional($voucher->creator)->primaryDepartment->name ?? 'N/A' }}</dd>
+            <dd class="col-7">{{ $voucher->creator->primaryDepartment->name ?? 'N/A' }}</dd>
             <dt class="col-5">Amount</dt>
             <dd class="col-7"><strong>TZS {{ number_format($voucher->amount ?? 0, 2) }}</strong></dd>
             <dt class="col-5">Purpose</dt>

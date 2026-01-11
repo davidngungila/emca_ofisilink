@@ -378,189 +378,72 @@
         </div>
     </div>
 
-    <!-- System Statistics & Analytics -->
-    <div class="col-12 mb-4">
+    <!-- Recent System Events -->
+    @if(!empty($recentEvents))
+    <div class="col-lg-6 mb-4">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bx bx-bar-chart-alt-2"></i> System Statistics & Analytics
+                    <i class="bx bx-time-five"></i> Recent System Events
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-primary text-white">
-                            <div class="card-body text-center">
-                                <i class="bx bx-server fs-1 mb-2"></i>
-                                <h3 class="mb-0">{{ $systemInfo['database']['tables'] ?? 0 }}</h3>
-                                <small>Database Tables</small>
+                <div class="list-group list-group-flush">
+                    @foreach(array_slice($recentEvents, 0, 5) as $event)
+                    <div class="list-group-item px-0">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-primary">
+                                    <i class="bx {{ $event['icon'] ?? 'bx-info-circle' }}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 small">{{ $event['title'] ?? 'Unknown Event' }}</h6>
+                                <p class="mb-1 small text-muted">{{ strlen($event['description'] ?? '') > 60 ? substr($event['description'] ?? '', 0, 60) . '...' : ($event['description'] ?? '') }}</p>
+                                <small class="text-muted">{{ \Carbon\Carbon::parse($event['time'] ?? now())->diffForHumans() }}</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-success text-white">
-                            <div class="card-body text-center">
-                                <i class="bx bx-data fs-1 mb-2"></i>
-                                <h3 class="mb-0">
-                                    @if(isset($systemInfo['database']['size_mb']))
-                                        {{ number_format($systemInfo['database']['size_mb'], 0) }} MB
-                                    @else
-                                        N/A
-                                    @endif
-                                </h3>
-                                <small>Database Size</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-info text-white">
-                            <div class="card-body text-center">
-                                <i class="bx bx-hdd fs-1 mb-2"></i>
-                                <h3 class="mb-0">
-                                    @if(isset($systemInfo['storage']['used_gb']))
-                                        {{ number_format($systemInfo['storage']['used_gb'], 1) }} GB
-                                    @else
-                                        N/A
-                                    @endif
-                                </h3>
-                                <small>Storage Used</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-gradient-warning text-white">
-                            <div class="card-body text-center">
-                                <i class="bx bx-memory-card fs-1 mb-2"></i>
-                                <h3 class="mb-0">{{ number_format($advancedMetrics['memory']['current_mb'] ?? 0, 0) }} MB</h3>
-                                <small>Memory Usage</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <hr class="my-4">
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="mb-3"><i class="bx bx-trending-up me-2"></i>Performance Overview</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-borderless">
-                                <tbody>
-                                    <tr>
-                                        <td width="60%"><strong>Database Queries Executed</strong></td>
-                                        <td><span class="badge bg-primary">{{ $performanceMetrics['database']['query_count'] ?? 0 }}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Total Query Time</strong></td>
-                                        <td><span class="badge bg-info">{{ number_format($performanceMetrics['database']['total_time_ms'] ?? 0, 2) }} ms</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Average Query Time</strong></td>
-                                        <td><span class="badge bg-{{ ($performanceMetrics['database']['avg_time_ms'] ?? 0) > 100 ? 'danger' : (($performanceMetrics['database']['avg_time_ms'] ?? 0) > 50 ? 'warning' : 'success') }}">
-                                            {{ number_format($performanceMetrics['database']['avg_time_ms'] ?? 0, 2) }} ms
-                                        </span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Cache Status</strong></td>
-                                        <td>
-                                            <span class="badge bg-{{ ($performanceMetrics['cache']['status'] ?? 'inactive') == 'active' ? 'success' : 'secondary' }}">
-                                                {{ ucfirst($performanceMetrics['cache']['status'] ?? 'inactive') }}
-                                            </span>
-                                            <small class="text-muted ms-2">({{ $performanceMetrics['cache']['driver'] ?? 'N/A' }})</small>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6 class="mb-3"><i class="bx bx-info-circle me-2"></i>System Configuration</h6>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-borderless">
-                                <tbody>
-                                    <tr>
-                                        <td width="60%"><strong>Application Environment</strong></td>
-                                        <td><span class="badge bg-{{ ($health['app']['env'] ?? 'production') == 'production' ? 'success' : 'warning' }}">{{ strtoupper($health['app']['env'] ?? 'unknown') }}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Debug Mode</strong></td>
-                                        <td><span class="badge bg-{{ ($health['app']['debug'] ?? false) ? 'danger' : 'success' }}">{{ ($health['app']['debug'] ?? false) ? 'Enabled' : 'Disabled' }}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Laravel Version</strong></td>
-                                        <td><code>{{ $health['app']['version'] ?? 'Unknown' }}</code></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>PHP Version</strong></td>
-                                        <td><code>{{ $systemInfo['server']['php_version'] ?? 'N/A' }}</code></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Server OS</strong></td>
-                                        <td>{{ $systemInfo['server']['os'] ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Timezone</strong></td>
-                                        <td>{{ $systemInfo['application']['timezone'] ?? 'N/A' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
     </div>
+    @endif
 
-    <!-- Quick Actions & System Tools -->
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header">
+    <!-- Recent Errors -->
+    @if(!empty($advancedMetrics['recent_errors']))
+    <div class="col-lg-6 mb-4">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
                 <h5 class="card-title mb-0">
-                    <i class="bx bx-cog"></i> Quick Actions & System Tools
+                    <i class="bx bx-error-circle"></i> Recent System Errors
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.settings') }}" class="card text-decoration-none border h-100">
-                            <div class="card-body text-center">
-                                <i class="bx bx-cog fs-1 text-primary mb-2"></i>
-                                <h6 class="mb-0">System Settings</h6>
-                                <small class="text-muted">Configure system preferences</small>
+                <div class="list-group list-group-flush">
+                    @foreach(array_slice($advancedMetrics['recent_errors'], 0, 5) as $error)
+                    <div class="list-group-item px-0">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-danger">
+                                    <i class="bx bx-error"></i>
+                                </span>
                             </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.system.errors') }}" class="card text-decoration-none border h-100">
-                            <div class="card-body text-center">
-                                <i class="bx bx-error-circle fs-1 text-danger mb-2"></i>
-                                <h6 class="mb-0">System Errors</h6>
-                                <small class="text-muted">View error logs</small>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.dashboard') }}" class="card text-decoration-none border h-100">
-                            <div class="card-body text-center">
-                                <i class="bx bx-dashboard fs-1 text-info mb-2"></i>
-                                <h6 class="mb-0">Admin Dashboard</h6>
-                                <small class="text-muted">Return to dashboard</small>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card border h-100" onclick="refreshHealth()" style="cursor: pointer;">
-                            <div class="card-body text-center">
-                                <i class="bx bx-refresh fs-1 text-success mb-2"></i>
-                                <h6 class="mb-0">Refresh Health</h6>
-                                <small class="text-muted">Check system status</small>
+                            <div class="flex-grow-1">
+                                <p class="mb-1 small">{{ strlen($error['message'] ?? 'Unknown error') > 100 ? substr($error['message'] ?? 'Unknown error', 0, 100) . '...' : ($error['message'] ?? 'Unknown error') }}</p>
+                                @if(isset($error['time']))
+                                <small class="text-muted">{{ $error['time'] }}</small>
+                                @endif
                             </div>
                         </div>
                     </div>
+                    @endforeach
                 </div>
             </div>
         </div>
     </div>
+    @endif
 
     <!-- User Management Section -->
     <div class="col-12 mb-4">
@@ -765,7 +648,6 @@
                         <li><strong>Password Protection:</strong> <code>Ofisilink</code> (case-sensitive) - for database access</li>
                         <li><strong>Filename:</strong> Includes timestamp and current year (e.g., ofisilink_backup_20250101_120000_2025.sql)</li>
                         <li><strong>Notifications:</strong> Automatic SMS and Email (with attachment) to all System Administrators and davidngungila@gmail.com</li>
-                        <li><strong>Email Testing:</strong> <button class="btn btn-sm btn-outline-info" onclick="testEmailConfiguration()"><i class="bx bx-envelope"></i> Test Email Configuration</button></li>
                         <li><strong>Auto-cleanup:</strong> Old backups are automatically removed based on retention policy</li>
                         <li><strong>Fallback:</strong> Uses Laravel DB connection if mysqldump is unavailable</li>
                     </ul>
@@ -1082,9 +964,9 @@ function loadBackupsList() {
                             <td class="text-center">
                                 <div class="btn-group" role="group">
                                     ${backup.download_url ? `
-                                        <button onclick="downloadBackupWithToken('${backup.filename}')" class="btn btn-sm btn-primary" title="Download backup file">
+                                        <a href="${backup.download_url}" class="btn btn-sm btn-primary" download>
                                             <i class="bx bx-download"></i> Download
-                                        </button>
+                                        </a>
                                     ` : `
                                         <span class="btn btn-sm btn-secondary" disabled title="File not available">
                                             <i class="bx bx-x"></i> Not Available
@@ -1156,46 +1038,6 @@ function saveBackupSchedule() {
     })
     .catch(err => {
         Swal.fire('Error', 'Network error occurred. Please try again.', 'error');
-    });
-}
-
-function downloadBackupWithToken(filename) {
-    // Show loading state
-    Swal.fire({
-        title: 'Preparing download...',
-        text: 'Please wait while we generate a secure download link...',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
-    
-    // Generate download token
-    fetch('{{ route("admin.system.backup.token.generate") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ file: filename })
-    })
-    .then(response => response.json())
-    .then(data => {
-        Swal.close();
-        if (data.success && data.download_url) {
-            // Use token-based download URL to bypass ModSecurity
-            window.location.href = data.download_url;
-        } else {
-            // Fallback to direct download if token generation fails
-            const directUrl = '{{ route("admin.system.backup.download", ["file" => "PLACEHOLDER"]) }}'.replace('PLACEHOLDER', encodeURIComponent(filename));
-            window.location.href = directUrl;
-        }
-    })
-    .catch(error => {
-        Swal.close();
-        console.error('Token generation error:', error);
-        // Fallback to direct download
-        const directUrl = '{{ route("admin.system.backup.download", ["file" => "PLACEHOLDER"]) }}'.replace('PLACEHOLDER', encodeURIComponent(filename));
-        window.location.href = directUrl;
     });
 }
 
@@ -1967,100 +1809,6 @@ function loadBackupStats() {
         const container = document.getElementById('backupStatsContainer');
         if (container) {
             container.style.display = 'block';
-        }
-    });
-}
-
-function testEmailConfiguration() {
-    Swal.fire({
-        title: 'Test Email Configuration',
-        html: `
-            <div class="mb-3">
-                <label for="testEmail" class="form-label">Test Email Address</label>
-                <input type="email" class="form-control" id="testEmail" placeholder="Enter email address" value="{{ Auth::user()->email ?? 'davidngungila@gmail.com' }}">
-                <small class="text-muted">A test email will be sent to this address</small>
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'Send Test Email',
-        cancelButtonText: 'Cancel',
-        didOpen: () => {
-            const input = document.getElementById('testEmail');
-            if (input) {
-                input.focus();
-            }
-        },
-        preConfirm: () => {
-            const email = document.getElementById('testEmail').value;
-            if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-                Swal.showValidationMessage('Please enter a valid email address');
-                return false;
-            }
-            return email;
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const testEmail = result.value;
-            
-            Swal.fire({
-                title: 'Sending test email...',
-                text: 'Please wait while we test your email configuration...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-            
-            fetch('{{ route("admin.system.test.email") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ email: testEmail })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Success!',
-                        html: `
-                            <p>${data.message}</p>
-                            ${data.details ? `
-                                <div class="mt-3 text-start">
-                                    <small class="text-muted">
-                                        <strong>Configuration Used:</strong><br>
-                                        Host: ${data.details.config?.host || 'N/A'}<br>
-                                        Port: ${data.details.config?.port || 'N/A'}<br>
-                                        Encryption: ${data.details.config?.encryption || 'N/A'}<br>
-                                        From: ${data.details.config?.from_address || 'N/A'}
-                                    </small>
-                                </div>
-                            ` : ''}
-                        `,
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Email Test Failed',
-                        html: `
-                            <p>${data.message}</p>
-                            ${data.details?.error ? `<p class="text-danger mt-2"><small>${data.details.error}</small></p>` : ''}
-                            ${data.details?.suggestion ? `<p class="text-info mt-2"><small><strong>Suggestion:</strong><br>${data.details.suggestion.replace(/\n/g, '<br>')}</small></p>` : ''}
-                        `,
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Failed to test email configuration: ' + error.message,
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            });
         }
     });
 }

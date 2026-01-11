@@ -40,10 +40,13 @@ class SystemController extends Controller
         // Get advanced metrics
         $advancedMetrics = $this->getAdvancedMetrics();
         
+        // Get recent system events
+        $recentEvents = $this->getRecentSystemEvents();
+        
         // Get performance metrics (after queries)
         $performanceMetrics = $this->getPerformanceMetrics();
         
-        return view('admin.system', compact('health', 'liveStats', 'systemInfo', 'backupSchedule', 'advancedMetrics', 'performanceMetrics'));
+        return view('admin.system', compact('health', 'liveStats', 'systemInfo', 'backupSchedule', 'advancedMetrics', 'recentEvents', 'performanceMetrics'));
     }
 
     public function healthCheck()
@@ -278,106 +281,6 @@ class SystemController extends Controller
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
 
-    /**
-     * Generate a secure download token for backup file
-     * This helps bypass ModSecurity restrictions
-     */
-    public function generateDownloadToken(Request $request)
-    {
-        try {
-            // Get filename from request
-            $file = $request->input('file');
-            if (!$file) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Filename is required'
-                ], 400);
-            }
-            
-            // Sanitize filename
-            $safe = basename($file);
-            $safe = preg_replace('/[^a-zA-Z0-9._-]/', '', $safe);
-            
-            // Verify file exists before generating token
-            $backup = DatabaseBackup::where('filename', $safe)->first();
-            if ($backup && $backup->file_path) {
-                $path = $backup->file_path;
-            } else {
-                $path = 'backups/' . $safe;
-            }
-            
-            $full = \Storage::disk('local')->path($path);
-            if (!file_exists($full)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Backup file not found'
-                ], 404);
-            }
-            
-            // Generate a secure token
-            $token = Str::random(32);
-            
-            // Store token in cache for 10 minutes with file info
-            Cache::put('backup_download_token_' . $token, [
-                'filename' => $safe,
-                'file_path' => $path,
-                'created_at' => now()->toIso8601String()
-            ], 600);
-            
-            // Return token URL
-            $downloadUrl = route('admin.system.backup.download.token', ['token' => $token]);
-            
-            return response()->json([
-                'success' => true,
-                'download_url' => $downloadUrl,
-                'token' => $token
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error generating download token: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error generating download token: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Download backup using token (bypasses ModSecurity)
-     */
-    public function downloadBackupByToken(string $token)
-    {
-        try {
-            // Get file info from cache
-            $fileInfo = Cache::get('backup_download_token_' . $token);
-            
-            if (!$fileInfo) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid or expired download token'
-                ], 404);
-            }
-            
-            // Delete token after use (one-time use)
-            Cache::forget('backup_download_token_' . $token);
-            
-            // Use the stored filename
-            $safe = $fileInfo['filename'];
-            
-            // Continue with normal download logic
-            return $this->performDownload($safe, $fileInfo['file_path'] ?? null);
-        } catch (\Exception $e) {
-            \Log::error('Error downloading backup by token: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error downloading backup: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Original download method (kept for backward compatibility)
-     * Now uses safer headers to avoid ModSecurity blocking
-     */
     public function downloadBackup(string $file)
     {
         try {
@@ -387,34 +290,6 @@ class SystemController extends Controller
             // Remove any dangerous characters
             $safe = preg_replace('/[^a-zA-Z0-9._-]/', '', $safe);
             
-            return $this->performDownload($safe);
-        } catch (\Exception $e) {
-            \Log::error('Error downloading backup', [
-                'file' => $file,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            $errorMessage = 'Error downloading backup: ' . $e->getMessage();
-            
-            if (request()->expectsJson() || request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $errorMessage
-                ], 500);
-            } else {
-                return response('<html><body><h1>Download Error</h1><p>' . htmlspecialchars($errorMessage) . '</p><p><a href="' . url()->previous() . '">Go Back</a></p></body></html>', 500)
-                    ->header('Content-Type', 'text/html; charset=utf-8');
-            }
-        }
-    }
-
-    /**
-     * Perform the actual file download with ModSecurity-safe headers
-     */
-    protected function performDownload(string $safe, ?string $filePath = null)
-    {
-        try {
             // First, try to find the backup record in the database
             $backup = DatabaseBackup::where('filename', $safe)->first();
             
@@ -511,15 +386,6 @@ class SystemController extends Controller
             // Get file size
             $fileSize = filesize($full);
             
-            // Use generic content type to avoid ModSecurity blocking
-            // ModSecurity often blocks application/sql and .sql extensions
-            $contentType = 'application/octet-stream';
-            
-            // Sanitize filename for Content-Disposition header
-            // Remove any potentially problematic characters
-            $downloadFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $safe);
-            
-            // Create response with headers that are less likely to trigger ModSecurity
             return new StreamedResponse(function () use ($full) {
                 $stream = fopen($full, 'rb');
                 if ($stream === false) {
@@ -529,14 +395,10 @@ class SystemController extends Controller
                 fpassthru($stream);
                 fclose($stream);
             }, 200, [
-                'Content-Type' => $contentType,
-                'Content-Disposition' => 'attachment; filename="' . $downloadFilename . '"; filename*=UTF-8\'\'' . rawurlencode($safe),
+                'Content-Type' => 'application/sql',
+                'Content-Disposition' => 'attachment; filename="' . $safe . '"',
                 'Content-Length' => $fileSize,
-                'Cache-Control' => 'no-cache, must-revalidate, post-check=0, pre-check=0',
-                'Pragma' => 'no-cache',
-                'Expires' => '0',
-                'X-Content-Type-Options' => 'nosniff',
-                'X-Download-Options' => 'noopen',
+                'Cache-Control' => 'no-cache, must-revalidate',
             ]);
         } catch (\Exception $e) {
             \Log::error('Error downloading backup', [
@@ -1355,52 +1217,6 @@ class SystemController extends Controller
                 'message' => 'Error loading sessions: ' . $e->getMessage(),
                 'sessions' => [],
                 'total' => 0
-            ], 500);
-        }
-    }
-
-    /**
-     * Test email configuration
-     */
-    public function testEmail(Request $request)
-    {
-        try {
-            $testEmail = $request->input('email', Auth::user()->email ?? 'davidngungila@gmail.com');
-            
-            if (!filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid email address'
-                ], 400);
-            }
-            
-            // Initialize EmailService (will load config from database/SystemSettings)
-            $emailService = new \App\Services\EmailService();
-            
-            // Test email configuration
-            $testResult = $emailService->testConfiguration($testEmail);
-            
-            if ($testResult['success']) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Test email sent successfully to ' . $testEmail,
-                    'details' => $testResult
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to send test email: ' . ($testResult['error'] ?? 'Unknown error'),
-                    'details' => $testResult
-                ], 500);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Email test error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error testing email: ' . $e->getMessage()
             ], 500);
         }
     }

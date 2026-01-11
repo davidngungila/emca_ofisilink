@@ -50,24 +50,15 @@ class Kernel extends ConsoleKernel
             
             foreach ($devices as $device) {
                 try {
-                    // Get connection IP (uses public IP if online mode is enabled)
-                    $deviceIp = $device->getConnectionIp();
-                    
-                    if (!$deviceIp) {
-                        \Illuminate\Support\Facades\Log::warning('Device IP not configured', [
-                            'device' => $device->name
-                        ]);
-                        continue;
-                    }
-                    
                     // Check if device IP is reachable (local network only)
-                    // Only connect to private/local IPs, skip public IPs (unless online mode is enabled)
+                    // Only connect to private/local IPs, skip public IPs
+                    $deviceIp = $device->ip_address;
                     $isPrivateIp = filter_var($deviceIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
                     
-                    if (!$isPrivateIp && !$device->is_online_mode) {
-                        // This is a public IP and online mode is not enabled
+                    if (!$isPrivateIp) {
+                        // This is a public IP - likely a cloud server scenario
                         // Skip direct connection, use Push SDK instead
-                        \Illuminate\Support\Facades\Log::debug('Skipping direct connection for public IP device - use Push SDK or enable online mode', [
+                        \Illuminate\Support\Facades\Log::debug('Skipping direct connection for public IP device - use Push SDK instead', [
                             'device' => $device->name,
                             'ip' => $deviceIp
                         ]);
@@ -75,7 +66,7 @@ class Kernel extends ConsoleKernel
                     }
                     
                     $zktecoService = new \App\Services\ZKTecoService(
-                        $deviceIp,
+                        $device->ip_address,
                         $device->port ?? 4370,
                         $device->settings['comm_key'] ?? 0
                     );

@@ -18,8 +18,8 @@
     }
     .minutes-preview {
         background: white;
-        padding: 30px;
-        max-width: 900px;
+        padding: 40px 50px;
+        max-width: 1000px;
         margin: 0 auto;
     }
     .minutes-preview h4, .minutes-preview h5, .minutes-preview h6 {
@@ -27,13 +27,28 @@
     }
     .minutes-preview table {
         width: 100%;
+        border-collapse: collapse;
     }
     .minutes-preview .table-bordered {
         border: 1px solid #dee2e6;
     }
-    .minutes-preview .table-bordered td {
+    .minutes-preview .table-bordered td,
+    .minutes-preview .table-bordered th {
         padding: 10px;
         border: 1px solid #dee2e6;
+        vertical-align: top;
+    }
+    .minutes-section {
+        margin-bottom: 30px;
+        page-break-inside: avoid;
+    }
+    @media print {
+        .minutes-preview {
+            padding: 20px;
+        }
+        .minutes-section {
+            page-break-inside: avoid;
+        }
     }
 </style>
 @endpush
@@ -76,7 +91,7 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    @include('modules.meetings.partials.minutes-preview')
+                    @include('modules.meetings.partials.minutes-preview-template')
                 </div>
             </div>
         </div>

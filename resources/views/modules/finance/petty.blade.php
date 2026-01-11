@@ -208,9 +208,13 @@
                 </td>
                 <td class="text-center">
                   <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-info view-details-btn" 
+                            data-id="{{ $voucher->id }}" title="Quick View">
+                      <i class="bx bx-show"></i>
+                    </button>
                     <a href="{{ route('petty-cash.show', $voucher) }}" 
                        class="btn btn-sm btn-outline-primary" title="View Details">
-                      <i class="bx bx-show"></i>
+                      <i class="bx bx-file"></i>
                     </a>
                     @if($voucher->status === 'paid' && $voucher->created_by === auth()->id())
                     <button type="button" class="btn btn-sm btn-success btn-open-retire" 
@@ -546,7 +550,42 @@ $(document).ready(function() {
         calculateGrandTotal();
     });
 
-    // Removed modal pop-up - now redirects directly to full page
+    // Quick view functionality - use the viewDetails function from scripts partial
+    $('.view-details-btn').on('click', function() {
+        const voucherId = $(this).data('id');
+        if (typeof viewDetails === 'function') {
+            viewDetails(voucherId);
+        } else {
+            // Fallback if viewDetails is not available
+            const modal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+            const content = document.getElementById('viewDetailsContent');
+            
+            content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading details...</p></div>';
+            modal.show();
+            
+            fetch(`/petty-cash/${voucherId}/details-ajax`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.html) {
+                    content.innerHTML = data.html;
+                } else {
+                    content.innerHTML = `<div class="alert alert-danger text-center">${data.message || 'Error loading details. Please try again.'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                content.innerHTML = '<div class="alert alert-danger text-center">Error loading details. Please try again.</div>';
+            });
+        }
+    });
 
     function escapeHtml(text) {
         if (text === null || typeof text === 'undefined') return '';

@@ -100,46 +100,6 @@
                         </div>
                     </div>
 
-                    <!-- Online Mode Section -->
-                    <div class="card border-info mb-3">
-                        <div class="card-header bg-info bg-opacity-10">
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="deviceIsOnlineMode" name="is_online_mode">
-                                <label class="form-check-label fw-bold" for="deviceIsOnlineMode">
-                                    <i class="bx bx-globe me-1"></i>Online Mode (Remote Access)
-                                </label>
-                            </div>
-                            <small class="text-muted d-block mt-1">Enable this if the device is on a different network and requires public IP access</small>
-                        </div>
-                        <div class="card-body" id="onlineModeFields" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label for="devicePublicIpAddress" class="form-label">Public IP Address <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="devicePublicIpAddress" name="public_ip_address" placeholder="41.59.154.147">
-                                    <small class="text-muted">Enter the public IP address for remote access. This will be used instead of local IP when online mode is enabled.</small>
-                                    <div class="invalid-feedback"></div>
-                                </div>
-                            </div>
-                            <div class="alert alert-info mb-0">
-                                <i class="bx bx-info-circle me-2"></i>
-                                <strong>Online Mode Configuration Required:</strong>
-                                <ol class="mb-0 mt-2" style="padding-left: 20px;">
-                                    <li><strong>Port Forwarding:</strong> Configure your router to forward:
-                                        <ul style="margin-top: 5px;">
-                                            <li>External Port: <code id="externalPortDisplay">{{ old('port', '4370') }}</code></li>
-                                            <li>Internal IP: <span id="localIpDisplay">{{ old('ip_address', 'Device Local IP') }}</span></li>
-                                            <li>Internal Port: <code id="internalPortDisplay">{{ old('port', '4370') }}</code></li>
-                                        </ul>
-                                    </li>
-                                    <li><strong>Router Firewall:</strong> Allow incoming connections on port <code id="firewallPortDisplay">{{ old('port', '4370') }}</code></li>
-                                    <li><strong>Device Firewall:</strong> Ensure device allows connections from internet</li>
-                                    <li><strong>Public IP:</strong> Enter the router's public IP address (e.g., 41.59.154.147)</li>
-                                    <li><strong>Local IP:</strong> Enter the device's local network IP address (e.g., 192.168.1.100)</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="mb-3">
                         <label for="deviceConnectionConfig" class="form-label">Connection Config (JSON)</label>
                         <textarea class="form-control" id="deviceConnectionConfig" name="connection_config" rows="3" placeholder='{"api_key": "xxx", "endpoint": "xxx"}'></textarea>

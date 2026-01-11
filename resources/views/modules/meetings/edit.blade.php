@@ -61,3 +61,4 @@ const meetingId = {{ $meeting->id }};
 <script src="{{ asset('js/meetings-form.js') }}"></script>
 @endpush
 
+

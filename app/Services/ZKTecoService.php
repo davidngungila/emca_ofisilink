@@ -16,20 +16,14 @@ class ZKTecoService
     private string $ip;
     private int $port;
     private $password; // Can be int or string, will be converted to int
-    private int $timeout; // Connection timeout in seconds
 
-    public function __construct($ip = null, $port = null, $password = null, $timeout = null)
+    public function __construct($ip = null, $port = null, $password = null)
     {
         $this->ip = $ip ?? config('zkteco.ip', env('ZKTECO_IP', '192.168.100.127'));
         $this->port = (int) ($port ?? config('zkteco.port', env('ZKTECO_PORT', 4370)));
         // Default password is 0 (no password/Comm Key) if not specified
         $configPassword = config('zkteco.password', env('ZKTECO_PASSWORD', 0));
         $this->password = $password ?? $configPassword;
-        
-        // Determine timeout - longer for public IPs (online mode)
-        // Check if IP is public (not private/local)
-        $isPublicIp = filter_var($this->ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-        $this->timeout = $timeout ?? ($isPublicIp ? 60 : 30); // 60 seconds for public IPs, 30 for local
         
         // Ensure password is numeric and convert to appropriate type
         if ($this->password !== null) {
@@ -44,7 +38,7 @@ class ZKTecoService
         }
         
         // Log connection parameters
-        Log::info("ZKTecoService initialized: IP={$this->ip}, Port={$this->port}, Comm Key={$this->password}, Timeout={$this->timeout}s" . ($isPublicIp ? ' (Public IP - Online Mode)' : ' (Local IP)'));
+        Log::info("ZKTecoService initialized: IP={$this->ip}, Port={$this->port}, Comm Key={$this->password}");
     }
 
     /**
@@ -70,7 +64,7 @@ class ZKTecoService
                 ip: $this->ip,
                 port: $this->port,
                 shouldPing: true,
-                timeout: $this->timeout, // Use configured timeout (longer for online mode)
+                timeout: 30, // Increased from 25 to 30 seconds for better reliability
                 password: $password
             );
         }

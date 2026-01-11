@@ -16,9 +16,9 @@
                 <a href="{{ route('modules.hr.attendance.settings') }}" class="btn btn-outline-secondary me-2">
                     <i class="bx bx-arrow-back me-1"></i> Back to Settings
                 </a>
-                <a href="{{ route('modules.hr.attendance.settings.devices.create') }}" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" onclick="openDeviceModal()">
                     <i class="bx bx-plus me-1"></i> Add Device
-                </a>
+                </button>
             </div>
         </div>
     </div>
@@ -163,56 +163,9 @@ const locations = @json($locations ?? []);
 let currentDeviceId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Use devicesData if available (from server-side), otherwise fetch
-    if (devicesData && devicesData.length >= 0) {
-        displayDevices(devicesData);
-    } else {
-        loadDevices();
-    }
+    loadDevices();
     setupDeviceForm();
 });
-
-function displayDevices(devices) {
-    const tbody = document.getElementById('devicesList');
-    if (!tbody) return;
-
-    if (!devices || devices.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No devices found</p></td></tr>';
-        return;
-    }
-
-    let html = '';
-    devices.forEach(device => {
-                const statusClass = device.is_online ? 'status-online' : 'status-offline';
-                const statusIcon = device.is_online ? 'bx-check-circle' : 'bx-x-circle';
-                const statusText = device.is_online ? 'Online' : 'Offline';
-                const lastSync = device.last_sync_at ? new Date(device.last_sync_at).toLocaleString() : 'Never';
-                
-                const ipDisplay = device.is_online_mode && device.public_ip_address 
-                    ? '<span title="Online Mode: ' + device.public_ip_address + '">' + device.public_ip_address + ' <i class="bx bx-globe text-info" title="Online Mode"></i></span>'
-                    : (device.ip_address || 'N/A');
-                
-                html += '<tr>';
-                html += '<td><strong>' + (device.name || 'N/A') + '</strong></td>';
-                html += '<td><code>' + (device.device_id || 'N/A') + '</code></td>';
-                html += '<td>' + ipDisplay + '</td>';
-                html += '<td>' + (device.port || '4370') + '</td>';
-                html += '<td>' + (device.location?.name || 'N/A') + '</td>';
-                html += '<td><span class="' + statusClass + '"><i class="bx ' + statusIcon + ' me-1"></i>' + statusText + '</span></td>';
-                html += '<td><small class="text-muted">' + lastSync + '</small></td>';
-                html += '<td>';
-                html += '<div class="btn-group" role="group">';
-                html += '<a href="/modules/hr/attendance/settings/devices/' + device.id + '/show" class="btn btn-sm btn-outline-info" title="View More"><i class="bx bx-show"></i></a> ';
-                html += '<a href="/modules/hr/attendance/settings/devices/' + device.id + '/edit" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bx bx-edit"></i></a> ';
-                html += '<button class="btn btn-sm btn-outline-warning" onclick="testDevice(' + device.id + ')" title="Test Connection"><i class="bx bx-wifi"></i></button> ';
-                html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteDevice(' + device.id + ', \'' + (device.name || '').replace(/'/g, "\\'") + '\')" title="Delete"><i class="bx bx-trash"></i></button>';
-                html += '</div>';
-                html += '</td>';
-                html += '</tr>';
-            });
-
-    tbody.innerHTML = html;
-}
 
 function loadDevices() {
     const tbody = document.getElementById('devicesList');
@@ -231,31 +184,51 @@ function loadDevices() {
     fetch('/attendance-settings/devices', {
         headers: {
             'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+            'Accept': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Devices data:', data); // Debug log
         if (data.success && data.devices) {
-            displayDevices(data.devices);
+            if (data.devices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No devices found</p></td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.devices.forEach(device => {
+                const statusClass = device.is_online ? 'status-online' : 'status-offline';
+                const statusIcon = device.is_online ? 'bx-check-circle' : 'bx-x-circle';
+                const statusText = device.is_online ? 'Online' : 'Offline';
+                const lastSync = device.last_sync_at ? new Date(device.last_sync_at).toLocaleString() : 'Never';
+                
+                html += '<tr>';
+                html += '<td><strong>' + (device.name || 'N/A') + '</strong></td>';
+                html += '<td><code>' + (device.device_id || 'N/A') + '</code></td>';
+                html += '<td>' + (device.ip_address || 'N/A') + '</td>';
+                html += '<td>' + (device.port || '4370') + '</td>';
+                html += '<td>' + (device.location?.name || 'N/A') + '</td>';
+                html += '<td><span class="' + statusClass + '"><i class="bx ' + statusIcon + ' me-1"></i>' + statusText + '</span></td>';
+                html += '<td><small class="text-muted">' + lastSync + '</small></td>';
+                html += '<td>';
+                html += '<div class="btn-group" role="group">';
+                html += '<button class="btn btn-sm btn-outline-info" onclick="viewDeviceDetails(' + device.id + ')" title="View More"><i class="bx bx-show"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-primary" onclick="editDevice(' + device.id + ')" title="Edit"><i class="bx bx-edit"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-warning" onclick="testDevice(' + device.id + ')" title="Test Connection"><i class="bx bx-wifi"></i></button> ';
+                html += '<button class="btn btn-sm btn-outline-danger" onclick="deleteDevice(' + device.id + ', \'' + (device.name || '').replace(/'/g, "\\'") + '\')" title="Delete"><i class="bx bx-trash"></i></button>';
+                html += '</div>';
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            tbody.innerHTML = html;
         } else {
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">Failed to load devices</p></td></tr>';
         }
     })
     .catch(error => {
         console.error('Error loading devices:', error);
-        let errorMessage = 'Failed to load devices';
-        if (error.message) {
-            errorMessage += ': ' + error.message;
-        }
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">' + errorMessage + '</p><p class="text-muted small">Check browser console for details</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">Failed to load devices</p></td></tr>';
     });
 }
 
@@ -268,7 +241,6 @@ function testDevice(deviceId) {
     // Test device connection logic
     Swal.fire({
         title: 'Testing Connection...',
-        text: 'Please wait while we test the device connection...',
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
     });
@@ -284,80 +256,16 @@ function testDevice(deviceId) {
     .then(response => response.json())
     .then(data => {
         Swal.close();
-        if (data.success && data.is_online) {
-            // Format message with device info
-            let html = '<div style="text-align: left;">';
-            html += '<p><strong>' + data.message.split('\n')[0] + '</strong></p>';
-            if (data.device_info) {
-                html += '<hr style="margin: 10px 0;">';
-                html += '<p style="margin: 5px 0;"><strong>IP:</strong> ' + (data.device_info.ip || data.device?.ip_address || 'N/A') + '</p>';
-                html += '<p style="margin: 5px 0;"><strong>Port:</strong> ' + (data.device?.port || '4370') + '</p>';
-                if (data.device_info.model) {
-                    html += '<p style="margin: 5px 0;"><strong>Model:</strong> ' + data.device_info.model + '</p>';
-                }
-                if (data.device_info.firmware) {
-                    html += '<p style="margin: 5px 0;"><strong>Firmware:</strong> ' + data.device_info.firmware + '</p>';
-                }
-            }
-            html += '</div>';
-            
-            Swal.fire({
-                title: 'Success!',
-                html: html,
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            // Reload devices to update status
-            loadDevices();
-        } else if (data.success && !data.is_online) {
-            // Format error message for better display
-            let errorHtml = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
-            if (data.message) {
-                // Replace newlines with HTML breaks
-                errorHtml += '<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">' + data.message.replace(/\n/g, '<br>') + '</pre>';
-            } else {
-                errorHtml += '<p>Device is offline or unreachable</p>';
-            }
-            errorHtml += '</div>';
-            
-            Swal.fire({
-                title: 'Device Offline',
-                html: errorHtml,
-                icon: 'warning',
-                confirmButtonText: 'OK',
-                width: '600px'
-            });
-            // Reload devices to update status
+        if (data.success) {
+            Swal.fire('Success!', data.message, 'success');
             loadDevices();
         } else {
-            // Format error message for better display
-            let errorHtml = '<div style="text-align: left; max-height: 400px; overflow-y: auto;">';
-            if (data.message) {
-                // Replace newlines with HTML breaks
-                errorHtml += '<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">' + data.message.replace(/\n/g, '<br>') + '</pre>';
-            } else {
-                errorHtml += '<p>Failed to test device connection</p>';
-            }
-            errorHtml += '</div>';
-            
-            Swal.fire({
-                title: 'Connection Error',
-                html: errorHtml,
-                icon: 'error',
-                confirmButtonText: 'OK',
-                width: '600px'
-            });
+            Swal.fire('Error!', data.message, 'error');
         }
     })
     .catch(error => {
         Swal.close();
-        console.error('Test device error:', error);
-        Swal.fire({
-            title: 'Error!',
-            text: 'Failed to test device connection. Please try again.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
+        Swal.fire('Error!', 'Failed to test device connection', 'error');
     });
 }
 
@@ -367,8 +275,8 @@ function testAllDevices() {
 }
 
 function editDevice(deviceId) {
-    // Navigate to edit page
-    window.location.href = '/modules/hr/attendance/settings/devices/' + deviceId + '/edit';
+    // Edit device logic
+    openDeviceModal(deviceId);
 }
 
 function deleteDevice(deviceId, deviceName) {
@@ -450,26 +358,6 @@ function openDeviceModal(deviceId = null) {
                 document.getElementById('deviceSettings').value = device.settings ? JSON.stringify(device.settings, null, 2) : '';
                 document.getElementById('deviceNotes').value = device.notes || '';
                 document.getElementById('deviceIsActive').checked = device.is_active !== false;
-                
-                // Online mode fields
-                const onlineModeToggle = document.getElementById('deviceIsOnlineMode');
-                const onlineModeFields = document.getElementById('onlineModeFields');
-                const publicIpField = document.getElementById('devicePublicIpAddress');
-                if (onlineModeToggle && onlineModeFields && publicIpField) {
-                    onlineModeToggle.checked = device.is_online_mode || false;
-                    publicIpField.value = device.public_ip_address || '';
-                    if (onlineModeToggle.checked) {
-                        onlineModeFields.style.display = 'block';
-                        publicIpField.setAttribute('required', 'required');
-                        // Update port forwarding instructions
-                        if (typeof updatePortForwardingInstructions === 'function') {
-                            updatePortForwardingInstructions();
-                        }
-                    } else {
-                        onlineModeFields.style.display = 'none';
-                        publicIpField.removeAttribute('required');
-                    }
-                }
             }
         })
         .catch(error => {
@@ -489,56 +377,6 @@ function openDeviceModal(deviceId = null) {
 function setupDeviceForm() {
     const form = document.getElementById('deviceForm');
     if (!form) return;
-    
-    // Setup online mode toggle
-    const onlineModeToggle = document.getElementById('deviceIsOnlineMode');
-    const onlineModeFields = document.getElementById('onlineModeFields');
-    const publicIpField = document.getElementById('devicePublicIpAddress');
-    const localIpField = document.getElementById('deviceIpAddress');
-    const portField = document.getElementById('devicePort');
-    
-    // Function to update port forwarding instructions
-    function updatePortForwardingInstructions() {
-        const port = portField?.value || '4370';
-        const localIp = localIpField?.value || 'Device Local IP';
-        
-        const externalPortDisplay = document.getElementById('externalPortDisplay');
-        const internalPortDisplay = document.getElementById('internalPortDisplay');
-        const localIpDisplay = document.getElementById('localIpDisplay');
-        const firewallPortDisplay = document.getElementById('firewallPortDisplay');
-        
-        if (externalPortDisplay) externalPortDisplay.textContent = port;
-        if (internalPortDisplay) internalPortDisplay.textContent = port;
-        if (localIpDisplay) localIpDisplay.textContent = localIp || 'Device Local IP';
-        if (firewallPortDisplay) firewallPortDisplay.textContent = port;
-    }
-    
-    if (onlineModeToggle && onlineModeFields) {
-        onlineModeToggle.addEventListener('change', function() {
-            if (this.checked) {
-                onlineModeFields.style.display = 'block';
-                if (publicIpField) {
-                    publicIpField.setAttribute('required', 'required');
-                }
-                updatePortForwardingInstructions();
-            } else {
-                onlineModeFields.style.display = 'none';
-                if (publicIpField) {
-                    publicIpField.removeAttribute('required');
-                }
-            }
-        });
-    }
-    
-    // Update port forwarding instructions when port or local IP changes
-    if (portField) {
-        portField.addEventListener('input', updatePortForwardingInstructions);
-        portField.addEventListener('change', updatePortForwardingInstructions);
-    }
-    if (localIpField) {
-        localIpField.addEventListener('input', updatePortForwardingInstructions);
-        localIpField.addEventListener('change', updatePortForwardingInstructions);
-    }
     
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -575,9 +413,8 @@ function setupDeviceForm() {
             return;
         }
         
-        // Convert checkboxes to boolean
+        // Convert checkbox to boolean
         data.is_active = document.getElementById('deviceIsActive').checked;
-        data.is_online_mode = document.getElementById('deviceIsOnlineMode').checked;
         
         const url = deviceId 
             ? `/attendance-settings/devices/${deviceId}`
@@ -647,18 +484,12 @@ function viewDeviceDetails(deviceId) {
     fetch(`/attendance-settings/devices/${deviceId}`, {
         headers: {
             'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
+            'Accept': 'application/json'
         }
+
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        console.log('Device data:', data); // Debug log
         if (data.success && data.device) {
             const device = data.device;
             const statusClass = device.is_online ? 'text-success' : 'text-danger';
@@ -711,19 +542,9 @@ function viewDeviceDetails(deviceId) {
                             <div class="card-body">
                                 <table class="table table-sm table-borderless mb-0">
                                     <tr>
-                                        <th width="40%">Online Mode:</th>
-                                        <td>${device.is_online_mode ? '<span class="badge bg-info"><i class="bx bx-globe me-1"></i>Enabled</span>' : '<span class="badge bg-secondary">Disabled (Local)</span>'}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Local IP Address:</th>
+                                        <th width="40%">IP Address:</th>
                                         <td>${device.ip_address || 'N/A'}</td>
                                     </tr>
-                                    ${device.is_online_mode && device.public_ip_address ? `
-                                    <tr>
-                                        <th>Public IP Address:</th>
-                                        <td><strong class="text-info">${device.public_ip_address} <i class="bx bx-globe"></i></strong></td>
-                                    </tr>
-                                    ` : ''}
                                     <tr>
                                         <th>Port:</th>
                                         <td>${device.port || 'N/A'}</td>
@@ -852,16 +673,11 @@ function viewDeviceDetails(deviceId) {
         }
     })
     .catch(error => {
-        console.error('Error loading device details:', error);
-        let errorMessage = 'Failed to load device details';
-        if (error.message) {
-            errorMessage += ': ' + error.message;
-        }
+        console.error('Error:', error);
         content.innerHTML = `
             <div class="alert alert-danger">
                 <i class="bx bx-error-circle me-2"></i>
-                <strong>Error:</strong> ${errorMessage}
-                <br><small class="text-muted">Check browser console for more details</small>
+                <strong>Error:</strong> Failed to load device details
             </div>
         `;
     });

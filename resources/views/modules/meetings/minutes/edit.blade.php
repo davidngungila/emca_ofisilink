@@ -72,3 +72,4 @@ const meetingId = {{ $meeting->id }};
 </script>
 @endpush
 
+

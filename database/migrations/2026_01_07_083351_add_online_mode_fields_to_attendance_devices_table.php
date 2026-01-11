@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('attendance_devices', function (Blueprint $table) {
-            $table->boolean('is_online_mode')->default(false)->after('connection_type');
-            $table->string('public_ip_address')->nullable()->after('ip_address');
+            //
         });
     }
 
@@ -23,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('attendance_devices', function (Blueprint $table) {
-            $table->dropColumn(['is_online_mode', 'public_ip_address']);
+            //
         });
     }
 };

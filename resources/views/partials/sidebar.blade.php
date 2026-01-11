@@ -150,16 +150,6 @@
       </li>
       @endif
       
-      <!-- Branches Management - System Admin only -->
-      @if($isSystemAdmin)
-      <li class="menu-item {{ request()->routeIs('admin.settings.branches.*') || request()->routeIs('admin.branches.*') ? 'active' : '' }}">
-        <a href="{{ route('admin.settings.branches.page') }}" class="menu-link">
-          <i class="menu-icon tf-icons bx bx-map"></i>
-          <div data-i18n="Branches" style="font-weight: bold;">Branches</div>
-        </a>
-      </li>
-      @endif
-      
       <!-- Recruitment - Available to HR, HOD, CEO, System Admin -->
       @if($isHR || $isHOD || $isCEO || $isSystemAdmin)
       <li class="menu-item {{ request()->routeIs('modules.hr.recruitment') ? 'active' : '' }}">
@@ -169,36 +159,46 @@
       </li>
       @endif
       
-      <!-- Notices - HR, Manager, System Admin -->
-      @php
-        $isManager = in_array('Manager', $userRoles);
-      @endphp
-      @if($isHR || $isManager || $isSystemAdmin)
-      <li class="menu-item {{ request()->routeIs('notices.*') ? 'active' : '' }}">
-        <a href="{{ route('notices.index') }}" class="menu-link">
-          <div data-i18n="Notices" style="font-weight: bold;">Notices</div>
-        </a>
-      </li>
-      @endif
-      
     </ul>
   </li>
 
 
   <!-- Task Management -->
-  <li class="menu-item {{ request()->routeIs('modules.tasks.*') ? 'active' : '' }}">
-    <a href="{{ route('modules.tasks.index') }}" class="menu-link">
+  <li class="menu-item {{ request()->routeIs('modules.tasks') ? 'active' : '' }}">
+    <a href="{{ route('modules.tasks') }}" class="menu-link">
       <i class="menu-icon tf-icons bx bx-clipboard"></i>
       <div data-i18n="Task Management" style="font-weight: bold;">Task Management</div>
     </a>
   </li>
 
   <!-- Meeting Management -->
-  <li class="menu-item {{ request()->routeIs('modules.meetings.*') ? 'active' : '' }}">
-    <a href="{{ route('modules.meetings.index') }}" class="menu-link">
+  <li class="menu-item {{ request()->routeIs('modules.meetings.*') ? 'active open' : '' }}">
+    <a href="javascript:void(0);" class="menu-link menu-toggle">
       <i class="menu-icon tf-icons bx bx-group"></i>
       <div data-i18n="Meetings & Minutes" style="font-weight: bold;">Meetings & Minutes</div>
     </a>
+    <ul class="menu-sub">
+      <li class="menu-item {{ request()->routeIs('modules.meetings.index') ? 'active' : '' }}">
+        <a href="{{ route('modules.meetings.index') }}" class="menu-link">
+          <div data-i18n="Meetings">Meetings</div>
+        </a>
+      </li>
+      <li class="menu-item {{ request()->routeIs('modules.meetings.pending-approval') ? 'active' : '' }}">
+        <a href="{{ route('modules.meetings.pending-approval') }}" class="menu-link">
+          <div data-i18n="Pending Approval">Pending Approval</div>
+        </a>
+      </li>
+      <li class="menu-item {{ request()->routeIs('modules.meetings.analytics') ? 'active' : '' }}">
+        <a href="{{ route('modules.meetings.analytics') }}" class="menu-link">
+          <div data-i18n="Analytics">Analytics</div>
+        </a>
+      </li>
+      <li class="menu-item {{ request()->routeIs('modules.meetings.categories') ? 'active' : '' }}">
+        <a href="{{ route('modules.meetings.categories') }}" class="menu-link">
+          <div data-i18n="Categories">Categories</div>
+        </a>
+      </li>
+    </ul>
   </li>
 
 
@@ -373,36 +373,6 @@
     }
     
     /**
-     * Initialize hover functionality for menu items
-     */
-    function initMenuHover() {
-        document.querySelectorAll('.menu-item:has(.menu-sub)').forEach(function(menuItem) {
-            const menuSub = menuItem.querySelector('.menu-sub');
-            if (!menuSub) return;
-            
-            let hoverTimeout;
-            
-            // Show submenu on hover
-            menuItem.addEventListener('mouseenter', function() {
-                clearTimeout(hoverTimeout);
-                menuItem.classList.add('open');
-                menuSub.style.display = 'block';
-            });
-            
-            // Hide submenu when mouse leaves
-            menuItem.addEventListener('mouseleave', function() {
-                // Only hide if not manually opened
-                if (!menuItem.classList.contains('manually-opened')) {
-                    hoverTimeout = setTimeout(function() {
-                        menuItem.classList.remove('open');
-                        menuSub.style.display = 'none';
-                    }, 200); // Small delay to prevent flickering
-                }
-            });
-        });
-    }
-    
-    /**
      * Ensure active menu items are visible and parent menus are expanded
      */
     function ensureActiveVisible() {
@@ -445,9 +415,6 @@
             
             // Initialize toggle handlers
             initMenuToggles();
-            
-            // Initialize hover functionality
-            initMenuHover();
             
             // Re-check after a short delay to ensure everything is set
             setTimeout(function() {

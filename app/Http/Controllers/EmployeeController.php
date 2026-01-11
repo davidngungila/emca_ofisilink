@@ -39,7 +39,7 @@ class EmployeeController extends Controller
         
         if ($canViewAll) {
             // Build query for all employees - ensure one-to-one relationship
-            $query = User::with(['employee', 'primaryDepartment', 'branch', 'roles'])
+            $query = User::with(['employee', 'primaryDepartment', 'roles'])
                 ->whereHas('employee'); // Only show users with employee records
             
             // Advanced filtering
@@ -51,10 +51,6 @@ class EmployeeController extends Controller
                       ->orWhere('employee_id', 'like', "%{$search}%")
                       ->orWhere('phone', 'like', "%{$search}%");
                 });
-            }
-            
-            if ($request->filled('branch')) {
-                $query->where('branch_id', $request->branch);
             }
             
             if ($request->filled('department')) {
@@ -286,18 +282,6 @@ class EmployeeController extends Controller
         }
         
         $departments = Department::where('is_active', true)->orderBy('name')->get();
-        
-        // Get branches for filtering
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
-        
-        // Get selected branch if filtering by branch
-        $selectedBranch = null;
-        if ($request->filled('branch')) {
-            $selectedBranch = \App\Models\Branch::with(['managers', 'users' => function($q) {
-                $q->whereHas('employee');
-            }])->find($request->branch);
-        }
-        
         $roles = \App\Models\Role::where('is_active', true)->orderBy('display_name')->get();
         $positions = \App\Models\Position::where('is_active', true)->orderBy('title')->get();
         
@@ -330,8 +314,7 @@ class EmployeeController extends Controller
             return view('modules.hr.employees', compact(
                 'employees', 
                 'employee', 
-                'departments',
-                'branches',
+                'departments', 
                 'roles', 
                 'positions', 
                 'canViewAll', 
@@ -348,7 +331,7 @@ class EmployeeController extends Controller
             ));
         }
         
-        return view('modules.hr.employees', compact('employees', 'employee', 'departments', 'branches', 'selectedBranch', 'roles', 'positions', 'canViewAll', 'canEditAll', 'recentActivities'));
+        return view('modules.hr.employees', compact('employees', 'employee', 'departments', 'roles', 'positions', 'canViewAll', 'canEditAll', 'recentActivities'));
     }
     
     /**
@@ -552,7 +535,7 @@ class EmployeeController extends Controller
             // Load all columns and relationships for complete employee view
             $employee = User::select([
                 'id', 'name', 'email', 'phone', 'mobile', 'employee_id', 'photo',
-                'primary_department_id', 'branch_id', 'hire_date', 'is_active', 'marital_status',
+                'primary_department_id', 'hire_date', 'is_active', 'marital_status',
                 'date_of_birth', 'gender', 'nationality', 'address',
                 'created_at', 'updated_at'
             ])
@@ -568,9 +551,6 @@ class EmployeeController extends Controller
                 },
                 'primaryDepartment' => function($query) {
                     $query->select('departments.id', 'departments.name', 'departments.code');
-                },
-                'branch' => function($query) {
-                    $query->select('branches.id', 'branches.name', 'branches.code');
                 },
                 'roles' => function($query) {
                     $query->select('roles.id', 'roles.name', 'roles.display_name');
@@ -766,11 +746,8 @@ class EmployeeController extends Controller
             ]);
         }
         
-        // Get branches for display (if needed for editing)
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
-        
         // Return view for browser requests
-        return view('modules.hr.employee-show', compact('employee', 'canEdit', 'completionPercentage', 'branches'));
+        return view('modules.hr.employee-show', compact('employee', 'canEdit', 'completionPercentage'));
     }
     
     /**
@@ -1443,9 +1420,6 @@ class EmployeeController extends Controller
                 },
                 'primaryDepartment' => function($query) {
                     $query->select('departments.id', 'departments.name');
-                },
-                'branch' => function($query) {
-                    $query->select('branches.id', 'branches.name', 'branches.code');
                 },
                 'roles:id,name,display_name',
                 'family', 'nextOfKin', 'referees', 'educations', 'bankAccounts'
@@ -2736,7 +2710,6 @@ class EmployeeController extends Controller
                 'phone' => 'nullable|string|max:20',
                 'employee_id' => 'nullable|string|max:50', // Will be auto-generated if not provided
                 'primary_department_id' => 'required|exists:departments,id',
-                'branch_id' => 'required|exists:branches,id',
                 'hire_date' => 'nullable|date',
             ];
             
@@ -2894,7 +2867,7 @@ class EmployeeController extends Controller
                 $employeeUser = User::findOrFail($request->user_id);
                 
                 // Update user details with validation
-                $userData = $request->only(['name', 'email', 'phone', 'employee_id', 'primary_department_id', 'branch_id', 'hire_date']);
+                $userData = $request->only(['name', 'email', 'phone', 'employee_id', 'primary_department_id', 'hire_date']);
                 
                 // Validate email uniqueness if changed
                 if (isset($userData['email']) && $userData['email'] !== $employeeUser->email) {
@@ -2972,7 +2945,6 @@ class EmployeeController extends Controller
                     'phone' => $request->phone,
                     'employee_id' => $employeeId, // Use auto-generated or provided ID
                     'primary_department_id' => $request->primary_department_id,
-                    'branch_id' => $request->branch_id,
                     'hire_date' => $request->hire_date ?? now(),
                     'is_active' => true, // Ensure new employees are active
                 ]);
@@ -3568,538 +3540,8 @@ class EmployeeController extends Controller
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $roles = \App\Models\Role::where('is_active', true)->orderBy('name')->get();
         $positions = \App\Models\Position::where('is_active', true)->orderBy('title')->get();
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
         
-        return view('modules.hr.employee-register', compact('departments', 'roles', 'positions', 'branches'));
-    }
-
-    /**
-     * Download Excel template for bulk employee registration
-     */
-    public function downloadBulkTemplate()
-    {
-        try {
-            // Create comprehensive CSV/Excel template with ALL necessary fields
-            $headers = [
-                // Personal Information (Required)
-                'Name',
-                'Email',
-                'Phone',
-                'Employee ID (Optional - Auto-generated if empty)',
-                'Department ID',
-                'Department Name',
-                'Branch ID',
-                'Branch Name',
-                'Hire Date (YYYY-MM-DD)',
-                
-                // Employment Details
-                'Position',
-                'Employment Type (permanent/contract/intern)',
-                'Salary',
-                'Role IDs (comma-separated)',
-                
-                // Profile Information
-                'Gender (Male/Female/Other)',
-                'Date of Birth (YYYY-MM-DD)',
-                'Marital Status (Single/Married/Divorced/Widowed)',
-                'Nationality',
-                'Address',
-                
-                // Statutory Information
-                'TIN Number',
-                'NSSF Number',
-                'NHIF Number',
-                'HESLB Number',
-                'Has Student Loan (Yes/No)',
-                
-                // Emergency Contact (JSON format or separate columns)
-                'Emergency Contact Name',
-                'Emergency Contact Phone',
-                'Emergency Contact Relationship',
-                'Emergency Contact Address',
-                
-                // Next of Kin
-                'Next of Kin Name',
-                'Next of Kin Phone',
-                'Next of Kin Relationship',
-                'Next of Kin Address',
-                'Next of Kin ID Number',
-                
-                // Banking Information
-                'Bank Name',
-                'Account Number',
-                'Account Holder Name',
-                'Branch Name',
-                'Swift Code',
-                
-                // Education (JSON format - can add multiple)
-                'Education Institution 1',
-                'Education Qualification 1',
-                'Education Field 1',
-                'Education Start Year 1',
-                'Education End Year 1',
-                'Education Grade 1',
-                
-                // Referees (JSON format - can add multiple)
-                'Referee Name 1',
-                'Referee Position 1',
-                'Referee Organization 1',
-                'Referee Phone 1',
-                'Referee Email 1',
-                'Referee Relationship 1',
-            ];
-            
-            $filename = 'employee_bulk_upload_template_' . date('Y-m-d') . '.csv';
-            
-            $handle = fopen('php://output', 'w');
-            header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-            
-            fputcsv($handle, $headers);
-            
-            // Add sample row with example data
-            $sampleRow = [
-                // Personal Information
-                'John Doe',
-                'john.doe@example.com',
-                '255712345678',
-                '', // Leave empty for auto-generation
-                '1', // Department ID
-                'IT Department', // Department Name (for reference)
-                '1', // Branch ID
-                'Main Branch', // Branch Name (for reference)
-                date('Y-m-d'), // Hire Date
-                
-                // Employment
-                'Software Developer',
-                'permanent',
-                '500000',
-                '1,2', // Role IDs (comma-separated)
-                
-                // Profile
-                'Male',
-                '1990-01-15',
-                'Single',
-                'Tanzanian',
-                'Dar es Salaam, Tanzania',
-                
-                // Statutory
-                '123456789',
-                'NSSF123456',
-                'NHIF123456',
-                'HESLB123456',
-                'No',
-                
-                // Emergency Contact
-                'Jane Doe',
-                '255712345679',
-                'Spouse',
-                'Dar es Salaam, Tanzania',
-                
-                // Next of Kin
-                'John Doe Sr',
-                '255712345680',
-                'Father',
-                'Dar es Salaam, Tanzania',
-                'ID123456789',
-                
-                // Banking
-                'CRDB Bank',
-                '0123456789',
-                'John Doe',
-                'Dar es Salaam Branch',
-                'CORUTZTZ',
-                
-                // Education
-                'University of Dar es Salaam',
-                'Bachelor Degree',
-                'Computer Science',
-                '2008',
-                '2012',
-                'Second Class Upper',
-                
-                // Referees
-                'Dr. Smith',
-                'Professor',
-                'University of Dar es Salaam',
-                '255712345681',
-                'smith@udsm.ac.tz',
-                'Former Lecturer',
-            ];
-            fputcsv($handle, $sampleRow);
-            
-            fclose($handle);
-            exit;
-        } catch (\Exception $e) {
-            Log::error('Error generating bulk upload template: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error generating template: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Handle bulk employee upload from Excel file
-     */
-    public function bulkUploadEmployees(Request $request)
-    {
-        $user = Auth::user();
-        
-        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to upload employees.'
-            ], 403);
-        }
-        
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240'
-        ]);
-        
-        $file = $request->file('excel_file');
-        $extension = $file->getClientOriginalExtension();
-        
-        $created = 0;
-        $failed = 0;
-        $skipped = 0;
-        $errors = [];
-        $warnings = [];
-        
-        DB::beginTransaction();
-        
-        try {
-            $rows = [];
-            
-            if (strtolower($extension) === 'csv') {
-                // Handle CSV
-                $handle = fopen($file->getRealPath(), 'r');
-                if ($handle === false) {
-                    throw new \Exception('Failed to open CSV file');
-                }
-                
-                // Read header
-                $header = fgetcsv($handle);
-                if (!$header) {
-                    throw new \Exception('CSV file is empty or invalid');
-                }
-                
-                // Read data rows
-                while (($row = fgetcsv($handle)) !== false) {
-                    if (empty(array_filter($row))) {
-                        continue; // Skip empty rows
-                    }
-                    $rows[] = array_combine($header, array_pad($row, count($header), ''));
-                }
-                fclose($handle);
-            } else {
-                // Handle Excel - try Maatwebsite Excel if available
-                if (class_exists('\Maatwebsite\Excel\Facades\Excel')) {
-                    $data = \Maatwebsite\Excel\Facades\Excel::toArray([], $file);
-                    if (empty($data) || empty($data[0])) {
-                        throw new \Exception('Excel file is empty or invalid');
-                    }
-                    
-                    $excelRows = $data[0];
-                    $header = array_shift($excelRows); // Remove header row
-                    
-                    foreach ($excelRows as $row) {
-                        if (empty(array_filter($row))) {
-                            continue; // Skip empty rows
-                        }
-                        $rows[] = array_combine($header, array_pad($row, count($header), ''));
-                    }
-                } else {
-                    throw new \Exception('Excel processing library not available. Please install maatwebsite/excel package.');
-                }
-            }
-            
-            if (empty($rows)) {
-                throw new \Exception('No data rows found in the file');
-            }
-            
-            $rowIndex = 1; // Start from 1 (header is row 0)
-            
-            foreach ($rows as $row) {
-                $rowIndex++;
-                
-                try {
-                    // Extract and validate required fields
-                    $name = trim($row['Name'] ?? '');
-                    $email = trim($row['Email'] ?? '');
-                    $phone = trim($row['Phone'] ?? '');
-                    $departmentId = trim($row['Department ID'] ?? '');
-                    $departmentName = trim($row['Department Name'] ?? '');
-                    $employeeId = trim($row['Employee ID (Optional - Auto-generated if empty)'] ?? '');
-                    
-                    // Validate required fields
-                    if (empty($name)) {
-                        $errors[] = "Row {$rowIndex}: Name is required";
-                        $failed++;
-                        continue;
-                    }
-                    
-                    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                        $errors[] = "Row {$rowIndex}: Valid email is required";
-                        $failed++;
-                        continue;
-                    }
-                    
-                    // Check if email already exists
-                    if (User::where('email', $email)->exists()) {
-                        $warnings[] = "Row {$rowIndex}: Employee with email '{$email}' already exists - skipped";
-                        $skipped++;
-                        continue;
-                    }
-                    
-                    // Resolve department
-                    $finalDepartmentId = null;
-                    if (!empty($departmentId)) {
-                        $dept = Department::find($departmentId);
-                        if ($dept) {
-                            $finalDepartmentId = $dept->id;
-                        }
-                    }
-                    
-                    if (!$finalDepartmentId && !empty($departmentName)) {
-                        $dept = Department::where('name', 'like', "%{$departmentName}%")->first();
-                        if ($dept) {
-                            $finalDepartmentId = $dept->id;
-                        }
-                    }
-                    
-                    if (!$finalDepartmentId) {
-                        $errors[] = "Row {$rowIndex}: Valid Department ID or Name is required";
-                        $failed++;
-                        continue;
-                    }
-                    
-                    // Resolve branch
-                    $branchId = null;
-                    $branchIdInput = trim($row['Branch ID'] ?? '');
-                    $branchName = trim($row['Branch Name'] ?? '');
-                    
-                    if (!empty($branchIdInput)) {
-                        $branch = \App\Models\Branch::find($branchIdInput);
-                        if ($branch) {
-                            $branchId = $branch->id;
-                        }
-                    }
-                    
-                    if (!$branchId && !empty($branchName)) {
-                        $branch = \App\Models\Branch::where('name', 'like', "%{$branchName}%")->first();
-                        if ($branch) {
-                            $branchId = $branch->id;
-                        }
-                    }
-                    
-                    // Validate employee ID if provided
-                    if (!empty($employeeId) && User::where('employee_id', $employeeId)->exists()) {
-                        $warnings[] = "Row {$rowIndex}: Employee ID '{$employeeId}' already exists - will auto-generate";
-                        $employeeId = null;
-                    }
-                    
-                    // Auto-generate employee ID if not provided
-                    if (empty($employeeId)) {
-                        $hireDate = !empty($row['Hire Date (YYYY-MM-DD)']) ? $row['Hire Date (YYYY-MM-DD)'] : now();
-                        $employeeId = $this->generateEmployeeId($hireDate, $finalDepartmentId);
-                    }
-                    
-                    // Create user
-                    $password = 'welcome123'; // Default password
-                    
-                    $employeeUser = User::create([
-                        'name' => $name,
-                        'email' => $email,
-                        'password' => Hash::make($password),
-                        'phone' => $phone ?: null,
-                        'employee_id' => $employeeId,
-                        'primary_department_id' => $finalDepartmentId,
-                        'branch_id' => $branchId,
-                        'hire_date' => !empty($row['Hire Date (YYYY-MM-DD)']) ? $row['Hire Date (YYYY-MM-DD)'] : now(),
-                        'is_active' => true,
-                    ]);
-                    
-                    // Create employee record with employment details
-                    $position = trim($row['Position'] ?? 'Staff Member');
-                    $employmentType = trim($row['Employment Type (permanent/contract/intern)'] ?? 'permanent');
-                    $salary = !empty($row['Salary']) ? (float)$row['Salary'] : 0;
-                    
-                    $employeeRecord = Employee::create([
-                        'user_id' => $employeeUser->id,
-                        'position' => $position,
-                        'employment_type' => $employmentType,
-                        'hire_date' => $employeeUser->hire_date,
-                        'salary' => $salary,
-                    ]);
-                    
-                    // Update user profile fields
-                    $userUpdates = [];
-                    if (!empty($row['Gender (Male/Female/Other)'])) {
-                        $userUpdates['gender'] = $row['Gender (Male/Female/Other)'];
-                    }
-                    if (!empty($row['Date of Birth (YYYY-MM-DD)'])) {
-                        $userUpdates['date_of_birth'] = $row['Date of Birth (YYYY-MM-DD)'];
-                    }
-                    if (!empty($row['Marital Status (Single/Married/Divorced/Widowed)'])) {
-                        $userUpdates['marital_status'] = $row['Marital Status (Single/Married/Divorced/Widowed)'];
-                    }
-                    if (!empty($row['Nationality'])) {
-                        $userUpdates['nationality'] = $row['Nationality'];
-                    }
-                    if (!empty($row['Address'])) {
-                        $userUpdates['address'] = $row['Address'];
-                    }
-                    if (!empty($row['TIN Number'])) {
-                        $userUpdates['tin_number'] = $row['TIN Number'];
-                    }
-                    if (!empty($row['NSSF Number'])) {
-                        $userUpdates['nssf_number'] = $row['NSSF Number'];
-                    }
-                    if (!empty($row['NHIF Number'])) {
-                        $userUpdates['nhif_number'] = $row['NHIF Number'];
-                    }
-                    if (!empty($row['HESLB Number'])) {
-                        $userUpdates['heslb_number'] = $row['HESLB Number'];
-                    }
-                    if (!empty($row['Has Student Loan (Yes/No)']) && strtolower($row['Has Student Loan (Yes/No)']) == 'yes') {
-                        $userUpdates['has_student_loan'] = true;
-                    }
-                    
-                    if (!empty($userUpdates)) {
-                        $employeeUser->update($userUpdates);
-                    }
-                    
-                    // Assign roles
-                    $roleIds = [];
-                    if (!empty($row['Role IDs (comma-separated)'])) {
-                        $roleIdStrings = explode(',', $row['Role IDs (comma-separated)']);
-                        foreach ($roleIdStrings as $roleIdStr) {
-                            $roleId = trim($roleIdStr);
-                            if (is_numeric($roleId) && \App\Models\Role::find($roleId)) {
-                                $roleIds[] = $roleId;
-                            }
-                        }
-                    }
-                    
-                    // Assign default role if no roles specified
-                    if (empty($roleIds)) {
-                        $defaultRole = \App\Models\Role::where('name', 'Employee')->first();
-                        if ($defaultRole) {
-                            $roleIds[] = $defaultRole->id;
-                        }
-                    }
-                    
-                    if (!empty($roleIds)) {
-                        $employeeUser->roles()->attach($roleIds);
-                    }
-                    
-                    // Add Emergency Contact
-                    if (!empty($row['Emergency Contact Name'])) {
-                        \App\Models\EmployeeEmergencyContact::create([
-                            'user_id' => $employeeUser->id,
-                            'name' => $row['Emergency Contact Name'],
-                            'phone' => $row['Emergency Contact Phone'] ?? null,
-                            'relationship' => $row['Emergency Contact Relationship'] ?? null,
-                            'address' => $row['Emergency Contact Address'] ?? null,
-                        ]);
-                    }
-                    
-                    // Add Next of Kin
-                    if (!empty($row['Next of Kin Name'])) {
-                        \App\Models\EmployeeNextOfKin::create([
-                            'user_id' => $employeeUser->id,
-                            'name' => $row['Next of Kin Name'],
-                            'phone' => $row['Next of Kin Phone'] ?? null,
-                            'relationship' => $row['Next of Kin Relationship'] ?? null,
-                            'address' => $row['Next of Kin Address'] ?? null,
-                            'id_number' => $row['Next of Kin ID Number'] ?? null,
-                        ]);
-                    }
-                    
-                    // Add Bank Account
-                    if (!empty($row['Bank Name']) || !empty($row['Account Number'])) {
-                        \App\Models\BankAccount::create([
-                            'user_id' => $employeeUser->id,
-                            'bank_name' => $row['Bank Name'] ?? null,
-                            'account_number' => $row['Account Number'] ?? null,
-                            'account_holder_name' => $row['Account Holder Name'] ?? $employeeUser->name,
-                            'branch_name' => $row['Branch Name'] ?? null,
-                            'swift_code' => $row['Swift Code'] ?? null,
-                            'is_primary' => true,
-                        ]);
-                    }
-                    
-                    // Add Education
-                    if (!empty($row['Education Institution 1'])) {
-                        \App\Models\EmployeeEducation::create([
-                            'user_id' => $employeeUser->id,
-                            'institution_name' => $row['Education Institution 1'],
-                            'qualification' => $row['Education Qualification 1'] ?? null,
-                            'field_of_study' => $row['Education Field 1'] ?? null,
-                            'start_year' => !empty($row['Education Start Year 1']) ? (int)$row['Education Start Year 1'] : null,
-                            'end_year' => !empty($row['Education End Year 1']) ? (int)$row['Education End Year 1'] : null,
-                            'grade' => $row['Education Grade 1'] ?? null,
-                        ]);
-                    }
-                    
-                    // Add Referee
-                    if (!empty($row['Referee Name 1'])) {
-                        \App\Models\EmployeeReferee::create([
-                            'user_id' => $employeeUser->id,
-                            'name' => $row['Referee Name 1'],
-                            'position' => $row['Referee Position 1'] ?? null,
-                            'organization' => $row['Referee Organization 1'] ?? null,
-                            'phone' => $row['Referee Phone 1'] ?? null,
-                            'email' => $row['Referee Email 1'] ?? null,
-                            'relationship' => $row['Referee Relationship 1'] ?? null,
-                        ]);
-                    }
-                    
-                    $created++;
-                    
-                    Log::info('Bulk employee created', [
-                        'user_id' => $employeeUser->id,
-                        'email' => $email,
-                        'employee_id' => $employeeId,
-                        'row' => $rowIndex
-                    ]);
-                    
-                } catch (\Exception $e) {
-                    $errors[] = "Row {$rowIndex}: " . $e->getMessage();
-                    $failed++;
-                    Log::error('Bulk upload error for row ' . $rowIndex, [
-                        'error' => $e->getMessage(),
-                        'row_data' => $row
-                    ]);
-                }
-            }
-            
-            DB::commit();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Bulk upload completed',
-                'total' => count($rows),
-                'created' => $created,
-                'failed' => $failed,
-                'skipped' => $skipped,
-                'errors' => $errors,
-                'warnings' => $warnings
-            ]);
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Bulk upload failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Bulk upload failed: ' . $e->getMessage(),
-                'errors' => [$e->getMessage()]
-            ], 500);
-        }
+        return view('modules.hr.employee-register', compact('departments', 'roles', 'positions'));
     }
 
     /**
@@ -4114,7 +3556,7 @@ class EmployeeController extends Controller
         }
         
         $employee = User::with([
-            'employee', 'primaryDepartment', 'branch', 'roles',
+            'employee', 'primaryDepartment', 'roles',
             'family', 'nextOfKin', 'referees', 'educations', 
             'bankAccounts', 'salaryDeductions', 'documents'
         ])->findOrFail($userId);
@@ -4122,9 +3564,8 @@ class EmployeeController extends Controller
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $roles = \App\Models\Role::where('is_active', true)->orderBy('name')->get();
         $positions = \App\Models\Position::where('is_active', true)->orderBy('title')->get();
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
         
-        return view('modules.hr.employee-edit', compact('employee', 'departments', 'roles', 'positions', 'branches'));
+        return view('modules.hr.employee-edit', compact('employee', 'departments', 'roles', 'positions'));
     }
 
     /**
@@ -4673,87 +4114,27 @@ class EmployeeController extends Controller
                 ->where('is_active', true)
                 ->firstOrFail();
             
-            // Resolve file path - handle both 'public/documents/...' and 'documents/...' formats
-            $filePath = $document->file_path;
+            $filePath = storage_path('app/' . $document->file_path);
             
-            // Normalize path - ensure it starts with 'public/'
-            if (!str_starts_with($filePath, 'public/')) {
-                $filePath = 'public/' . $filePath;
-            }
-            
-            // Get the path relative to public disk (remove 'public/' prefix)
-            $publicPath = str_replace('public/', '', $filePath);
-            
-            // Check if file exists using Storage facade
-            if (!Storage::disk('public')->exists($publicPath)) {
-                // Try direct file system check as fallback
-                $fullPath = storage_path('app/' . $filePath);
-                
-                if (!file_exists($fullPath)) {
-                    // Log the issue for debugging
-                    Log::warning('Document file not found', [
-                        'document_id' => $documentId,
-                        'employee_id' => $employeeId,
-                        'original_file_path' => $document->file_path,
-                        'normalized_path' => $filePath,
-                        'public_path' => $publicPath,
-                        'full_path' => $fullPath,
-                        'storage_exists' => Storage::disk('public')->exists($publicPath)
-                    ]);
-                    
-                    // Return proper error response instead of JSON to prevent browser from saving JSON as file
-                    if (request()->expectsJson() || request()->ajax()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'File not found. The file may have been deleted or moved.'
-                        ], 404);
-                    } else {
-                        // Return HTML error page for browser requests (prevents JSON being saved as file)
-                        return response('<html><body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;"><h1 style="color: #dc3545;">File Not Found</h1><p style="font-size: 16px; color: #666;">The requested file is not available on the server.</p><p style="font-size: 14px; color: #999;">The file may have been deleted or moved.</p><p><a href="' . url()->previous() . '" style="color: #007bff; text-decoration: none;">← Go Back</a></p></body></html>', 404)
-                            ->header('Content-Type', 'text/html; charset=utf-8');
-                    }
-                }
-                
-                // File found via direct path, download it
-                return response()->download($fullPath, $document->file_name);
-            }
-            
-            // File exists in storage, download it using Storage facade
-            $fullPath = Storage::disk('public')->path($publicPath);
-            return response()->download($fullPath, $document->file_name);
-            
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::warning('Document not found for download', [
-                'document_id' => $documentId,
-                'employee_id' => $employeeId
-            ]);
-            
-            if (request()->expectsJson() || request()->ajax()) {
+            if (!file_exists($filePath)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Document not found.'
+                    'message' => 'File not found.'
                 ], 404);
-            } else {
-                return response('<html><body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;"><h1 style="color: #dc3545;">Document Not Found</h1><p style="font-size: 16px; color: #666;">The requested document could not be found.</p><p><a href="' . url()->previous() . '" style="color: #007bff; text-decoration: none;">← Go Back</a></p></body></html>', 404)
-                    ->header('Content-Type', 'text/html; charset=utf-8');
             }
+            
+            return response()->download($filePath, $document->file_name);
+            
         } catch (\Exception $e) {
             Log::error('Error downloading document', [
                 'document_id' => $documentId,
                 'employee_id' => $employeeId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
-            
-            if (request()->expectsJson() || request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An error occurred while downloading the document.'
-                ], 500);
-            } else {
-                return response('<html><body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;"><h1 style="color: #dc3545;">Download Error</h1><p style="font-size: 16px; color: #666;">An error occurred while downloading the document.</p><p style="font-size: 14px; color: #999;">Please try again later or contact support if the problem persists.</p><p><a href="' . url()->previous() . '" style="color: #007bff; text-decoration: none;">← Go Back</a></p></body></html>', 500)
-                    ->header('Content-Type', 'text/html; charset=utf-8');
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while downloading the document.'
+            ], 500);
         }
     }
     

@@ -348,11 +348,13 @@ class MeetingController extends Controller
                 $orderColumn = Schema::hasColumn('meeting_agendas', 'sort_order') ? 'sort_order' : 'order_index';
                 $hasDurationMinutes = Schema::hasColumn('meeting_agendas', 'duration_minutes');
                 $hasDuration = Schema::hasColumn('meeting_agendas', 'duration');
+                $hasStatus = Schema::hasColumn('meeting_agendas', 'status');
                 
                 // Log for debugging (can be removed later)
                 Log::debug('Meeting agenda columns check', [
                     'hasDurationMinutes' => $hasDurationMinutes,
                     'hasDuration' => $hasDuration,
+                    'hasStatus' => $hasStatus,
                     'orderColumn' => $orderColumn
                 ]);
 
@@ -378,10 +380,14 @@ class MeetingController extends Controller
                             'presenter_id' => $presenters[$i] ?: null,
                             'description' => $descriptions[$i] ?? null,
                             $orderColumn => $i + 1,
-                            'status' => 'pending',
                             'created_at' => now(),
                             'updated_at' => now()
                         ];
+                        
+                        // Only add status if column exists
+                        if ($hasStatus) {
+                            $agendaData['status'] = 'pending';
+                        }
                         
                         // Add duration based on which column exists - ONLY add if column exists
                         // IMPORTANT: Only add the column that actually exists in the database
@@ -663,6 +669,7 @@ class MeetingController extends Controller
                 $orderColumn = Schema::hasColumn('meeting_agendas', 'sort_order') ? 'sort_order' : 'order_index';
                 $hasDurationMinutes = Schema::hasColumn('meeting_agendas', 'duration_minutes');
                 $hasDuration = Schema::hasColumn('meeting_agendas', 'duration');
+                $hasStatus = Schema::hasColumn('meeting_agendas', 'status');
 
                 foreach ($titles as $i => $title) {
                     if ($title) {
@@ -686,10 +693,14 @@ class MeetingController extends Controller
                             'presenter_id' => $presenters[$i] ?: null,
                             'description' => $descriptions[$i] ?? null,
                             $orderColumn => $i + 1,
-                            'status' => 'pending',
                             'created_at' => now(),
-                        'updated_at' => now()
-                    ];
+                            'updated_at' => now()
+                        ];
+                        
+                        // Only add status if column exists
+                        if ($hasStatus) {
+                            $agendaData['status'] = 'pending';
+                        }
                     
                         // Add duration based on which column exists - ONLY add if column exists
                         if ($hasDurationMinutes === true) {
@@ -1084,6 +1095,14 @@ class MeetingController extends Controller
                     return $this->getDashboardStats($request, $user);
                 case 'get_categories':
                     return $this->getCategories($request, $user);
+                case 'save_minutes_section':
+                    return $this->saveMinutesSection($request, $user);
+                case 'save_agenda_minutes':
+                    return $this->saveAgendaMinutes($request, $user);
+                case 'save_all_minutes':
+                    return $this->saveAllMinutes($request, $user);
+                case 'finalize_minutes':
+                    return $this->finalizeMinutes($request, $user);
                 default:
                     return response()->json([
                         'success' => false,
@@ -1314,4 +1333,185 @@ class MeetingController extends Controller
     public function submitForApproval($id) { return redirect()->back(); }
     public function approve($id) { return redirect()->back(); }
     public function reject($id) { return redirect()->back(); }
+
+    /**
+     * Save a minutes section
+     */
+    private function saveMinutesSection(Request $request, $user)
+    {
+        try {
+            $meetingId = $request->input('meeting_id');
+            $section = $request->input('section');
+
+            if (!$meetingId) {
+                return response()->json(['success' => false, 'message' => 'Meeting ID is required'], 400);
+            }
+
+            $meeting = DB::table('meetings')->where('id', $meetingId)->first();
+            if (!$meeting) {
+                return response()->json(['success' => false, 'message' => 'Meeting not found'], 404);
+            }
+
+            $minutes = DB::table('meeting_minutes')->where('meeting_id', $meetingId)->first();
+            $minutesData = ['meeting_id' => $meetingId, 'prepared_by' => $user->id, 'updated_at' => now()];
+
+            switch ($section) {
+                case 'attendance':
+                    $attendance = $request->input('attendance', []);
+                    foreach ($attendance as $participantId) {
+                        if (strpos($participantId, 'external_') === 0) {
+                            $extId = str_replace('external_', '', $participantId);
+                            DB::table('meeting_participants')->where('id', $extId)->update(['attendance_status' => 'attended', 'updated_at' => now()]);
+                        } else {
+                            DB::table('meeting_participants')->where('user_id', $participantId)->where('meeting_id', $meetingId)->update(['attendance_status' => 'attended', 'updated_at' => now()]);
+                        }
+                    }
+                    break;
+                case 'aob':
+                    if (Schema::hasColumn('meeting_minutes', 'aob')) $minutesData['aob'] = $request->input('aob');
+                    break;
+                case 'next_meeting':
+                    if (Schema::hasColumn('meeting_minutes', 'next_meeting_date')) $minutesData['next_meeting_date'] = $request->input('next_meeting_date');
+                    if (Schema::hasColumn('meeting_minutes', 'next_meeting_time')) $minutesData['next_meeting_time'] = $request->input('next_meeting_time');
+                    if (Schema::hasColumn('meeting_minutes', 'next_meeting_venue')) $minutesData['next_meeting_venue'] = $request->input('next_meeting_venue');
+                    break;
+                case 'closing':
+                    if (Schema::hasColumn('meeting_minutes', 'closing_time')) $minutesData['closing_time'] = $request->input('closing_time');
+                    if (Schema::hasColumn('meeting_minutes', 'closing_remarks')) $minutesData['closing_remarks'] = $request->input('closing_remarks');
+                    break;
+                case 'summary':
+                    if (Schema::hasColumn('meeting_minutes', 'summary')) $minutesData['summary'] = $request->input('summary');
+                    break;
+            }
+
+            if ($minutes) {
+                DB::table('meeting_minutes')->where('meeting_id', $meetingId)->update($minutesData);
+            } else {
+                $minutesData['created_at'] = now();
+                if (!isset($minutesData['status'])) $minutesData['status'] = Schema::hasColumn('meeting_minutes', 'status') ? 'draft' : null;
+                DB::table('meeting_minutes')->insert($minutesData);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Section saved successfully']);
+        } catch (\Exception $e) {
+            Log::error('Save minutes section error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to save section: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function saveAgendaMinutes(Request $request, $user)
+    {
+        try {
+            $meetingId = $request->input('meeting_id');
+            $agendaId = $request->input('agenda_id');
+            $discussion = $request->input('discussion');
+            $resolution = $request->input('resolution');
+
+            if (!$meetingId || !$agendaId) {
+                return response()->json(['success' => false, 'message' => 'Meeting ID and Agenda ID are required'], 400);
+            }
+
+            $updateData = [];
+            if (Schema::hasColumn('meeting_agendas', 'discussion_notes')) $updateData['discussion_notes'] = $discussion;
+            if (Schema::hasColumn('meeting_agendas', 'resolution')) $updateData['resolution'] = $resolution;
+
+            if (!empty($updateData)) {
+                $updateData['updated_at'] = now();
+                DB::table('meeting_agendas')->where('id', $agendaId)->where('meeting_id', $meetingId)->update($updateData);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Agenda minutes saved successfully']);
+        } catch (\Exception $e) {
+            Log::error('Save agenda minutes error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to save agenda minutes: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function saveAllMinutes(Request $request, $user)
+    {
+        try {
+            $meetingId = $request->input('meeting_id');
+            if (!$meetingId) {
+                return response()->json(['success' => false, 'message' => 'Meeting ID is required'], 400);
+            }
+
+            DB::beginTransaction();
+
+            $minutes = DB::table('meeting_minutes')->where('meeting_id', $meetingId)->first();
+            $minutesData = ['meeting_id' => $meetingId, 'prepared_by' => $user->id, 'updated_at' => now()];
+
+            $attendance = $request->input('attendance', []);
+            foreach ($attendance as $participantId) {
+                if (strpos($participantId, 'external_') === 0) {
+                    $extId = str_replace('external_', '', $participantId);
+                    DB::table('meeting_participants')->where('id', $extId)->update(['attendance_status' => 'attended', 'updated_at' => now()]);
+                } else {
+                    DB::table('meeting_participants')->where('user_id', $participantId)->where('meeting_id', $meetingId)->update(['attendance_status' => 'attended', 'updated_at' => now()]);
+                }
+            }
+
+            $agendaDiscussions = $request->input('agenda_discussions', []);
+            $agendaResolutions = $request->input('agenda_resolutions', []);
+            foreach ($agendaDiscussions as $agendaId => $discussion) {
+                $updateData = [];
+                if (Schema::hasColumn('meeting_agendas', 'discussion_notes')) $updateData['discussion_notes'] = $discussion;
+                if (Schema::hasColumn('meeting_agendas', 'resolution') && isset($agendaResolutions[$agendaId])) $updateData['resolution'] = $agendaResolutions[$agendaId];
+                if (!empty($updateData)) {
+                    $updateData['updated_at'] = now();
+                    DB::table('meeting_agendas')->where('id', $agendaId)->where('meeting_id', $meetingId)->update($updateData);
+                }
+            }
+
+            if ($request->has('aob') && Schema::hasColumn('meeting_minutes', 'aob')) $minutesData['aob'] = $request->input('aob');
+            if ($request->has('summary') && Schema::hasColumn('meeting_minutes', 'summary')) $minutesData['summary'] = $request->input('summary');
+            if ($request->has('next_meeting_date') && Schema::hasColumn('meeting_minutes', 'next_meeting_date')) $minutesData['next_meeting_date'] = $request->input('next_meeting_date');
+            if ($request->has('next_meeting_time') && Schema::hasColumn('meeting_minutes', 'next_meeting_time')) $minutesData['next_meeting_time'] = $request->input('next_meeting_time');
+            if ($request->has('next_meeting_venue') && Schema::hasColumn('meeting_minutes', 'next_meeting_venue')) $minutesData['next_meeting_venue'] = $request->input('next_meeting_venue');
+            if ($request->has('closing_time') && Schema::hasColumn('meeting_minutes', 'closing_time')) $minutesData['closing_time'] = $request->input('closing_time');
+            if ($request->has('closing_remarks') && Schema::hasColumn('meeting_minutes', 'closing_remarks')) $minutesData['closing_remarks'] = $request->input('closing_remarks');
+
+            if ($minutes) {
+                DB::table('meeting_minutes')->where('meeting_id', $meetingId)->update($minutesData);
+            } else {
+                $minutesData['created_at'] = now();
+                if (!isset($minutesData['status'])) $minutesData['status'] = Schema::hasColumn('meeting_minutes', 'status') ? 'draft' : null;
+                DB::table('meeting_minutes')->insert($minutesData);
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'All minutes saved successfully']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Save all minutes error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to save minutes: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function finalizeMinutes(Request $request, $user)
+    {
+        try {
+            $meetingId = $request->input('meeting_id');
+            $approverId = $request->input('approver_id');
+
+            if (!$meetingId || !$approverId) {
+                return response()->json(['success' => false, 'message' => 'Meeting ID and Approver ID are required'], 400);
+            }
+
+            $saveRequest = new Request($request->all());
+            $saveRequest->merge(['action' => 'save_all_minutes']);
+            $saveResult = $this->saveAllMinutes($saveRequest, $user);
+            if (!$saveResult->getData()->success) return $saveResult;
+
+            $updateData = ['updated_at' => now()];
+            if (Schema::hasColumn('meeting_minutes', 'status')) $updateData['status'] = 'pending_approval';
+            if (Schema::hasColumn('meeting_minutes', 'approver_id')) $updateData['approver_id'] = $approverId;
+
+            DB::table('meeting_minutes')->where('meeting_id', $meetingId)->update($updateData);
+
+            return response()->json(['success' => true, 'message' => 'Minutes finalized and submitted for approval']);
+        } catch (\Exception $e) {
+            Log::error('Finalize minutes error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to finalize minutes: ' . $e->getMessage()], 500);
+        }
+    }
 }

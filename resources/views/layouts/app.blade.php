@@ -107,19 +107,6 @@
         border-bottom-color: rgba(148, 0, 0, 0.1) !important;
       }
       
-      /* Dropdown hover support */
-      .dropdown-hover .dropdown-menu {
-        margin-top: 0;
-      }
-      
-      /* Sidebar menu hover */
-      .menu-item:has(.menu-sub):hover .menu-sub {
-        display: block !important;
-      }
-      .menu-item:has(.menu-sub):hover {
-        background-color: rgba(148, 0, 0, 0.05);
-      }
-      
       /* Tables */
       .table-primary {
         background-color: rgba(148, 0, 0, 0.1) !important;
@@ -196,7 +183,7 @@
               </a>
             </div>
 
-            <div class="navbar-nav-right d-flex align-items-center justify-content-between w-100" id="navbar-collapse">
+            <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
               <!-- Search -->
               <div class="navbar-nav align-items-center">
                 <div class="nav-item d-flex align-items-center">
@@ -211,19 +198,9 @@
               </div>
               <!-- /Search -->
 
-              <!-- Branch Name Center -->
-              <div class="d-flex align-items-center justify-content-center flex-grow-1">
-                @if(auth()->check() && auth()->user()->branch)
-                  <div class="text-center">
-                    <span class="text-muted small d-block" style="font-size: 0.75rem;">Your working in branch</span>
-                    <span class="fw-semibold text-primary">{{ auth()->user()->branch->name }}</span>
-                  </div>
-                @endif
-              </div>
-
-              <ul class="navbar-nav flex-row align-items-center">
+              <ul class="navbar-nav flex-row align-items-center ms-auto">
                 <!-- Notifications -->
-                <li class="nav-item dropdown me-3 dropdown-hover" id="notifContainer">
+                <li class="nav-item dropdown me-3" id="notifContainer">
                   <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="notifBell">
                     <i class="bx bx-bell fs-4"></i>
                     <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" style="display:none" id="notifCount">0</span>
@@ -252,9 +229,9 @@
 
 
                 <!-- User -->
-                <li class="nav-item navbar-dropdown dropdown-user dropdown dropdown-hover">
-                  <a class="nav-link dropdown-toggle hide-arrow d-flex align-items-center" href="javascript:void(0);" data-bs-toggle="dropdown">
-                    <div class="avatar avatar-online me-2">
+                <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                  <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <div class="avatar avatar-online">
                       @if(auth()->user()->photo)
                         @php
                           $photoUrl = route('storage.photos', ['filename' => auth()->user()->photo]);
@@ -263,10 +240,6 @@
                       @else
                         <span class="avatar-initial rounded-circle bg-label-primary user-profile-avatar" data-profile-image="true">{{ substr(auth()->user()->name, 0, 1) }}</span>
                       @endif
-                    </div>
-                    <div class="d-none d-md-flex flex-column align-items-start" style="line-height: 1.2;">
-                      <span class="fw-semibold" style="font-size: 0.875rem;">{{ auth()->user()->name }}</span>
-                      <small class="text-muted" style="font-size: 0.75rem;">{{ auth()->user()->roles->first()->display_name ?? 'User' }}</small>
                     </div>
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end">
@@ -287,7 +260,7 @@
                           </div>
                           <div class="flex-grow-1">
                             <span class="fw-semibold d-block">{{ auth()->user()->name }}</span>
-                            <small class="text-muted">{{ auth()->user()->roles->first()->display_name ?? auth()->user()->roles->first()->name ?? 'User' }}</small>
+                            <small class="text-muted">{{ auth()->user()->roles->first()->display_name ?? 'User' }}</small>
                           </div>
                         </div>
                       </a>
@@ -408,476 +381,7 @@
     <!-- Vite JS -->
     @vite(['resources/js/app.js'])
 
-    <!-- Notice Pop-up Modal -->
-    <div class="modal fade" id="noticeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content shadow-lg" style="border: none; border-radius: 12px; overflow: hidden;">
-                <div class="modal-header border-0 pb-0" id="noticeModalHeader" style="padding: 1.5rem 1.5rem 0.5rem;">
-                    <div class="d-flex align-items-center justify-content-center w-100 position-relative">
-                        <div class="text-center">
-                            <h4 class="modal-title mb-1 fw-bold text-white" id="noticeModalTitle" style="font-size: 1.25rem;">
-                                <i class="bx bx-bullhorn me-2"></i>Notice
-                            </h4>
-                            <small class="text-white-50" id="noticeDate" style="opacity: 0.9;"></small>
-                        </div>
-                        <button type="button" class="btn-close btn-close-white position-absolute end-0" data-bs-dismiss="modal" aria-label="Close" id="modalCloseBtn" style="display: none;"></button>
-                    </div>
-                </div>
-                <div class="modal-body" id="noticeModalBody" style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
-                    <div id="noticeContent" class="mb-4" style="
-                        background: #f8f9fa;
-                        border-radius: 8px;
-                        padding: 1.5rem;
-                        border: 1px solid #e9ecef;
-                    ">
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Attachments Section -->
-                    <div id="noticeAttachments" class="mb-3" style="display: none;">
-                        <h6 class="mb-2 fw-semibold">
-                            <i class="bx bx-paperclip me-1"></i>Attachments
-                        </h6>
-                        <div id="attachmentsList" class="row g-2"></div>
-                    </div>
-                    
-                    <!-- Comment Section -->
-                    <div id="noticeCommentSection" class="mt-4 pt-3 border-top">
-                        <label for="noticeComment" class="form-label fw-semibold mb-2">
-                            <i class="bx bx-comment-dots me-1 text-primary"></i>Your Feedback (Optional)
-                        </label>
-                        <textarea class="form-control" id="noticeComment" rows="4" 
-                                  placeholder="Share your thoughts, questions, or feedback about this announcement..."></textarea>
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <small class="text-muted">
-                                <i class="bx bx-info-circle me-1"></i>Your comments help us improve our communications
-                            </small>
-                            <small class="text-muted" id="commentCharCount">0 / 500</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0" id="noticeModalFooter" style="padding: 0 1.5rem 1.5rem;">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="closeBtn" style="display: none;">
-                        <i class="bx bx-x me-1"></i>Close
-                    </button>
-                    <button type="button" class="btn btn-primary btn-lg px-4" id="acknowledgeBtn" onclick="acknowledgeNotice()" style="display: none;">
-                        <i class="bx bx-check-circle me-2"></i>Mark as Read
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     @stack('scripts')
-    
-    <!-- Notice Pop-up Script -->
-    <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
-    <script>
-    let currentNoticeId = null;
-    let noticeQueue = [];
-    let isProcessingNotices = false;
-
-    // Check for unacknowledged notices on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Wait a bit for page to fully load
-        setTimeout(() => {
-            checkForNotices();
-        }, 1000);
-    });
-
-    function checkForNotices() {
-        if (isProcessingNotices) return;
-        
-        isProcessingNotices = true;
-        
-        fetch('{{ route("notices.unacknowledged") }}', {
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            isProcessingNotices = false;
-            
-            if (data.success && data.notices && data.notices.length > 0) {
-                noticeQueue = data.notices;
-                showNextNotice();
-            }
-        })
-        .catch(error => {
-            isProcessingNotices = false;
-            console.error('Error checking notices:', error);
-        });
-    }
-
-    function showNextNotice() {
-        if (noticeQueue.length === 0) return;
-        
-        const notice = noticeQueue.shift();
-        currentNoticeId = notice.id;
-        
-        // Set modal header color based on priority
-        const header = document.getElementById('noticeModalHeader');
-        const priorityClass = notice.priority === 'urgent' ? 'bg-danger text-white' : 
-                             notice.priority === 'important' ? 'bg-warning text-dark' : 
-                             'bg-info text-white';
-        header.className = 'modal-header ' + priorityClass;
-        
-        // Set title
-        document.getElementById('noticeModalTitle').innerHTML = 
-            `<i class="bx bx-bullhorn me-2"></i>${notice.title}`;
-        
-        // Set notice content in the content div with proper formatting
-        const contentDiv = document.getElementById('noticeContent');
-        if (contentDiv) {
-            // Format content with proper paragraph breaks and advanced styling
-            let formattedContent = notice.content || '';
-            
-            // If content doesn't have HTML tags, format it properly
-            if (!formattedContent.includes('<p>') && !formattedContent.includes('<div>') && !formattedContent.includes('<h')) {
-                // Split by double line breaks for paragraphs
-                let paragraphs = formattedContent.split(/\n\n+/).filter(p => p.trim().length > 0);
-                
-                // If no double breaks, try splitting by single breaks but group related lines
-                if (paragraphs.length <= 1) {
-                    const lines = formattedContent.split(/\n/).filter(p => p.trim().length > 0);
-                    paragraphs = [];
-                    let currentPara = '';
-                    
-                    lines.forEach((line, index) => {
-                        line = line.trim();
-                        // Check if line is a heading indicator
-                        if (line.match(/^[📖🔹•▪▫]\s/) || line.match(/^[A-Z][^.!?]*:$/)) {
-                            if (currentPara) {
-                                paragraphs.push(currentPara);
-                                currentPara = '';
-                            }
-                            paragraphs.push(line);
-                        } else if (line.length > 0) {
-                            if (currentPara) {
-                                currentPara += ' ' + line;
-                            } else {
-                                currentPara = line;
-                            }
-                            // Start new paragraph if line ends with period or is long
-                            if (line.match(/[.!?]$/) || index === lines.length - 1) {
-                                paragraphs.push(currentPara);
-                                currentPara = '';
-                            }
-                        }
-                    });
-                    if (currentPara) paragraphs.push(currentPara);
-                }
-                
-                // Wrap each paragraph with proper formatting
-                formattedContent = paragraphs.map(p => {
-                    p = p.trim();
-                    if (!p) return '';
-                    
-                    // Handle special markers
-                    if (p.match(/^[📖🔹•▪▫]\s/)) {
-                        const text = p.replace(/^[📖🔹•▪▫]\s*/, '');
-                        return `<p class="fw-semibold text-primary mb-2"><i class="bx bx-info-circle me-1"></i>${text}</p>`;
-                    }
-                    // Handle headings (short lines or lines ending with colon)
-                    if (p.match(/^[A-Z][^.!?]*:$/) && p.length < 100) {
-                        return `<h5 class="fw-bold text-dark mb-3 mt-4">${p.replace(':', '')}</h5>`;
-                    }
-                    // Regular paragraph
-                    return `<p class="mb-3">${p}</p>`;
-                }).filter(p => p).join('');
-            } else {
-                // Content already has HTML, ensure proper spacing
-                formattedContent = formattedContent
-                    .replace(/(<\/p>)\s*(<p>)/g, '$1$2')
-                    .replace(/(<\/h[1-6]>)\s*(<p>)/g, '$1$2');
-            }
-            
-            contentDiv.innerHTML = `
-                <div class="notice-content">
-                    ${formattedContent}
-                </div>
-                <style>
-                    #noticeContent .notice-content {
-                        line-height: 1.9;
-                        font-size: 1.05rem;
-                        color: #495057;
-                    }
-                    #noticeContent .notice-content p {
-                        margin-bottom: 1.2rem;
-                        text-align: justify;
-                        word-wrap: break-word;
-                        text-indent: 0;
-                        line-height: 1.9;
-                    }
-                    #noticeContent .notice-content p:first-child {
-                        margin-top: 0;
-                    }
-                    #noticeContent .notice-content p:last-child {
-                        margin-bottom: 0;
-                    }
-                    #noticeContent .notice-content p.fw-semibold {
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        padding: 0.75rem 1rem;
-                        border-radius: 6px;
-                        margin: 1rem 0;
-                        text-align: left;
-                    }
-                    #noticeContent .notice-content h1, 
-                    #noticeContent .notice-content h2, 
-                    #noticeContent .notice-content h3, 
-                    #noticeContent .notice-content h4, 
-                    #noticeContent .notice-content h5, 
-                    #noticeContent .notice-content h6 {
-                        margin-top: 1.5rem;
-                        margin-bottom: 1rem;
-                        font-weight: 600;
-                        color: #212529;
-                        line-height: 1.4;
-                    }
-                    #noticeContent .notice-content h1:first-child,
-                    #noticeContent .notice-content h2:first-child,
-                    #noticeContent .notice-content h3:first-child,
-                    #noticeContent .notice-content h4:first-child,
-                    #noticeContent .notice-content h5:first-child {
-                        margin-top: 0;
-                    }
-                    #noticeContent .notice-content ul, 
-                    #noticeContent .notice-content ol {
-                        margin-bottom: 1.2rem;
-                        padding-left: 2rem;
-                        margin-top: 0.5rem;
-                    }
-                    #noticeContent .notice-content li {
-                        margin-bottom: 0.6rem;
-                        line-height: 1.7;
-                    }
-                    #noticeContent .notice-content strong {
-                        font-weight: 600;
-                        color: #212529;
-                    }
-                    #noticeContent .notice-content em {
-                        font-style: italic;
-                    }
-                    #noticeContent .notice-content blockquote {
-                        border-left: 4px solid #0d6efd;
-                        padding: 1rem 1rem 1rem 1.5rem;
-                        margin: 1.5rem 0;
-                        font-style: italic;
-                        color: #6c757d;
-                        background: #f8f9fa;
-                        border-radius: 4px;
-                    }
-                    #noticeContent .notice-content img {
-                        max-width: 100%;
-                        height: auto;
-                        border-radius: 8px;
-                        margin: 1rem 0;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                    }
-                    #noticeContent .notice-content a {
-                        color: #0d6efd;
-                        text-decoration: none;
-                        font-weight: 500;
-                    }
-                    #noticeContent .notice-content a:hover {
-                        text-decoration: underline;
-                    }
-                </style>
-            `;
-        }
-        
-        // Handle attachments
-        const attachmentsSection = document.getElementById('noticeAttachments');
-        const attachmentsList = document.getElementById('attachmentsList');
-        if (notice.attachments && notice.attachments.length > 0) {
-            attachmentsList.innerHTML = '';
-            notice.attachments.forEach((att, index) => {
-                const fileType = att.type || 'file';
-                const icon = fileType.includes('image') ? 'bx-image' : 
-                           fileType.includes('pdf') ? 'bx-file-blank' : 'bx-file';
-                const badgeColor = fileType.includes('image') ? 'bg-primary' : 
-                                 fileType.includes('pdf') ? 'bg-danger' : 'bg-secondary';
-                
-                attachmentsList.innerHTML += `
-                    <div class="col-md-6">
-                        <div class="card border h-100" style="transition: all 0.3s;">
-                            <div class="card-body p-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-shrink-0">
-                                        <span class="badge ${badgeColor} rounded-circle p-2">
-                                            <i class="bx ${icon} fs-5"></i>
-                                        </span>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="mb-0 text-truncate" style="max-width: 200px;" title="${att.name}">
-                                            ${att.name}
-                                        </h6>
-                                        <small class="text-muted">${fileType}</small>
-                                    </div>
-                                    <div class="flex-shrink-0 ms-2">
-                                        <a href="${att.url || '#'}" target="_blank" class="btn btn-sm btn-outline-primary" title="View">
-                                            <i class="bx bx-show"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            attachmentsSection.style.display = 'block';
-        } else {
-            attachmentsSection.style.display = 'none';
-        }
-        
-        // Show comment section and clear previous comment
-        const commentSection = document.getElementById('noticeCommentSection');
-        const commentField = document.getElementById('noticeComment');
-        if (commentSection) {
-            commentSection.style.display = 'block';
-        }
-        if (commentField) {
-            commentField.value = ''; // Clear previous comments
-            updateCommentCharCount();
-            // Add character counter event listener if not already added
-            commentField.removeEventListener('input', updateCommentCharCount);
-            commentField.addEventListener('input', updateCommentCharCount);
-            commentField.setAttribute('maxlength', '500');
-        }
-        
-        // Show/hide acknowledge button and close button
-        const acknowledgeBtn = document.getElementById('acknowledgeBtn');
-        const closeBtn = document.getElementById('closeBtn');
-        const modalCloseBtn = document.getElementById('modalCloseBtn');
-        
-        if (notice.require_acknowledgment) {
-            acknowledgeBtn.style.display = 'inline-block';
-            if (closeBtn) closeBtn.style.display = 'none';
-            if (modalCloseBtn) modalCloseBtn.style.display = 'none'; // Prevent closing without acknowledgment
-        } else {
-            acknowledgeBtn.style.display = 'none';
-            if (closeBtn) closeBtn.style.display = 'inline-block';
-            if (modalCloseBtn) modalCloseBtn.style.display = 'block';
-        }
-        
-        // Update date if available
-        const dateElement = document.getElementById('noticeDate');
-        if (dateElement) {
-            dateElement.textContent = new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-        }
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('noticeModal'));
-        modal.show();
-        
-        // Handle modal close - show next if available
-        const modalElement = document.getElementById('noticeModal');
-        modalElement.addEventListener('hidden.bs.modal', function onModalHidden() {
-            modalElement.removeEventListener('hidden.bs.modal', onModalHidden);
-            // Show next notice if available
-            if (noticeQueue.length > 0) {
-                setTimeout(() => showNextNotice(), 500);
-            }
-        }, { once: true });
-    }
-
-    function updateCommentCharCount() {
-        const commentField = document.getElementById('noticeComment');
-        const charCount = document.getElementById('commentCharCount');
-        if (commentField && charCount) {
-            const length = commentField.value.length;
-            charCount.textContent = length + ' / 500';
-            if (length > 450) {
-                charCount.classList.add('text-warning');
-                charCount.classList.remove('text-muted');
-            } else {
-                charCount.classList.remove('text-warning');
-                charCount.classList.add('text-muted');
-            }
-        }
-    }
-    
-    function previewAttachment(url, type, name) {
-        if (type.includes('image')) {
-            window.open(url, '_blank');
-        } else if (type.includes('pdf')) {
-            window.open(url, '_blank');
-        } else {
-            window.open(url, '_blank');
-        }
-    }
-    
-    function acknowledgeNotice() {
-        if (!currentNoticeId) return;
-        
-        const btn = document.getElementById('acknowledgeBtn');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bx bx-loader bx-spin me-2"></i>Processing...';
-        
-        // Get comment if provided
-        const commentField = document.getElementById('noticeComment');
-        const comment = commentField ? commentField.value.trim() : '';
-        
-        // Build the acknowledge URL
-        const acknowledgeUrl = '{{ url("/notices") }}/' + currentNoticeId + '/acknowledge';
-        fetch(acknowledgeUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                notes: comment || null
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('noticeModal'));
-                modal.hide();
-                
-                // Show next notice if available
-                if (noticeQueue.length > 0) {
-                    setTimeout(() => showNextNotice(), 500);
-                }
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: data.message || 'Failed to acknowledge notice',
-                    confirmButtonColor: '#d33'
-                });
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-            }
-        })
-        .catch(error => {
-            console.error('Error acknowledging notice:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'An error occurred while processing your acknowledgment. Please try again.',
-                confirmButtonColor: '#d33'
-            });
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        });
-    }
-    </script>
     <script>
     (function(){
       const notifCount = document.getElementById('notifCount');
@@ -920,19 +424,15 @@
               name: 'view',
               class: 'primary',
               callback: function(){
-                // Mark as shown in session (frontend)
+                // Mark as read if notification ID is available
                 if(notification.id){
-                  markNotificationAsShown(notification.id);
-                  // Also mark as shown in backend session
-                  fetch('{{ route('notifications.mark-shown') }}', {
+                  fetch(`{{ url('notifications') }}/${notification.id}/read`, {
                     method: 'POST',
                     headers: {
                       'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                       'X-Requested-With': 'XMLHttpRequest',
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ notification_id: notification.id })
+                      'Accept': 'application/json'
+                    }
                   }).catch(() => {});
                 }
                 // Navigate to the link
@@ -966,145 +466,98 @@
       function truncate(s, n){ return (s && s.length>n) ? (s.slice(0, n-1)+'…') : s; }
       function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
-      // Track shown notifications per login session (using sessionStorage)
-      const NOTIFICATION_SESSION_KEY = 'ofisilink_notifications_session';
-      const LOGIN_SESSION_KEY = 'ofisilink_login_time';
-      let popupShownThisLogin = false;
+      // Track shown notifications and timing
+      const NOTIFICATION_STORAGE_KEY = 'ofisilink_notifications';
+      const MIN_DELAY_BETWEEN_NOTIFICATIONS = 2 * 60 * 1000; // 2 minutes in milliseconds
+      const MAX_DISPLAYS_PER_HOUR = 5;
       
-      // Initialize login time if not set (first time this session)
-      function initializeLoginSession(){
+      function getStoredNotificationData(){
         try {
-          const loginTime = sessionStorage.getItem(LOGIN_SESSION_KEY);
-          if(!loginTime){
-            // Set login time to current time
-            sessionStorage.setItem(LOGIN_SESSION_KEY, Date.now().toString());
-            popupShownThisLogin = false;
-          } else {
-            // Check if we've already shown popup this login
-            const shownIds = getShownNotificationIds();
-            popupShownThisLogin = shownIds.length > 0;
-          }
-        } catch(e){
-          popupShownThisLogin = false;
-        }
-      }
-      
-      function getShownNotificationIds(){
-        try {
-          const stored = sessionStorage.getItem(NOTIFICATION_SESSION_KEY);
+          const stored = localStorage.getItem(NOTIFICATION_STORAGE_KEY);
           if(stored){
             const data = JSON.parse(stored);
-            return data.shownIds || [];
-          }
-        } catch(e){}
-        return [];
-      }
-      
-      function markNotificationAsShown(notificationId){
-        try {
-          const stored = sessionStorage.getItem(NOTIFICATION_SESSION_KEY);
-          let data = { shownIds: [] };
-          if(stored){
-            data = JSON.parse(stored);
-          }
-          if(!data.shownIds){
-            data.shownIds = [];
-          }
-          if(!data.shownIds.includes(notificationId)){
-            data.shownIds.push(notificationId);
-            sessionStorage.setItem(NOTIFICATION_SESSION_KEY, JSON.stringify(data));
-          }
-        } catch(e){}
-      }
-      
-      // Show popup once per login for unread notifications
-      async function showLoginNotificationsOnce(){
-        // Only show once per login session
-        if(popupShownThisLogin){
-          return;
-        }
-        
-        try {
-          const res = await fetch('{{ route('notifications.unread') }}', { headers: {'X-Requested-With':'XMLHttpRequest'} });
-          if(!res.ok) return;
-          const data = await res.json();
-          if(data && data.success && Array.isArray(data.notifications) && data.notifications.length > 0){
-            const shownIds = getShownNotificationIds();
-            
-            // Filter out already shown notifications and login notifications
-            const newNotifications = data.notifications.filter(function(n){
-              // Skip if already shown
-              if(shownIds.includes(n.id)){
-                return false;
-              }
-              // Skip login notification - it's handled separately and only shown once
-              if(n.message && n.message.includes('successfully logged into')){
-                return false;
-              }
-              return true;
-            });
-            
-            // Show popup for first unread notification if any (excluding login notification)
-            if(newNotifications.length > 0){
-              const firstNotification = newNotifications[0];
-              showNotificationToast(firstNotification);
-              markNotificationAsShown(firstNotification.id);
-              popupShownThisLogin = true;
-              
-              // Also mark as shown in backend session
-              fetch('{{ route('notifications.mark-shown') }}', {
-                method: 'POST',
-                headers: {
-                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ notification_id: firstNotification.id })
-              }).catch(() => {});
+            // Clean up old data (older than 1 hour)
+            const oneHourAgo = Date.now() - (60 * 60 * 1000);
+            if(data.lastHourReset && data.lastHourReset < oneHourAgo){
+              // Reset hour counter
+              data.displaysThisHour = 0;
+              data.lastHourReset = Date.now();
             }
+            return data;
           }
-        } catch (e) {
-          // silent
-        }
+        } catch(e){}
+        return {
+          shownIds: [],
+          lastDisplayTime: 0,
+          displaysThisHour: 0,
+          lastHourReset: Date.now(),
+          pendingNotifications: []
+        };
       }
       
-      // Handle login notification separately - show only once per login from session (NO DB entry)
-      function showLoginNotificationOnce(){
-        const LOGIN_NOTIF_KEY = 'login_notification_shown';
-        if(sessionStorage.getItem(LOGIN_NOTIF_KEY)){
-          return; // Already shown this login
+      function saveStoredNotificationData(data){
+        try {
+          localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(data));
+        } catch(e){}
+      }
+      
+      function canShowNotification(data){
+        const now = Date.now();
+        const oneHourAgo = now - (60 * 60 * 1000);
+        
+        // Reset hour counter if needed
+        if(data.lastHourReset < oneHourAgo){
+          data.displaysThisHour = 0;
+          data.lastHourReset = now;
         }
         
-        // Check if login notification message exists in server session
-        @if(session('login_notification_message'))
-          const loginMessage = '{{ session('login_notification_message') }}';
-          if(loginMessage){
-            // Show login notification as toast (no DB entry, just session-based)
-            const loginNotification = {
-              id: 'login_' + Date.now(),
-              message: loginMessage,
-              link: '{{ route('dashboard') }}',
-              time: 'Just now'
-            };
-            
-            // Show the notification toast
-            showNotificationToast(loginNotification);
-            
-            // Mark as shown in sessionStorage to prevent showing again
-            sessionStorage.setItem(LOGIN_NOTIF_KEY, 'true');
-            
-            // Clear the session data so it won't show on refresh
-            fetch('{{ route('notifications.clear-login-notification') }}', {
-              method: 'POST',
-              headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-              }
-            }).catch(() => {});
+        // Check if we've exceeded displays per hour
+        if(data.displaysThisHour >= MAX_DISPLAYS_PER_HOUR){
+          return false;
+        }
+        
+        // Check if enough time has passed since last display
+        const timeSinceLastDisplay = now - data.lastDisplayTime;
+        if(timeSinceLastDisplay < MIN_DELAY_BETWEEN_NOTIFICATIONS){
+          return false;
+        }
+        
+        return true;
+      }
+      
+      function processPendingNotifications(){
+        const data = getStoredNotificationData();
+        
+        // Check if we can show a notification
+        if(!canShowNotification(data)){
+          return; // Wait for next check
+        }
+        
+        // Get next pending notification
+        if(data.pendingNotifications && data.pendingNotifications.length > 0){
+          const notification = data.pendingNotifications.shift();
+          
+          // Show the notification
+          showNotificationToast(notification);
+          
+          // Update tracking - mark as shown AFTER displaying
+          data.lastDisplayTime = Date.now();
+          data.displaysThisHour = (data.displaysThisHour || 0) + 1;
+          // Mark this notification as shown so it won't be displayed again
+          if(!data.shownIds.includes(notification.id)){
+            data.shownIds.push(notification.id);
           }
-        @endif
+          
+          // Keep only last 100 shown IDs
+          if(data.shownIds.length > 100){
+            data.shownIds = data.shownIds.slice(-100);
+          }
+          
+          saveStoredNotificationData(data);
+          
+          // Schedule next notification check after delay
+          setTimeout(processPendingNotifications, MIN_DELAY_BETWEEN_NOTIFICATIONS);
+        }
       }
       
       async function pollNotifications(){
@@ -1112,8 +565,38 @@
           const res = await fetch('{{ route('notifications.unread') }}', { headers: {'X-Requested-With':'XMLHttpRequest'} });
           if(!res.ok) return;
           const data = await res.json();
-          if(data && data.success){
-            // Update bell count (only current day notifications)
+          if(data && data.success && Array.isArray(data.notifications)){
+            const storedData = getStoredNotificationData();
+            
+            // Filter out already shown notifications and those already in pending queue
+            const newNotifications = data.notifications.filter(function(n){
+              // Skip if already shown
+              if(storedData.shownIds.includes(n.id)){
+                return false;
+              }
+              // Skip if already in pending queue
+              const alreadyPending = storedData.pendingNotifications.some(function(p){
+                return p.id === n.id;
+              });
+              return !alreadyPending;
+            });
+            
+            // Add new notifications to pending queue (don't mark as shown yet)
+            newNotifications.forEach(function(n){
+              storedData.pendingNotifications.push(n);
+            });
+            
+            // Keep only last 100 shown IDs
+            if(storedData.shownIds.length > 100){
+              storedData.shownIds = storedData.shownIds.slice(-100);
+            }
+            
+            saveStoredNotificationData(storedData);
+            
+            // Try to process pending notifications
+            processPendingNotifications();
+            
+            // Update bell count and refresh dropdown
             if(typeof data.count === 'number'){
               notifCount.style.display = data.count>0 ? 'inline-block':'none';
               notifCount.textContent = data.count;
@@ -1148,54 +631,13 @@
         }
       };
       
-      // Initialize login session tracking
-      initializeLoginSession();
-      
-      // Initial load and show popup once per login
-      setTimeout(function(){ 
-        pollNotifications(); 
-        loadNotifDropdown(true);
-        // Show login notification once per login (separate from other notifications)
-        showLoginNotificationOnce();
-        // Show popup once per login for other unread notifications (excluding login)
-        showLoginNotificationsOnce();
-      }, 1500);
-      
-      // Poll every 20 seconds to check for new notifications (count only, no popup)
+      // Initial and interval poll
+      setTimeout(function(){ pollNotifications(); loadNotifDropdown(true); }, 1500);
+      // Poll every 20 seconds to check for new notifications
       setInterval(pollNotifications, 20000);
-      
+      // Also check for pending notifications every 30 seconds
+      setInterval(processPendingNotifications, 30000);
       document.getElementById('notifBell').addEventListener('click', function(){ loadNotifDropdown(true); });
-    })();
-
-    // Dropdown hover functionality
-    (function() {
-      document.addEventListener('DOMContentLoaded', function() {
-        // Enable hover for dropdowns with dropdown-hover class
-        const hoverDropdowns = document.querySelectorAll('.dropdown-hover');
-        hoverDropdowns.forEach(function(dropdown) {
-          const toggle = dropdown.querySelector('[data-bs-toggle="dropdown"]');
-          const menu = dropdown.querySelector('.dropdown-menu');
-          
-          if (toggle && menu) {
-            let hoverTimeout;
-            
-            dropdown.addEventListener('mouseenter', function() {
-              clearTimeout(hoverTimeout);
-              const bsDropdown = bootstrap.Dropdown.getInstance(toggle) || new bootstrap.Dropdown(toggle);
-              bsDropdown.show();
-            });
-            
-            dropdown.addEventListener('mouseleave', function() {
-              hoverTimeout = setTimeout(function() {
-                const bsDropdown = bootstrap.Dropdown.getInstance(toggle);
-                if (bsDropdown) {
-                  bsDropdown.hide();
-                }
-              }, 200);
-            });
-          }
-        });
-      });
     })();
 
     // Auto-logout on idle with 30-second warning

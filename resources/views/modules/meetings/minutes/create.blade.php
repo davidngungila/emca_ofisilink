@@ -109,7 +109,10 @@
         @csrf
         <input type="hidden" name="meeting_id" id="minutes_meeting_id" value="{{ $meeting->id }}">
 
-        <!-- Previous Actions Section -->
+        {{-- Include Template Structure Sections --}}
+        @include('modules.meetings.minutes.partials.template-form-sections')
+
+        <!-- Previous Actions Section (Legacy - can be removed if using template format) -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -330,13 +333,25 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label">Closing Time</label>
                                 <input type="time" name="closing_time" id="closing_time" class="form-control" value="{{ \Carbon\Carbon::parse($meeting->end_time)->format('H:i') }}">
                             </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Closing Hymn</label>
+                                <input type="text" name="closing_hymn" id="closing_hymn" class="form-control" placeholder="e.g., 'Bwana u sehemu yangu'">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Closing Prayer Leader</label>
+                                <input type="text" name="closing_prayer_leader" id="closing_prayer_leader" class="form-control" placeholder="Enter name of prayer leader">
+                            </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Closing Remarks</label>
-                                <textarea name="closing_remarks" id="closing_remarks" class="form-control" rows="3" placeholder="Enter closing remarks..."></textarea>
+                                <label class="form-label">Closing Words/Remarks</label>
+                                <textarea name="closing_remarks" id="closing_remarks" class="form-control" rows="3" placeholder="Enter closing remarks/words (e.g., 'NEEMA')"></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Organization Motto/Tagline</label>
+                                <input type="text" name="organization_motto" id="organization_motto" class="form-control" placeholder="e.g., 'Unity is Our Progress' / 'Umoja Wetu Ndiyo Maendeleo Yetu'">
                             </div>
                         </div>
                         <div class="text-end">
@@ -551,6 +566,17 @@ $(document).ready(function() {
     // Preview minutes
     $('#preview-minutes-btn').on('click', function() {
         previewMinutes();
+    });
+
+    // Add follow-up row
+    $('#add-follow-up-btn').on('click', function() {
+        addFollowUpRow();
+    });
+
+    // Remove follow-up row
+    $(document).on('click', '.remove-followup-btn', function() {
+        $(this).closest('tr').remove();
+        updateFollowUpRefNumbers();
     });
 });
 
@@ -867,6 +893,26 @@ function finalizeMinutes() {
 // Preview minutes
 function previewMinutes() {
     window.open('/modules/meetings/' + meetingId + '/minutes/preview', '_blank');
+}
+
+// Add follow-up row
+function addFollowUpRow() {
+    const template = document.getElementById('follow-up-row-template');
+    if (!template) {
+        console.error('Follow-up template not found');
+        return;
+    }
+    const clone = template.content.cloneNode(true);
+    $('#follow-ups-table').append(clone);
+    updateFollowUpRefNumbers();
+}
+
+// Update follow-up reference numbers
+function updateFollowUpRefNumbers() {
+    $('#follow-ups-table .follow-up-row').each(function(index) {
+        const refNo = index + 1;
+        $(this).find('input[name="followup_ref_no[]"]').val('Ref. ' + refNo);
+    });
 }
 
 function escapeHtml(text) {

@@ -131,67 +131,6 @@ class AttendanceSettingsController extends Controller
     }
 
     /**
-     * Show the form for creating a new device
-     */
-    public function createDevice()
-    {
-        $user = Auth::user();
-        
-        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
-            abort(403, 'Unauthorized');
-        }
-        
-        $locations = AttendanceLocation::where('is_active', true)->orderBy('name')->get();
-        
-        return view('modules.hr.attendance-settings-devices-form', [
-            'device' => null,
-            'locations' => $locations,
-            'mode' => 'create'
-        ]);
-    }
-
-    /**
-     * Show the form for editing a device
-     */
-    public function editDevice($id)
-    {
-        $user = Auth::user();
-        
-        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
-            abort(403, 'Unauthorized');
-        }
-        
-        try {
-            $device = AttendanceDevice::with(['location'])->findOrFail($id);
-            $locations = AttendanceLocation::where('is_active', true)->orderBy('name')->get();
-            
-            // Log for debugging
-            Log::info('Loading device for edit', [
-                'device_id' => $id,
-                'device_exists' => $device ? 'yes' : 'no',
-                'device_name' => $device->name ?? 'N/A'
-            ]);
-            
-            return view('modules.hr.attendance-settings-devices-form', [
-                'device' => $device,
-                'locations' => $locations,
-                'mode' => 'edit'
-            ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::error('Device not found for edit: ' . $id);
-            abort(404, 'Device not found');
-        } catch (\Throwable $e) {
-            Log::error('Error loading device for edit: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            Log::error('Device ID: ' . $id);
-            Log::error('Error class: ' . get_class($e));
-            
-            // Return a simple error response
-            return response('Error loading device: ' . $e->getMessage() . '. Check logs for details.', 500);
-        }
-    }
-
-    /**
      * Get devices list (API endpoint)
      */
     public function getDevices()
@@ -229,68 +168,12 @@ class AttendanceSettingsController extends Controller
             ], 403);
         }
         
-        try {
-            // Load device with relationships, but handle missing relationships gracefully
-            $device = AttendanceDevice::with(['location'])->findOrFail($id);
-            
-            // Load creator and updater separately to avoid errors if they don't exist
-            if ($device->created_by) {
-                $device->load('creator');
-            }
-            if ($device->updated_by) {
-                $device->load('updater');
-            }
-            
-            return response()->json([
-                'success' => true,
-                'device' => $device
-            ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Device not found'
-            ], 404);
-        } catch (\Exception $e) {
-            Log::error('Error getting device: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error loading device: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Show device details page
-     */
-    public function showDevice($id)
-    {
-        $user = Auth::user();
+        $device = AttendanceDevice::with(['location', 'creator', 'updater'])->findOrFail($id);
         
-        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
-            abort(403, 'Unauthorized');
-        }
-        
-        try {
-            $device = AttendanceDevice::with(['location'])->findOrFail($id);
-            
-            // Load relationships separately to avoid errors
-            if ($device->created_by) {
-                $device->load('creator');
-            }
-            if ($device->updated_by) {
-                $device->load('updater');
-            }
-            
-            return view('modules.hr.attendance-settings-devices-show', [
-                'device' => $device
-            ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            abort(404, 'Device not found');
-        } catch (\Exception $e) {
-            Log::error('Error loading device for show: ' . $e->getMessage());
-            abort(500, 'Error loading device. Please check the logs.');
-        }
+        return response()->json([
+            'success' => true,
+            'device' => $device
+        ]);
     }
 
     /**
@@ -370,7 +253,7 @@ class AttendanceSettingsController extends Controller
         
         // Extract device connection details from database, fallback to config
         if ($device) {
-            $deviceIp = $device->getConnectionIp() ?? config('zkteco.ip', '192.168.100.108');
+            $deviceIp = $device->ip_address ?? config('zkteco.ip', '192.168.100.108');
             $devicePort = $device->port ?? config('zkteco.port', 4370);
             $deviceCommKey = isset($device->settings['comm_key']) ? $device->settings['comm_key'] : config('zkteco.password', 0);
         } else {
@@ -634,11 +517,9 @@ class AttendanceSettingsController extends Controller
             'serial_number' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:attendance_locations,id',
             'ip_address' => 'nullable|ip',
-            'public_ip_address' => 'nullable|ip|required_if:is_online_mode,1',
             'mac_address' => 'nullable|string|max:17',
             'port' => 'nullable|integer|min:1|max:65535',
             'connection_type' => 'required|string|in:network,usb,bluetooth,wifi',
-            'is_online_mode' => 'boolean',
             'connection_config' => 'nullable|array',
             'capabilities' => 'nullable|array',
             'settings' => 'nullable|array',
@@ -647,13 +528,10 @@ class AttendanceSettingsController extends Controller
         ]);
 
         if ($validator->fails()) {
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
         try {
@@ -666,41 +544,29 @@ class AttendanceSettingsController extends Controller
                 'serial_number' => $request->serial_number,
                 'location_id' => $request->location_id,
                 'ip_address' => $request->ip_address,
-                'public_ip_address' => $request->public_ip_address,
                 'mac_address' => $request->mac_address,
                 'port' => $request->port,
                 'connection_type' => $request->connection_type,
-                'is_online_mode' => $request->has('is_online_mode') ? (bool)$request->is_online_mode : false,
                 'connection_config' => $request->connection_config,
                 'capabilities' => $request->capabilities,
                 'settings' => $request->settings,
                 'sync_interval_minutes' => $request->sync_interval_minutes ?? 5,
                 'notes' => $request->notes,
-                'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+                'is_active' => $request->is_active ?? true,
                 'created_by' => Auth::id(),
             ]);
 
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Device created successfully.',
-                    'device' => $device->load('location', 'creator'),
-                ]);
-            }
-            
-            return redirect()->route('modules.hr.attendance.settings.devices')
-                ->with('success', 'Device created successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Device created successfully.',
+                'device' => $device->load('location', 'creator'),
+            ]);
         } catch (\Exception $e) {
             Log::error('Create device error: ' . $e->getMessage());
-            
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create device.',
-                ], 500);
-            }
-            
-            return back()->with('error', 'Failed to create device: ' . $e->getMessage())->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create device.',
+            ], 500);
         }
     }
 
@@ -720,11 +586,9 @@ class AttendanceSettingsController extends Controller
             'serial_number' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:attendance_locations,id',
             'ip_address' => 'nullable|ip',
-            'public_ip_address' => 'nullable|ip|required_if:is_online_mode,1',
             'mac_address' => 'nullable|string|max:17',
             'port' => 'nullable|integer|min:1|max:65535',
             'connection_type' => 'required|string|in:network,usb,bluetooth,wifi',
-            'is_online_mode' => 'boolean',
             'connection_config' => 'nullable|array',
             'capabilities' => 'nullable|array',
             'settings' => 'nullable|array',
@@ -734,13 +598,10 @@ class AttendanceSettingsController extends Controller
         ]);
 
         if ($validator->fails()) {
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
-            return back()->withErrors($validator)->withInput();
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
         try {
@@ -753,41 +614,29 @@ class AttendanceSettingsController extends Controller
                 'serial_number' => $request->serial_number,
                 'location_id' => $request->location_id,
                 'ip_address' => $request->ip_address,
-                'public_ip_address' => $request->public_ip_address,
                 'mac_address' => $request->mac_address,
                 'port' => $request->port,
                 'connection_type' => $request->connection_type,
-                'is_online_mode' => $request->has('is_online_mode') ? (bool)$request->is_online_mode : false,
                 'connection_config' => $request->connection_config,
                 'capabilities' => $request->capabilities,
                 'settings' => $request->settings,
-                'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+                'is_active' => $request->is_active ?? true,
                 'sync_interval_minutes' => $request->sync_interval_minutes ?? 5,
                 'notes' => $request->notes,
                 'updated_by' => Auth::id(),
             ]);
 
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Device updated successfully.',
-                    'device' => $device->load('location', 'creator', 'updater'),
-                ]);
-            }
-            
-            return redirect()->route('modules.hr.attendance.settings.devices')
-                ->with('success', 'Device updated successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Device updated successfully.',
+                'device' => $device->load('location', 'creator', 'updater'),
+            ]);
         } catch (\Exception $e) {
             Log::error('Update device error: ' . $e->getMessage());
-            
-            if ($request->expectsJson() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update device.',
-                ], 500);
-            }
-            
-            return back()->with('error', 'Failed to update device: ' . $e->getMessage())->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update device.',
+            ], 500);
         }
     }
 
@@ -822,36 +671,8 @@ class AttendanceSettingsController extends Controller
         try {
             $device = AttendanceDevice::findOrFail($id);
             
-            // Get connection IP (uses public IP if online mode is enabled)
-            $connectionIp = $device->getConnectionIp();
-            if (!$connectionIp) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Device IP address is not configured'
-                ], 400);
-            }
-            
-            // Actually test the connection using ZKTecoService
-            // For online mode, we need longer timeout as connections over internet can be slower
-            $zktecoService = new \App\Services\ZKTecoService(
-                $connectionIp,
-                $device->port ?? 4370,
-                $device->settings['comm_key'] ?? 0
-            );
-            
-            // Log connection attempt details
-            Log::info("Testing device connection", [
-                'device_id' => $device->id,
-                'device_name' => $device->name,
-                'connection_ip' => $connectionIp,
-                'port' => $device->port ?? 4370,
-                'is_online_mode' => $device->is_online_mode,
-                'local_ip' => $device->ip_address,
-                'public_ip' => $device->public_ip_address
-            ]);
-            
-            $testResult = $zktecoService->testConnection();
-            $isOnline = $testResult['success'] ?? false;
+            // Test connection
+            $isOnline = $this->testDeviceConnection($device);
             
             // Update device status
             if ($isOnline) {
@@ -868,111 +689,32 @@ class AttendanceSettingsController extends Controller
                 $isOnline ? 'test_success' : 'test_failed',
                 "Device connection test: {$device->name} - " . ($isOnline ? 'Online' : 'Offline'),
                 $device,
-                ['ip_address' => $connectionIp, 'is_online' => $isOnline]
+                ['ip_address' => $device->ip_address, 'is_online' => $isOnline]
             );
-            
-            // Build response message with device info if available
-            if ($isOnline) {
-                $message = 'Device is online and connected';
-                if (isset($testResult['device_info'])) {
-                    $deviceInfo = $testResult['device_info'];
-                    $message .= "\n\nIP: {$connectionIp}\n";
-                    $message .= "Port: " . ($device->port ?? 4370) . "\n";
-                    if (isset($deviceInfo['model'])) {
-                        $message .= "Model: {$deviceInfo['model']}\n";
-                    }
-                    if (isset($deviceInfo['firmware'])) {
-                        $message .= "Firmware: {$deviceInfo['firmware']}";
-                    }
-                }
-            } else {
-                // Provide detailed error message for online mode
-                $errorMessage = $testResult['message'] ?? 'Device is offline or unreachable';
-                
-                if ($device->is_online_mode) {
-                    $message = "Failed to connect to device via public IP.\n\n";
-                    $message .= "Connection Details:\n";
-                    $message .= "• Public IP: {$connectionIp}\n";
-                    $message .= "• Port: " . ($device->port ?? 4370) . "\n";
-                    $message .= "• Local IP: " . ($device->ip_address ?? 'Not set') . "\n\n";
-                    $message .= "Troubleshooting Steps:\n";
-                    $message .= "1. Verify port forwarding is configured on the router\n";
-                    $message .= "   - External Port: " . ($device->port ?? 4370) . "\n";
-                    $message .= "   - Internal IP: " . ($device->ip_address ?? 'Device local IP') . "\n";
-                    $message .= "   - Internal Port: " . ($device->port ?? 4370) . "\n";
-                    $message .= "2. Check if the device firewall allows connections\n";
-                    $message .= "3. Verify the public IP address is correct: {$connectionIp}\n";
-                    $message .= "4. Test connection from device network first (using local IP)\n";
-                    $message .= "5. Ensure router firewall allows incoming connections on port " . ($device->port ?? 4370) . "\n\n";
-                    $message .= "Error: {$errorMessage}";
-                } else {
-                    $message = $errorMessage;
-                }
-            }
             
             return response()->json([
                 'success' => true,
                 'is_online' => $isOnline,
-                'message' => $message,
+                'message' => $isOnline ? 'Device is online and connected' : 'Device is offline or unreachable',
                 'last_sync' => $device->last_sync_at ? $device->last_sync_at->format('Y-m-d H:i:s') : null,
                 'device' => $device,
-                'device_info' => $testResult['device_info'] ?? null,
             ]);
         } catch (\Exception $e) {
             Log::error('Test device error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             
             if (isset($device)) {
-                // Mark device as offline on error
-                $device->is_online = false;
-                $device->save();
-                
-                // Build detailed error message for online mode
-                $errorMessage = $e->getMessage();
-                if ($device->is_online_mode) {
-                    $errorMessage = "Connection failed to device via public IP.\n\n";
-                    $errorMessage .= "Connection Details:\n";
-                    $errorMessage .= "• Public IP: {$connectionIp}\n";
-                    $errorMessage .= "• Port: " . ($device->port ?? 4370) . "\n";
-                    $errorMessage .= "• Local IP: " . ($device->ip_address ?? 'Not set') . "\n\n";
-                    $errorMessage .= "Error: " . $e->getMessage() . "\n\n";
-                    $errorMessage .= "Troubleshooting Steps:\n";
-                    $errorMessage .= "1. Verify port forwarding is configured on the router:\n";
-                    $errorMessage .= "   - Forward external port " . ($device->port ?? 4370) . " to internal IP " . ($device->ip_address ?? 'device local IP') . ":" . ($device->port ?? 4370) . "\n";
-                    $errorMessage .= "2. Check router firewall allows incoming connections on port " . ($device->port ?? 4370) . "\n";
-                    $errorMessage .= "3. Verify device firewall allows connections from internet\n";
-                    $errorMessage .= "4. Test connection from device's local network first (using local IP)\n";
-                    $errorMessage .= "5. Ensure public IP address is correct: {$connectionIp}\n";
-                    $errorMessage .= "6. Check if ISP is blocking the port\n";
-                    $errorMessage .= "7. Verify device is powered on and connected to network";
-                }
-                
                 ActivityLogService::log(
                     'test_error',
                     "Device connection test failed: {$device->name} - " . $e->getMessage(),
                     $device,
-                    ['ip_address' => $connectionIp ?? null, 'error' => $e->getMessage(), 'is_online_mode' => $device->is_online_mode ?? false]
+                    ['error' => $e->getMessage()]
                 );
-                
-                return response()->json([
-                    'success' => false,
-                    'is_online' => false,
-                    'message' => $errorMessage ?? $e->getMessage(),
-                    'device' => $device ?? null,
-                    'connection_details' => [
-                        'public_ip' => ($device->is_online_mode ?? false) ? ($connectionIp ?? null) : null,
-                        'local_ip' => $device->ip_address ?? null,
-                        'port' => $device->port ?? 4370,
-                        'is_online_mode' => $device->is_online_mode ?? false
-                    ]
-                ], 500);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'is_online' => false,
-                    'message' => $e->getMessage(),
-                ], 500);
             }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to test device: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -2142,7 +1884,7 @@ class AttendanceSettingsController extends Controller
                 }
                 
                 // Check IP connectivity (basic ping test)
-                if ($device->getConnectionIp() && $isFailed) {
+                if ($device->ip_address && $isFailed) {
                     // In production, you might want to actually ping the device
                     // For now, we'll just mark it based on sync status
                 }
@@ -2151,7 +1893,7 @@ class AttendanceSettingsController extends Controller
                     $failedDevices[] = [
                         'id' => $device->id,
                         'name' => $device->name,
-                        'ip_address' => $device->getConnectionIp(),
+                        'ip_address' => $device->ip_address,
                         'device_id' => $device->device_id,
                         'last_sync_at' => $device->last_sync_at ? $device->last_sync_at->diffForHumans() : 'Never',
                         'error_message' => $errorMessage,
@@ -2232,10 +1974,7 @@ class AttendanceSettingsController extends Controller
      */
     private function testDeviceConnection($device)
     {
-        // Get the correct IP address (public if online mode is enabled)
-        $ipAddress = $device->getConnectionIp();
-        
-        if (!$ipAddress) {
+        if (!$device->ip_address) {
             return false;
         }
         
@@ -2349,8 +2088,6 @@ class AttendanceSettingsController extends Controller
                 case 2:
                     $device->connection_type = $request->connection_type ?? 'network';
                     $device->ip_address = $request->ip_address;
-                    $device->public_ip_address = $request->public_ip_address;
-                    $device->is_online_mode = $request->is_online_mode ?? false;
                     $device->port = $request->port ?? 4370;
                     $device->sync_interval_minutes = $request->sync_interval_minutes ?? 5;
                     break;
@@ -2598,14 +2335,13 @@ class AttendanceSettingsController extends Controller
                 }
             }
 
-            // Get connection IP (uses public IP if online mode is enabled)
-            $connectionIp = $device->getConnectionIp();
-            if (!$connectionIp) {
+            // Check if device is online and accessible
+            if (!$device->ip_address) {
                 throw new \Exception('Device IP address is not configured');
             }
 
             // Get connection parameters
-            $deviceIp = $request->ip_address ?? $connectionIp;
+            $deviceIp = $request->ip_address ?? $device->ip_address;
             $devicePort = $request->port ?? $device->port ?? 4370;
             $commKey = $request->comm_key ?? $device->settings['comm_key'] ?? 0;
             
@@ -2642,7 +2378,7 @@ class AttendanceSettingsController extends Controller
                 'enroll_id' => $enrollId,
                 'uid' => $uid,
                 'device_id' => $device->id,
-                'device_ip' => $device->getConnectionIp()
+                'device_ip' => $device->ip_address
             ]);
 
             $registrationResult = $zktecoService->registerUser(
@@ -2768,7 +2504,7 @@ class AttendanceSettingsController extends Controller
                 try {
                     // Initialize ZKTeco service
                     $zktecoService = new \App\Services\ZKTecoService(
-                        $device->getConnectionIp(),
+                        $device->ip_address,
                         $device->port ?? 4370,
                         $device->settings['comm_key'] ?? 0
                     );
@@ -3155,8 +2891,7 @@ class AttendanceSettingsController extends Controller
         try {
             $device = AttendanceDevice::findOrFail($id);
             
-            $connectionIp = $device->getConnectionIp();
-            if (!$connectionIp) {
+            if (!$device->ip_address) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Device IP address is not configured'
@@ -3165,7 +2900,7 @@ class AttendanceSettingsController extends Controller
 
             // Use ZKTecoService to sync directly from device
             $zktecoService = new \App\Services\ZKTecoService(
-                $connectionIp,
+                $device->ip_address,
                 $device->port ?? 4370,
                 $device->settings['comm_key'] ?? 0
             );
