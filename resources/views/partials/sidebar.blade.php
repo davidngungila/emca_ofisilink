@@ -126,6 +126,34 @@
         </a>
       </li>
       
+      <!-- Notices/Announcements - Available to ALL -->
+      @php
+        $hasNoticesRoute = \Illuminate\Support\Facades\Route::has('notices.index');
+      @endphp
+      @if($hasNoticesRoute)
+      <li class="menu-item {{ request()->routeIs('notices.*') ? 'active' : '' }}">
+        <a href="{{ route('notices.index') }}" class="menu-link">
+          <div data-i18n="Notices / Announcements" style="font-weight: bold;">Notices / Announcements</div>
+        </a>
+      </li>
+      @endif
+      
+      <!-- My Training Reports - For staff with approved training permissions -->
+      @php
+        $userTrainingPermissions = \App\Models\PermissionRequest::where('user_id', auth()->id())
+          ->where('is_for_training', true)
+          ->where('status', 'approved')
+          ->whereNotNull('training_id')
+          ->count();
+      @endphp
+      @if($userTrainingPermissions > 0)
+      <li class="menu-item {{ request()->routeIs('trainings.report') || request()->routeIs('trainings.my-reports') ? 'active' : '' }}">
+        <a href="{{ route('trainings.my-reports') }}" class="menu-link">
+          <div data-i18n="My Training Reports" style="font-weight: bold;">My Training Reports</div>
+        </a>
+      </li>
+      @endif
+      
       <!-- Training Management - Available to HR, HOD, System Admin, General Manager, CEO -->
       @if($isHR || $isHOD || $isSystemAdmin || $isGeneralManager || $isCEO)
       <li class="menu-item {{ request()->routeIs('trainings.*') ? 'active' : '' }}">

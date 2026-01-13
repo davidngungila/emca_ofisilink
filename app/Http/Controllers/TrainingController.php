@@ -1033,5 +1033,32 @@ class TrainingController extends Controller
             ->with('search', $request->search)
             ->with('filters', $request->only(['category', 'status', 'start_date', 'end_date']));
     }
+
+    /**
+     * Show user's training reports
+     */
+    public function myReports(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Get all approved training permissions for this user
+        $trainingPermissions = PermissionRequest::where('user_id', $user->id)
+            ->where('is_for_training', true)
+            ->where('status', 'approved')
+            ->whereNotNull('training_id')
+            ->with(['training', 'training.reports' => function($q) use ($user) {
+                $q->where('created_by', $user->id);
+            }])
+            ->orderBy('start_datetime', 'desc')
+            ->get();
+        
+        // Get all training reports by this user
+        $myReports = TrainingReport::where('created_by', $user->id)
+            ->with(['training', 'permissionRequest'])
+            ->orderBy('report_date', 'desc')
+            ->get();
+        
+        return view('modules.trainings.my-reports', compact('trainingPermissions', 'myReports'));
+    }
 }
 

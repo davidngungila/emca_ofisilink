@@ -223,6 +223,7 @@ Route::middleware(['auth'])->group(function () {
     // Training Management Routes
     Route::prefix('trainings')->name('trainings.')->group(function () {
         Route::get('/', [TrainingController::class, 'index'])->name('index');
+        Route::get('/my-reports', [TrainingController::class, 'myReports'])->name('my-reports');
         Route::get('/search', [TrainingController::class, 'search'])->name('search');
         Route::get('/analytics', [TrainingController::class, 'analytics'])->name('analytics');
         Route::get('/calendar', [TrainingController::class, 'calendar'])->name('calendar');
@@ -241,6 +242,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{training}/evaluation', [TrainingController::class, 'storeEvaluation'])->name('evaluation.store');
         Route::post('/{training}/send-notifications', [TrainingController::class, 'sendNotifications'])->name('send-notifications');
         Route::delete('/{training}/documents/{document}', [TrainingController::class, 'deleteDocument'])->name('delete-document');
+    });
+
+    // Notices/Announcements Routes
+    Route::prefix('notices')->name('notices.')->group(function () {
+        Route::get('/', [NoticeController::class, 'index'])->name('index');
+        Route::get('/create', [NoticeController::class, 'create'])->name('create');
+        Route::post('/', [NoticeController::class, 'store'])->name('store');
+        Route::get('/{notice}', [NoticeController::class, 'show'])->name('show');
+        Route::get('/{notice}/edit', [NoticeController::class, 'edit'])->name('edit');
+        Route::put('/{notice}', [NoticeController::class, 'update'])->name('update');
+        Route::delete('/{notice}', [NoticeController::class, 'destroy'])->name('destroy');
     });
 
     // Account Settings
