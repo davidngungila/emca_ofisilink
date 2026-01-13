@@ -26,6 +26,7 @@ use App\Http\Controllers\TaxController;
 use App\Http\Controllers\FixedAssetController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\TrainingController;
+use App\Http\Controllers\NoticeController;
 
 // Helper function to get subdomain
 if (!function_exists('getSubdomain')) {
