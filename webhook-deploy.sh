@@ -84,3 +84,5 @@ echo -e "${GREEN}✓ Permissions set${NC}"
 
 echo -e "\n${GREEN}✅ Deployment completed successfully at $(date)!${NC}"
 
+
+
