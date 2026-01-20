@@ -1172,9 +1172,11 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::get('settings/communication/check-email', [SettingsController::class, 'checkEmailStatus'])->name('admin.settings.communication.check-email');
         Route::get('settings/communication/check-sms', [SettingsController::class, 'checkSMSStatus'])->name('admin.settings.communication.check-sms');
         
-        // Email and SMS Provider Create Routes
+        // Email and SMS Provider Create/Edit Routes
         Route::get('settings/communication/email-providers/create', [EmailProviderController::class, 'create'])->name('admin.settings.communication.email-providers.create');
+        Route::get('settings/communication/email-providers/{provider}/edit', [EmailProviderController::class, 'edit'])->name('admin.settings.communication.email-providers.edit');
         Route::get('settings/communication/sms-providers/create', [SmsProviderController::class, 'create'])->name('admin.settings.communication.sms-providers.create');
+        Route::get('settings/communication/sms-providers/{provider}/edit', [SmsProviderController::class, 'edit'])->name('admin.settings.communication.sms-providers.edit');
         
         // Notification Providers Management
         Route::get('settings/notification-providers', [SettingsController::class, 'getNotificationProviders'])->name('admin.settings.notification-providers');
