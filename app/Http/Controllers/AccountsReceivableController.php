@@ -853,6 +853,14 @@ class AccountsReceivableController extends Controller
 
             $invoice = Invoice::findOrFail($validated['invoice_id']);
 
+            // Check if invoice is approved
+            if (!in_array($invoice->status, ['Approved', 'Sent', 'Partially Paid', 'Overdue'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice must be approved before payment can be recorded. Current status: ' . $invoice->status
+                ], 400);
+            }
+
             if ($validated['amount'] > $invoice->balance) {
                 return response()->json([
                     'success' => false,
@@ -1623,6 +1631,168 @@ class AccountsReceivableController extends Controller
     }
 
     /**
+     * Invoice Payment Page - Dedicated page for recording payment for a specific invoice
+     */
+    public function invoicePaymentPage($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasAnyRole(['Accountant', 'System Admin'])) {
+            abort(403);
+        }
+
+        try {
+            $invoice = Invoice::with(['customer', 'items.account', 'payments.bankAccount', 'payments.createdBy', 'hodApprover', 'ceoApprover'])
+                ->findOrFail($id);
+            
+            $bankAccounts = \App\Models\BankAccount::all();
+            
+            return view('modules.accounting.accounts-receivable.invoice-payment', compact('invoice', 'bankAccounts'));
+        } catch (\Exception $e) {
+            Log::error('Error loading invoice payment page: ' . $e->getMessage());
+            return redirect()->route('modules.accounting.ar.invoices')->with('error', 'Invoice not found');
+        }
+    }
+
+    /**
+     * Store Payment for Specific Invoice
+     */
+    public function storeInvoicePaymentForInvoice(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'payment_date' => 'required|date',
+                'amount' => 'required|numeric|min:0.01',
+                'payment_method' => 'required|in:Cash,Bank Transfer,Cheque,Mobile Money,Credit Card,Other',
+                'reference_no' => 'nullable|string|max:255',
+                'bank_account_id' => 'nullable|exists:bank_accounts,id',
+                'notes' => 'nullable|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $invoice = Invoice::findOrFail($id);
+
+            // Check if invoice is approved
+            if (!in_array($invoice->status, ['Approved', 'Sent', 'Partially Paid', 'Overdue'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice must be approved before payment can be recorded. Current status: ' . $invoice->status
+                ], 400);
+            }
+
+            if ($validated['amount'] > $invoice->balance) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment amount exceeds invoice balance'
+                ], 400);
+            }
+
+            $payment = InvoicePayment::create([
+                'payment_no' => InvoicePayment::generatePaymentNo(),
+                'invoice_id' => $invoice->id,
+                'payment_date' => $validated['payment_date'],
+                'amount' => $validated['amount'],
+                'payment_method' => $validated['payment_method'],
+                'reference_no' => $validated['reference_no'] ?? null,
+                'bank_account_id' => $validated['bank_account_id'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Update invoice
+            $invoice->paid_amount += $validated['amount'];
+            $invoice->balance = $invoice->total_amount - $invoice->paid_amount;
+            $invoice->updateStatus();
+            $invoice->save();
+
+            // Post to General Ledger
+            $customer = $invoice->customer;
+            $arAccount = $customer->account_id ?? ChartOfAccount::where('code', 'AR')->first()?->id;
+            
+            if (!$arAccount) {
+                $arAccount = ChartOfAccount::firstOrCreate(
+                    ['code' => 'AR'],
+                    [
+                        'name' => 'Accounts Receivable',
+                        'type' => 'Asset',
+                        'category' => 'Current Asset',
+                        'is_active' => true,
+                    ]
+                )->id;
+            }
+
+            // Debit: Bank Account or Cash (based on payment method)
+            $paymentAccount = $validated['bank_account_id'] 
+                ? \App\Models\BankAccount::find($validated['bank_account_id'])->chart_of_account_id
+                : ChartOfAccount::where('code', 'CASH')->first()?->id;
+
+            if ($paymentAccount) {
+                GeneralLedger::create([
+                    'account_id' => $paymentAccount,
+                    'transaction_date' => $validated['payment_date'],
+                    'reference_type' => 'InvoicePayment',
+                    'reference_id' => $payment->id,
+                    'reference_no' => $payment->payment_no,
+                    'type' => 'Debit',
+                    'amount' => $validated['amount'],
+                    'description' => "Payment received for invoice {$invoice->invoice_no}",
+                    'source' => 'Payment',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
+            // Credit: Accounts Receivable (decreases asset - customer paid us)
+            GeneralLedger::create([
+                'account_id' => $arAccount,
+                'transaction_date' => $validated['payment_date'],
+                'reference_type' => 'InvoicePayment',
+                'reference_id' => $payment->id,
+                'reference_no' => $payment->payment_no,
+                'type' => 'Credit',
+                'amount' => $validated['amount'],
+                'description' => "Payment received for invoice {$invoice->invoice_no} from {$customer->name}",
+                'source' => 'Payment',
+                'created_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+
+            // Log activity
+            ActivityLogService::logCreated($payment, "Recorded payment {$payment->payment_no} of TZS " . number_format($validated['amount'], 2) . " for invoice {$invoice->invoice_no}", [
+                'payment_no' => $payment->payment_no,
+                'invoice_id' => $invoice->id,
+                'invoice_no' => $invoice->invoice_no,
+                'amount' => $validated['amount'],
+                'payment_method' => $validated['payment_method'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment recorded successfully',
+                'payment' => $payment->load('bankAccount', 'invoice.customer'),
+                'invoice' => $invoice->fresh(['customer', 'items', 'payments'])
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error recording payment: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error recording payment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Update Invoice
      */
     public function updateInvoice(Request $request, $id)
@@ -2053,39 +2223,136 @@ class AccountsReceivableController extends Controller
     /**
      * Approve Invoice (HOD)
      */
-    public function approveInvoice($id)
+    public function approveInvoice(Request $request, $id)
     {
+        $user = Auth::user();
+        $isSystemAdmin = $user->hasRole('System Admin');
+        
+        // Check if user has HOD or CEO role
+        if (!$user->hasAnyRole(['HOD', 'CEO', 'Director', 'System Admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only HOD, CEO, or System Admin can approve invoices.'
+            ], 403);
+        }
+
         try {
             $invoice = Invoice::findOrFail($id);
+            $comments = $request->input('comments');
             
-            if ($invoice->status !== 'Pending for Approval') {
+            // Determine approval level
+            $isHOD = $user->hasAnyRole(['HOD', 'System Admin']);
+            $isCEO = $user->hasAnyRole(['CEO', 'Director', 'System Admin']);
+            
+            // HOD approval
+            if ($isHOD && !$isCEO && $invoice->status === 'Pending for Approval') {
+                // HOD approves, move to CEO approval
+                if (!$isSystemAdmin && !$user->hasRole('HOD')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized. Only HOD can approve at this level.'
+                    ], 403);
+                }
+
+                $oldStatus = $invoice->status;
+                $invoice->status = 'Pending CEO Approval';
+                $invoice->hod_approved_at = now();
+                $invoice->hod_approved_by = Auth::id();
+                $invoice->hod_comments = $comments;
+                $invoice->updated_by = Auth::id();
+                $invoice->save();
+
+                // Log activity
+                ActivityLogService::logApproved($invoice, "Invoice #{$invoice->invoice_no} approved by HOD", Auth::user()->name, [
+                    'old_status' => $oldStatus,
+                    'new_status' => 'Pending CEO Approval',
+                    'invoice_no' => $invoice->invoice_no,
+                    'invoice_amount' => $invoice->total_amount,
+                ]);
+
+                // Notify CEO for approval
+                $notificationService = new \App\Services\NotificationService();
+                $link = route('modules.accounting.ar.invoices.show', ['id' => $invoice->id]);
+                $notificationService->notifyCEO(
+                    "Invoice {$invoice->invoice_no} approved by HOD, pending your approval",
+                    $link,
+                    'Invoice Pending CEO Approval'
+                );
+
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Invoice is not pending approval'
-                ], 400);
+                    'success' => true,
+                    'message' => 'Invoice approved by HOD. Waiting for CEO approval.',
+                    'invoice' => $invoice
+                ]);
+            }
+            
+            // CEO approval
+            if ($isCEO && $invoice->status === 'Pending CEO Approval') {
+                if (!$isSystemAdmin && !$user->hasAnyRole(['CEO', 'Director'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized. Only CEO/Director can give final approval.'
+                    ], 403);
+                }
+
+                $oldStatus = $invoice->status;
+                $invoice->status = 'Approved';
+                $invoice->ceo_approved_at = now();
+                $invoice->ceo_approved_by = Auth::id();
+                $invoice->ceo_comments = $comments;
+                $invoice->updated_by = Auth::id();
+                $invoice->save();
+
+                // Update status to Sent
+                $invoice->updateStatus();
+
+                // Log activity
+                ActivityLogService::logApproved($invoice, "Invoice #{$invoice->invoice_no} approved by CEO", Auth::user()->name, [
+                    'old_status' => $oldStatus,
+                    'new_status' => 'Approved',
+                    'invoice_no' => $invoice->invoice_no,
+                    'invoice_amount' => $invoice->total_amount,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice approved successfully by CEO. Invoice can now be paid.',
+                    'invoice' => $invoice
+                ]);
+            }
+            
+            // System Admin can approve directly
+            if ($isSystemAdmin && $invoice->status === 'Pending for Approval') {
+                $oldStatus = $invoice->status;
+                $invoice->status = 'Approved';
+                $invoice->hod_approved_at = now();
+                $invoice->hod_approved_by = Auth::id();
+                $invoice->ceo_approved_at = now();
+                $invoice->ceo_approved_by = Auth::id();
+                $invoice->hod_comments = $comments ?? 'Approved by System Admin';
+                $invoice->updated_by = Auth::id();
+                $invoice->save();
+
+                $invoice->updateStatus();
+
+                ActivityLogService::logApproved($invoice, "Invoice #{$invoice->invoice_no} approved by System Admin", Auth::user()->name, [
+                    'old_status' => $oldStatus,
+                    'new_status' => 'Approved',
+                    'invoice_no' => $invoice->invoice_no,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice approved successfully',
+                    'invoice' => $invoice
+                ]);
             }
 
-            $oldStatus = $invoice->status;
-            $invoice->status = 'Approved';
-            $invoice->updated_by = Auth::id();
-            $invoice->save();
-
-            // Log activity
-            ActivityLogService::logApproved($invoice, "Invoice #{$invoice->invoice_number} approved", Auth::user()->name, [
-                'old_status' => $oldStatus,
-                'new_status' => 'Approved',
-                'invoice_number' => $invoice->invoice_number,
-                'invoice_amount' => $invoice->total_amount,
-            ]);
-
-            // Update status to Sent if needed
-            $invoice->updateStatus();
-
             return response()->json([
-                'success' => true,
-                'message' => 'Invoice approved successfully',
-                'invoice' => $invoice
-            ]);
+                'success' => false,
+                'message' => 'Invoice is not pending approval or already processed'
+            ], 400);
+
         } catch (\Exception $e) {
             Log::error('Error approving invoice: ' . $e->getMessage());
             return response()->json([

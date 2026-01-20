@@ -557,7 +557,11 @@ const token = '{{ csrf_token() }}';
                     <span class="badge bg-light text-dark">${p.payment_date_display || p.payment_date || ''}</span>
                 </td>
                 <td><code class="text-primary fw-bold">${escapeHtml(p.payment_no || '')}</code></td>
-                <td><code class="text-info fw-bold">${escapeHtml(p.invoice_no || 'N/A')}</code></td>
+                <td>
+                    <a href="${'{{ route('modules.accounting.ar.invoices.payment', ':id') }}'.replace(':id', p.invoice_id || '')}" class="text-info fw-bold text-decoration-none" title="Record Payment" target="_blank">
+                        <code>${escapeHtml(p.invoice_no || 'N/A')}</code>
+                    </a>
+                </td>
                 <td>
                     <div class="fw-medium">${escapeHtml(p.customer_name || 'N/A')}</div>
                 </td>

@@ -943,6 +943,8 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::put('/accounts-receivable/invoices/{id}', [AccountsReceivableController::class, 'updateInvoice'])->name('ar.invoices.update');
         Route::post('/accounts-receivable/invoices/{id}/approve', [AccountsReceivableController::class, 'approveInvoice'])->name('ar.invoices.approve');
         Route::post('/accounts-receivable/invoices/{id}/reject', [AccountsReceivableController::class, 'rejectInvoice'])->name('ar.invoices.reject');
+        Route::get('/accounts-receivable/invoices/{id}/payment', [AccountsReceivableController::class, 'invoicePaymentPage'])->name('ar.invoices.payment');
+        Route::post('/accounts-receivable/invoices/{id}/payment', [AccountsReceivableController::class, 'storeInvoicePaymentForInvoice'])->name('ar.invoices.payment.store');
         Route::get('/accounts-receivable/payments', [AccountsReceivableController::class, 'invoicePayments'])->name('ar.payments');
         Route::post('/accounts-receivable/payments/data', [AccountsReceivableController::class, 'getPaymentsData'])->name('ar.payments.data');
         Route::get('/accounts-receivable/payments/{id}', [AccountsReceivableController::class, 'showInvoicePayment'])->name('ar.payments.show');

@@ -695,7 +695,9 @@
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-info" onclick="viewInvoice(${inv.id})" title="View">View</button>
                         ${inv.status !== 'Paid' ? `<button class="btn btn-sm btn-warning" onclick="editInvoice(${inv.id})" title="Edit">Edit</button>` : ''}
-                        <button class="btn btn-sm btn-success" onclick="recordPayment(${inv.id})" title="Record Payment">Payment</button>
+                        <button class="btn btn-sm btn-success" onclick="recordPayment(${inv.id})" title="Record Payment - Opens dedicated payment page">
+                            <i class="bx bx-money me-1"></i>Record Payment
+                        </button>
                         <button class="btn btn-sm btn-danger" onclick="exportInvoicePdf(${inv.id})" title="PDF">PDF</button>
                     </div>
                 </td>
@@ -1557,9 +1559,8 @@ async function editInvoice(id) {
 }
 
 function recordPayment(id) {
-    // Redirect to payments page with invoice_id parameter
-    // The payments page will auto-open the payment modal
-    window.location.href = '{{ route("modules.accounting.ar.payments") }}?invoice_id=' + id;
+    // Redirect to dedicated invoice payment page
+    window.location.href = '{{ route("modules.accounting.ar.invoices.payment", ":id") }}'.replace(':id', id);
 }
 
 function exportInvoicePdf(id) {

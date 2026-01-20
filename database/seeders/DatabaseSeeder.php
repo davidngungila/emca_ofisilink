@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             EmcaUsersSeeder::class, // Using actual EmCa users data
             NotificationProviderSeeder::class,
             AttendanceDeviceSeeder::class,
+            ChartOfAccountsSeeder::class,
         ]);
     }
 }

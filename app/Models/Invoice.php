@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\User;
 
 class Invoice extends Model
 {
@@ -12,18 +13,9 @@ class Invoice extends Model
         'invoice_no', 'customer_id', 'invoice_date', 'due_date', 'reference_no',
         'subtotal', 'tax_amount', 'discount_amount', 'total_amount',
         'paid_amount', 'balance', 'status', 'notes', 'terms',
+        'hod_approved_at', 'hod_approved_by', 'hod_comments',
+        'ceo_approved_at', 'ceo_approved_by', 'ceo_comments',
         'created_by', 'updated_by'
-    ];
-
-    protected $casts = [
-        'invoice_date' => 'date',
-        'due_date' => 'date',
-        'subtotal' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'paid_amount' => 'decimal:2',
-        'balance' => 'decimal:2',
     ];
 
     // Relationships
@@ -41,6 +33,29 @@ class Invoice extends Model
     {
         return $this->hasMany(InvoicePayment::class, 'invoice_id');
     }
+
+    public function hodApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'hod_approved_by');
+    }
+
+    public function ceoApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'ceo_approved_by');
+    }
+
+    protected $casts = [
+        'invoice_date' => 'date',
+        'due_date' => 'date',
+        'hod_approved_at' => 'datetime',
+        'ceo_approved_at' => 'datetime',
+        'subtotal' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'balance' => 'decimal:2',
+    ];
 
     // Helper methods
     public function isOverdue(): bool
