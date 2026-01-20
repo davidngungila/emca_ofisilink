@@ -725,18 +725,41 @@ function openAccountModal(id = null) {
         const form = document.getElementById('accountForm');
         const title = document.getElementById('accountModalTitle');
         
+        // Reset form
         form.reset();
         document.getElementById('accountId').value = '';
-        document.getElementById('accountCode').readOnly = false;
+        const accountCodeField = document.getElementById('accountCode');
+        accountCodeField.readOnly = false;
+        accountCodeField.removeAttribute('required'); // Remove required temporarily
+        
+        // Remove required attributes temporarily to prevent validation errors during load
+        const accountNameField = document.getElementById('accountName');
+        const accountTypeField = document.getElementById('accountType');
+        accountNameField.removeAttribute('required');
+        accountTypeField.removeAttribute('required');
         
         if (id) {
             title.textContent = 'Edit Account';
-            loadAccountData(id);
+            // Load data first, then show modal
+            loadAccountData(id).then(() => {
+                // Restore required attributes after data is loaded
+                accountNameField.setAttribute('required', 'required');
+                accountTypeField.setAttribute('required', 'required');
+                if (!accountCodeField.readOnly) {
+                    accountCodeField.setAttribute('required', 'required');
+                }
+                modal.show();
+            }).catch(() => {
+                alert('Error loading account data');
+            });
         } else {
             title.textContent = 'New Account';
+            // Restore required attributes for new account
+            accountCodeField.setAttribute('required', 'required');
+            accountNameField.setAttribute('required', 'required');
+            accountTypeField.setAttribute('required', 'required');
+            modal.show();
         }
-        
-        modal.show();
     }, 100);
 }
 
@@ -745,24 +768,37 @@ async function loadAccountData(id) {
         const response = await fetch(`{{ route("modules.accounting.accounts.show", ["id" => ":id"]) }}`.replace(':id', id));
         const data = await response.json();
         
-        if (data.success) {
+        if (data.success && data.account) {
             const account = data.account;
-            document.getElementById('accountId').value = account.id || '';
-            document.getElementById('accountCode').value = account.code || '';
-            document.getElementById('accountCode').readOnly = true;
-            document.getElementById('accountName').value = account.name || '';
             
-            // Set type first, then update category options
+            // Populate all fields
+            document.getElementById('accountId').value = account.id || '';
+            
+            const accountCodeField = document.getElementById('accountCode');
+            accountCodeField.value = account.code || '';
+            accountCodeField.readOnly = true;
+            accountCodeField.removeAttribute('required'); // Code is not required when editing
+            
+            const accountNameField = document.getElementById('accountName');
+            accountNameField.value = account.name || '';
+            if (!accountNameField.value) {
+                throw new Error('Account name is missing');
+            }
+            
+            const accountTypeField = document.getElementById('accountType');
             if (account.type) {
-                document.getElementById('accountType').value = account.type;
+                accountTypeField.value = account.type;
                 updateCategoryOptions(account.type);
                 
-                // Set category after options are populated (with a small delay)
+                // Set category after options are populated
                 setTimeout(() => {
-                    if (account.category) {
-                        document.getElementById('accountCategory').value = account.category;
+                    const categoryField = document.getElementById('accountCategory');
+                    if (account.category && categoryField) {
+                        categoryField.value = account.category;
                     }
-                }, 100);
+                }, 150);
+            } else {
+                throw new Error('Account type is missing');
             }
             
             document.getElementById('accountParent').value = account.parent_id || '';
@@ -771,12 +807,14 @@ async function loadAccountData(id) {
             document.getElementById('accountSortOrder').value = account.sort_order || 0;
             document.getElementById('accountIsActive').checked = account.is_active !== false;
             document.getElementById('accountDescription').value = account.description || '';
+            
+            return Promise.resolve();
         } else {
-            alert('Error loading account data: ' + (data.message || 'Unknown error'));
+            throw new Error(data.message || 'Failed to load account data');
         }
     } catch (error) {
         console.error('Error loading account:', error);
-        alert('Error loading account data: ' + error.message);
+        return Promise.reject(error);
     }
 }
 
@@ -886,40 +924,90 @@ document.getElementById('accountForm').addEventListener('submit', async function
     
     // Get form values
     const accountId = document.getElementById('accountId').value;
-    const formData = new FormData(this);
+    const accountNameField = document.getElementById('accountName');
+    const accountTypeField = document.getElementById('accountType');
+    const accountCodeField = document.getElementById('accountCode');
     
-    // Ensure required fields are present
-    const name = document.getElementById('accountName').value.trim();
-    const type = document.getElementById('accountType').value;
+    // Validate required fields
+    const name = accountNameField.value.trim();
+    const type = accountTypeField.value;
+    const code = accountCodeField.value.trim();
     
+    // Clear any previous validation errors
+    accountNameField.classList.remove('is-invalid');
+    accountTypeField.classList.remove('is-invalid');
+    accountCodeField.classList.remove('is-invalid');
+    
+    let hasErrors = false;
+    
+    // Validate name
     if (!name) {
-        alert('Account Name is required');
-        document.getElementById('accountName').focus();
-        return;
+        accountNameField.classList.add('is-invalid');
+        accountNameField.focus();
+        hasErrors = true;
     }
     
+    // Validate type
     if (!type) {
-        alert('Account Type is required');
-        document.getElementById('accountType').focus();
+        accountTypeField.classList.add('is-invalid');
+        if (!hasErrors) accountTypeField.focus();
+        hasErrors = true;
+    }
+    
+    // Validate code (only for new accounts)
+    if (!accountId && !code) {
+        accountCodeField.classList.add('is-invalid');
+        if (!hasErrors) accountCodeField.focus();
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        alert('Please fill in all required fields');
         return;
     }
     
-    // Ensure formData has all required fields
-    formData.set('name', name);
-    formData.set('type', type);
+    // Build form data
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('type', type);
+    
+    if (accountId) {
+        // For updates, include account ID
+        formData.append('_method', 'PUT');
+    } else {
+        // For new accounts, include code
+        formData.append('code', code);
+    }
+    
+    // Add optional fields
+    const category = document.getElementById('accountCategory').value;
+    if (category) formData.append('category', category);
+    
+    const parentId = document.getElementById('accountParent').value;
+    if (parentId) formData.append('parent_id', parentId);
+    
+    const openingBalance = document.getElementById('accountOpeningBalance').value;
+    if (openingBalance) formData.append('opening_balance', openingBalance);
+    
+    const openingDate = document.getElementById('accountOpeningDate').value;
+    if (openingDate) formData.append('opening_balance_date', openingDate);
+    
+    const sortOrder = document.getElementById('accountSortOrder').value;
+    if (sortOrder) formData.append('sort_order', sortOrder);
+    
+    const description = document.getElementById('accountDescription').value;
+    if (description) formData.append('description', description);
     
     // Handle checkbox for is_active
     const isActive = document.getElementById('accountIsActive').checked;
     if (isActive) {
-        formData.set('is_active', '1');
-    } else {
-        formData.delete('is_active');
+        formData.append('is_active', '1');
     }
     
     const url = accountId 
         ? `{{ route("modules.accounting.accounts.update", ["id" => ":id"]) }}`.replace(':id', accountId)
         : '{{ route("modules.accounting.accounts.store") }}';
-    const method = accountId ? 'PUT' : 'POST';
+    const method = accountId ? 'POST' : 'POST'; // Use POST with _method for PUT
     
     try {
         const response = await fetch(url, {

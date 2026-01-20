@@ -18,6 +18,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Account Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="accountName" name="name" required>
+                            <div class="invalid-feedback">Account Name is required.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Type <span class="text-danger">*</span></label>
@@ -29,6 +30,7 @@
                                 <option value="Income">Income</option>
                                 <option value="Expense">Expense</option>
                             </select>
+                            <div class="invalid-feedback">Account Type is required.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Category</label>
