@@ -1652,8 +1652,12 @@ class AccountsReceivableController extends Controller
     {
         $user = Auth::user();
         
-        if (!$user->hasAnyRole(['Accountant', 'System Admin'])) {
-            abort(403);
+        if (!$user) {
+            return redirect()->route('login');
+        }
+        
+        if (!$user->hasAnyRole(['Accountant', 'System Admin', 'CEO'])) {
+            abort(403, 'Access denied. You do not have permission to view this invoice.');
         }
 
         try {
@@ -1698,9 +1702,16 @@ class AccountsReceivableController extends Controller
                 'averagePayment',
                 'daysOutstanding'
             ));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Invoice not found in advanced view: ' . $e->getMessage());
+            return redirect()->route('modules.accounting.ar.invoices')->with('error', 'Invoice not found.');
         } catch (\Exception $e) {
-            Log::error('Error loading advanced invoice view: ' . $e->getMessage());
-            return redirect()->route('modules.accounting.ar.invoices')->with('error', 'Invoice not found');
+            Log::error('Error loading advanced invoice view: ' . $e->getMessage(), [
+                'invoice_id' => $id,
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('modules.accounting.ar.invoices')->with('error', 'An error occurred while loading the invoice. Please try again.');
         }
     }
 

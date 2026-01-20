@@ -230,14 +230,15 @@
                     <h5 class="mb-0"><i class="bx bx-user me-2"></i>Customer Information</h5>
                 </div>
                 <div class="card-body">
+                    @if($invoice->customer)
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Customer Name:</strong>
-                            <p class="mb-0">{{ $invoice->customer->name }}</p>
+                            <p class="mb-0">{{ $invoice->customer->name ?? 'N/A' }}</p>
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Customer Code:</strong>
-                            <p class="mb-0">{{ $invoice->customer->customer_code }}</p>
+                            <p class="mb-0">{{ $invoice->customer->customer_code ?? 'N/A' }}</p>
                         </div>
                         @if($invoice->customer->email)
                         <div class="col-md-6 mb-3">
@@ -270,12 +271,19 @@
                             <p class="mb-0">{{ $invoice->customer->tax_id }}</p>
                         </div>
                         @endif
+                        @if($invoice->customer && $invoice->customer->id)
                         <div class="col-12 mt-2">
                             <a href="{{ route('modules.accounting.ar.customers.show', $invoice->customer->id) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="bx bx-show me-1"></i>View Customer Details
                             </a>
                         </div>
+                        @endif
                     </div>
+                    @else
+                    <div class="alert alert-warning">
+                        <i class="bx bx-info-circle me-2"></i>Customer information is not available for this invoice.
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -448,12 +456,12 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <strong>Invoice Date:</strong>
-                        <p class="mb-0">{{ $invoice->invoice_date->format('M d, Y') }}</p>
+                        <p class="mb-0">{{ $invoice->invoice_date ? $invoice->invoice_date->format('M d, Y') : 'N/A' }}</p>
                     </div>
                     <div class="mb-3">
                         <strong>Due Date:</strong>
                         <p class="mb-0 {{ $invoice->isOverdue() ? 'text-danger' : '' }}">
-                            {{ $invoice->due_date->format('M d, Y') }}
+                            {{ $invoice->due_date ? $invoice->due_date->format('M d, Y') : 'N/A' }}
                             @if($invoice->isOverdue())
                                 <span class="badge bg-danger ms-2">Overdue</span>
                             @endif
@@ -470,15 +478,15 @@
                     @if($invoice->creator)
                     <div class="mb-3">
                         <strong>Created By:</strong>
-                        <p class="mb-0">{{ $invoice->creator->name }}</p>
-                        <small class="text-muted">{{ $invoice->created_at->format('M d, Y H:i') }}</small>
+                        <p class="mb-0">{{ $invoice->creator->name ?? 'Unknown' }}</p>
+                        <small class="text-muted">{{ $invoice->created_at ? $invoice->created_at->format('M d, Y H:i') : 'N/A' }}</small>
                     </div>
                     @endif
                     @if($invoice->updater)
                     <div class="mb-3">
                         <strong>Last Updated By:</strong>
-                        <p class="mb-0">{{ $invoice->updater->name }}</p>
-                        <small class="text-muted">{{ $invoice->updated_at->format('M d, Y H:i') }}</small>
+                        <p class="mb-0">{{ $invoice->updater->name ?? 'Unknown' }}</p>
+                        <small class="text-muted">{{ $invoice->updated_at ? $invoice->updated_at->format('M d, Y H:i') : 'N/A' }}</small>
                     </div>
                     @endif
                 </div>
