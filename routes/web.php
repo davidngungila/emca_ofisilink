@@ -952,9 +952,9 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::post('/accounts-receivable/payments/data', [AccountsReceivableController::class, 'getPaymentsData'])->name('ar.payments.data');
         Route::get('/accounts-receivable/payments/create', [AccountsReceivableController::class, 'createInvoicePayment'])->name('ar.payments.create');
         Route::post('/accounts-receivable/payments/create', [AccountsReceivableController::class, 'storeInvoicePayment'])->name('ar.payments.store');
-        Route::get('/accounts-receivable/payments/{id}', [AccountsReceivableController::class, 'showInvoicePayment'])->name('ar.payments.show');
         Route::get('/accounts-receivable/payments/{id}/advanced', [AccountsReceivableController::class, 'advancedPaymentView'])->name('ar.payments.advanced');
         Route::get('/accounts-receivable/payments/{id}/pdf', [AccountsReceivableController::class, 'exportInvoicePaymentPdf'])->name('ar.payments.pdf');
+        Route::get('/accounts-receivable/payments/{id}', [AccountsReceivableController::class, 'showInvoicePayment'])->name('ar.payments.show');
         Route::get('/accounts-receivable/credit-memos', [AccountsReceivableController::class, 'creditMemos'])->name('ar.credit-memos');
         Route::post('/accounts-receivable/credit-memos/data', [AccountsReceivableController::class, 'getCreditMemosData'])->name('ar.credit-memos.data');
         Route::get('/accounts-receivable/credit-memos/{id}', [AccountsReceivableController::class, 'showCreditMemo'])->name('ar.credit-memos.show');
