@@ -747,22 +747,36 @@ async function loadAccountData(id) {
         
         if (data.success) {
             const account = data.account;
-            document.getElementById('accountId').value = account.id;
-            document.getElementById('accountCode').value = account.code;
+            document.getElementById('accountId').value = account.id || '';
+            document.getElementById('accountCode').value = account.code || '';
             document.getElementById('accountCode').readOnly = true;
-            document.getElementById('accountName').value = account.name;
-            document.getElementById('accountType').value = account.type;
-            document.getElementById('accountCategory').value = account.category || '';
+            document.getElementById('accountName').value = account.name || '';
+            
+            // Set type first, then update category options
+            if (account.type) {
+                document.getElementById('accountType').value = account.type;
+                updateCategoryOptions(account.type);
+                
+                // Set category after options are populated (with a small delay)
+                setTimeout(() => {
+                    if (account.category) {
+                        document.getElementById('accountCategory').value = account.category;
+                    }
+                }, 100);
+            }
+            
             document.getElementById('accountParent').value = account.parent_id || '';
             document.getElementById('accountOpeningBalance').value = account.opening_balance || 0;
             document.getElementById('accountOpeningDate').value = account.opening_balance_date || '';
             document.getElementById('accountSortOrder').value = account.sort_order || 0;
-            document.getElementById('accountIsActive').checked = account.is_active;
+            document.getElementById('accountIsActive').checked = account.is_active !== false;
             document.getElementById('accountDescription').value = account.description || '';
+        } else {
+            alert('Error loading account data: ' + (data.message || 'Unknown error'));
         }
     } catch (error) {
         console.error('Error loading account:', error);
-        alert('Error loading account data');
+        alert('Error loading account data: ' + error.message);
     }
 }
 
@@ -870,8 +884,38 @@ async function deleteAccount(id) {
 document.getElementById('accountForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
+    // Get form values
     const accountId = document.getElementById('accountId').value;
+    const formData = new FormData(this);
+    
+    // Ensure required fields are present
+    const name = document.getElementById('accountName').value.trim();
+    const type = document.getElementById('accountType').value;
+    
+    if (!name) {
+        alert('Account Name is required');
+        document.getElementById('accountName').focus();
+        return;
+    }
+    
+    if (!type) {
+        alert('Account Type is required');
+        document.getElementById('accountType').focus();
+        return;
+    }
+    
+    // Ensure formData has all required fields
+    formData.set('name', name);
+    formData.set('type', type);
+    
+    // Handle checkbox for is_active
+    const isActive = document.getElementById('accountIsActive').checked;
+    if (isActive) {
+        formData.set('is_active', '1');
+    } else {
+        formData.delete('is_active');
+    }
+    
     const url = accountId 
         ? `{{ route("modules.accounting.accounts.update", ["id" => ":id"]) }}`.replace(':id', accountId)
         : '{{ route("modules.accounting.accounts.store") }}';
@@ -897,7 +941,13 @@ document.getElementById('accountForm').addEventListener('submit', async function
             $('body').removeClass('modal-open');
             location.reload();
         } else {
-            alert(data.message || 'Error saving account');
+            // Show validation errors
+            let errorMessage = data.message || 'Error saving account';
+            if (data.errors) {
+                const errors = Object.values(data.errors).flat().join('\n');
+                errorMessage = errors;
+            }
+            alert(errorMessage);
         }
     } catch (error) {
         alert('Error: ' + error.message);

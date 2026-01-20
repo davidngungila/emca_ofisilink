@@ -612,6 +612,12 @@ class AccountingController extends Controller
                 'message' => 'Account updated successfully',
                 'account' => $account->load('parent', 'children')
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Error updating account: ' . $e->getMessage());
             return response()->json([
