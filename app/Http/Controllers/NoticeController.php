@@ -7,13 +7,22 @@ use App\Models\NoticeAcknowledgment;
 use App\Models\NoticeAttachment;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class NoticeController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Display a listing of notices/announcements
      */
@@ -138,6 +147,17 @@ class NoticeController extends Controller
             }
             
             DB::commit();
+            
+            // Send notifications via Email and SMS to all applicable users
+            try {
+                $this->sendNoticeNotifications($notice);
+            } catch (\Exception $e) {
+                // Log error but don't fail notice creation
+                Log::error('Failed to send notice notifications: ' . $e->getMessage(), [
+                    'notice_id' => $notice->id,
+                    'error' => $e->getTraceAsString()
+                ]);
+            }
             
             return redirect()->route('notices.index')
                 ->with('success', 'Notice created successfully.');
