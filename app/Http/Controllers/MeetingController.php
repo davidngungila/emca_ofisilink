@@ -891,7 +891,103 @@ class MeetingController extends Controller
             return redirect()->back()->withInput()->with('error', 'Failed to update meeting: ' . $e->getMessage());
         }
     }
-    public function destroy($id) { return redirect()->back(); }
+    /**
+     * Remove the specified meeting
+     */
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        $canManageMeetings = $user->hasPermission('manage_meetings') || 
+                            $user->hasAnyRole(['System Admin', 'admin', 'super_admin', 'hod', 'ceo', 'General Manager', 'HR Officer']);
+        
+        if (!$canManageMeetings) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to delete meetings.'
+                ], 403);
+            }
+            return redirect()->back()->with('error', 'You do not have permission to delete meetings.');
+        }
+        
+        $meeting = DB::table('meetings')->where('id', $id)->first();
+        
+        if (!$meeting) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting not found.'
+                ], 404);
+            }
+            return redirect()->back()->with('error', 'Meeting not found.');
+        }
+        
+        // Check if meeting can be deleted (only draft or rejected meetings)
+        if (!in_array($meeting->status, ['draft', 'rejected'])) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only draft or rejected meetings can be deleted.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'Only draft or rejected meetings can be deleted.');
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Delete related records
+            DB::table('meeting_participants')->where('meeting_id', $id)->delete();
+            DB::table('meeting_agendas')->where('meeting_id', $id)->delete();
+            DB::table('meeting_minutes')->where('meeting_id', $id)->delete();
+            
+            // Delete agenda documents if table exists
+            if (Schema::hasTable('meeting_agenda_documents')) {
+                $agendaIds = DB::table('meeting_agendas')->where('meeting_id', $id)->pluck('id');
+                if ($agendaIds->isNotEmpty()) {
+                    // Delete files from storage
+                    $documents = DB::table('meeting_agenda_documents')
+                        ->whereIn('meeting_agenda_id', $agendaIds)
+                        ->get();
+                    
+                    foreach ($documents as $doc) {
+                        if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
+                            Storage::disk('public')->delete($doc->file_path);
+                        }
+                    }
+                    
+                    DB::table('meeting_agenda_documents')->whereIn('meeting_agenda_id', $agendaIds)->delete();
+                }
+            }
+            
+            // Delete the meeting
+            DB::table('meetings')->where('id', $id)->delete();
+            
+            DB::commit();
+            
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Meeting deleted successfully.'
+                ]);
+            }
+            
+            return redirect()->route('modules.meetings.index')->with('success', 'Meeting deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete meeting: ' . $e->getMessage());
+            
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete meeting: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Failed to delete meeting: ' . $e->getMessage());
+        }
+    }
     /**
      * Display pending approval meetings
      */
@@ -1371,6 +1467,8 @@ class MeetingController extends Controller
                     return $this->storeCategory($request);
                 case 'update_category':
                     return $this->updateCategory($request, $request->input('category_id'));
+                case 'delete_meeting':
+                    return $this->destroy($request->input('meeting_id'));
                 case 'save_minutes_section':
                     return $this->saveMinutesSection($request, $user);
                 case 'save_agenda_minutes':

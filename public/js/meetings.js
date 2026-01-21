@@ -447,7 +447,8 @@ $(document).ready(function() {
         const canEdit = meeting.status === 'draft' || meeting.status === 'pending_approval';
         const canApprove = meeting.status === 'pending_approval';
         const canDelete = meeting.status === 'draft' || meeting.status === 'rejected';
-        const canSubmitForApproval = meeting.status !== 'pending_approval' && meeting.status !== 'approved' && meeting.status !== 'completed';
+        // Only show submit button if meeting is draft or rejected (not approved, not pending, not completed, not cancelled)
+        const canSubmitForApproval = (meeting.status === 'draft' || meeting.status === 'rejected') && meeting.status !== 'pending_approval' && meeting.status !== 'approved' && meeting.status !== 'completed';
         
         return `
             <tr>
