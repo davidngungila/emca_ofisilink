@@ -822,6 +822,10 @@ window.viewConfigDetails = function(id) {
         'unknown': 'secondary'
     };
     const statusColor = statusColors[config.connection_status] || 'secondary';
+    const incidentCount = config.incident_count || 0;
+    const createdDate = config.created_at ? new Date(config.created_at).toLocaleDateString() : 'N/A';
+    const updatedDate = config.updated_at ? new Date(config.updated_at).toLocaleDateString() : 'N/A';
+    
     modalBody.innerHTML = `
         <div class="row">
             <div class="col-md-6 mb-3">
@@ -830,11 +834,13 @@ window.viewConfigDetails = function(id) {
                         <h6 class="card-title text-primary mb-3"><i class="bx bx-envelope me-2"></i>Account Information</h6>
                         <table class="table table-sm table-borderless mb-0">
                             <tr><td class="fw-semibold" style="width: 40%;">Email:</td><td><strong>${escapeHtml(config.email_address)}</strong></td></tr>
-                            <tr><td class="fw-semibold">Protocol:</td><td><span class="badge bg-info">${config.protocol.toUpperCase()}</span> ${config.ssl_enabled ? '<span class="badge bg-success ms-1">SSL</span>' : ''}</td></tr>
-                            <tr><td class="fw-semibold">Host:</td><td>${escapeHtml(config.host)}</td></tr>
-                            <tr><td class="fw-semibold">Port:</td><td>${config.port}</td></tr>
+                            <tr><td class="fw-semibold">Protocol:</td><td><span class="badge bg-info">${config.protocol.toUpperCase()}</span> ${config.ssl_enabled ? '<span class="badge bg-success ms-1">SSL</span>' : '<span class="badge bg-warning ms-1">TLS</span>'}</td></tr>
+                            <tr><td class="fw-semibold">Host:</td><td><code>${escapeHtml(config.host)}</code></td></tr>
+                            <tr><td class="fw-semibold">Port:</td><td><code>${config.port}</code></td></tr>
                             <tr><td class="fw-semibold">Username:</td><td>${escapeHtml(config.username)}</td></tr>
                             <tr><td class="fw-semibold">Folder:</td><td>${escapeHtml(config.folder || 'INBOX')}</td></tr>
+                            <tr><td class="fw-semibold">Created:</td><td>${createdDate}</td></tr>
+                            <tr><td class="fw-semibold">Updated:</td><td>${updatedDate}</td></tr>
                         </table>
                     </div>
                 </div>
@@ -844,18 +850,28 @@ window.viewConfigDetails = function(id) {
                     <div class="card-body">
                         <h6 class="card-title text-primary mb-3"><i class="bx bx-info-circle me-2"></i>Status & Statistics</h6>
                         <table class="table table-sm table-borderless mb-0">
-                            <tr><td class="fw-semibold">Status:</td><td><span class="badge bg-${statusColor}">${config.connection_status || 'Unknown'}</span></td></tr>
+                            <tr><td class="fw-semibold" style="width: 40%;">Status:</td><td><span class="badge bg-${statusColor}">${config.connection_status || 'Unknown'}</span></td></tr>
                             <tr><td class="fw-semibold">Active:</td><td><span class="badge bg-${config.is_active ? 'success' : 'secondary'}">${config.is_active ? 'Yes' : 'No'}</span></td></tr>
+                            ${isLiveMode ? '<tr><td class="fw-semibold">Live Mode:</td><td><span class="badge bg-info"><i class="bx bx-sync bx-spin me-1"></i>Enabled</span></td></tr>' : ''}
                             <tr><td class="fw-semibold">Last Test:</td><td>${lastTest}</td></tr>
                             <tr><td class="fw-semibold">Last Sync:</td><td>${lastSync}</td></tr>
-                            <tr><td class="fw-semibold">Sync Count:</td><td><span class="text-success">${config.sync_count || 0} successful</span></td></tr>
-                            ${config.failed_sync_count > 0 ? `<tr><td class="fw-semibold">Failed:</td><td><span class="text-danger">${config.failed_sync_count}</span></td></tr>` : ''}
+                            <tr><td class="fw-semibold">Sync Count:</td><td><span class="text-success fw-bold">${config.sync_count || 0}</span> successful</td></tr>
+                            ${config.failed_sync_count > 0 ? `<tr><td class="fw-semibold">Failed:</td><td><span class="text-danger fw-bold">${config.failed_sync_count}</span></td></tr>` : ''}
+                            <tr><td class="fw-semibold">Incidents:</td><td><span class="badge bg-primary">${incidentCount}</span> created from this account</td></tr>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
-        ${config.connection_error ? `<div class="alert alert-danger"><strong>Connection Error:</strong> ${escapeHtml(config.connection_error)}</div>` : ''}
+        ${config.connection_error ? `<div class="alert alert-danger mt-3"><strong><i class="bx bx-error-circle me-1"></i>Connection Error:</strong><br>${escapeHtml(config.connection_error)}</div>` : ''}
+        ${syncSettings && Object.keys(syncSettings).length > 0 ? `
+        <div class="card border-0 bg-light mt-3">
+            <div class="card-body">
+                <h6 class="card-title text-primary mb-3"><i class="bx bx-cog me-2"></i>Sync Settings</h6>
+                <pre class="mb-0" style="font-size: 0.85rem; background: white; padding: 10px; border-radius: 4px;">${JSON.stringify(syncSettings, null, 2)}</pre>
+            </div>
+        </div>
+        ` : ''}
     `;
     const modal = new bootstrap.Modal(document.getElementById('viewConfigModal'));
     modal.show();
