@@ -614,6 +614,12 @@
                                 <i class="bx bx-file-pdf me-1"></i> Download PDF
                             </a>
                         @endif
+                        <a href="{{ route('modules.meetings.resolutions', $meeting->id) }}" class="btn btn-warning btn-lg">
+                            <i class="bx bx-file-blank me-1"></i> View Resolutions
+                        </a>
+                        <a href="{{ route('modules.meetings.resolutions.pdf', $meeting->id) }}" class="btn btn-warning btn-lg" target="_blank" style="background-color: #ff9800; border-color: #ff9800;">
+                            <i class="bx bx-file-pdf me-1"></i> Resolutions PDF
+                        </a>
                     </div>
                 </div>
             </div>
