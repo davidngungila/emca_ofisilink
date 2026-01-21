@@ -65,6 +65,10 @@ class PermissionController extends Controller
         $rejected = collect();
         $completed = collect();
         
+        // Separate by time mode for dashboard statistics
+        $hoursRequests = collect();
+        $daysRequests = collect();
+        
         foreach ($allRequests as $request) {
             $isOwnRequest = ($request->user_id == $user->id);
             
@@ -131,16 +135,41 @@ class PermissionController extends Controller
                     $completed->push($request);
                     break;
             }
+            
+            // Separate by time mode
+            if ($request->time_mode === 'hours') {
+                $hoursRequests->push($request);
+            } elseif ($request->time_mode === 'days') {
+                $daysRequests->push($request);
+            }
         }
         
         // Calculate total pending
         $totalPending = $pendingHR->count() + $pendingHOD->count() + $pendingHRFinal->count() + $returnPending->count();
         
+        // Calculate statistics for hours and days requests separately
+        $hoursStats = [
+            'total' => $hoursRequests->count(),
+            'pending' => $hoursRequests->whereIn('status', ['pending_hr', 'pending_hod', 'pending_hr_final', 'return_pending'])->count(),
+            'approved' => $hoursRequests->where('status', 'approved')->count(),
+            'rejected' => $hoursRequests->whereIn('status', ['rejected', 'return_rejected'])->count(),
+            'completed' => $hoursRequests->where('status', 'completed')->count(),
+        ];
+        
+        $daysStats = [
+            'total' => $daysRequests->count(),
+            'pending' => $daysRequests->whereIn('status', ['pending_hr', 'pending_hod', 'pending_hr_final', 'return_pending'])->count(),
+            'approved' => $daysRequests->where('status', 'approved')->count(),
+            'rejected' => $daysRequests->whereIn('status', ['rejected', 'return_rejected'])->count(),
+            'completed' => $daysRequests->where('status', 'completed')->count(),
+        ];
+        
         return view('modules.hr.permissions', compact(
             'allRequests', 'awaitingMyAction', 'myRequests', 'otherRequests', 'processedByMe',
             'isHOD', 'isHR', 'isAdmin', 'isCEO',
             'totalPending', 'pendingHR', 'pendingHOD', 'pendingHRFinal', 'returnPending',
-            'approved', 'rejected', 'completed'
+            'approved', 'rejected', 'completed',
+            'hoursRequests', 'daysRequests', 'hoursStats', 'daysStats'
         ));
     }
     
@@ -308,6 +337,21 @@ class PermissionController extends Controller
             'reason_description' => 'required|string|max:1000',
             'training_id' => 'nullable|exists:trainings,id',
         ]);
+        
+        // Validate 7 days maximum for days-based requests
+        if ($validated['time_mode'] === 'days') {
+            $startDate = Carbon::parse($validated['start_datetime']);
+            $endDate = Carbon::parse($validated['end_datetime']);
+            $daysDifference = $startDate->diffInDays($endDate, false);
+            
+            if ($daysDifference > 7) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission requests for days cannot exceed 7 days. Please select a maximum of 7 days.',
+                    'errors' => ['end_datetime' => ['Days-based permissions cannot exceed 7 days']]
+                ], 422);
+            }
+        }
         
         $user = Auth::user();
         

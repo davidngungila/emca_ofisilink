@@ -41,8 +41,13 @@
     @endif
 
     @if($isHOD || $isCEO || $isAdmin)
-    <!-- Statistics Cards -->
+    <!-- Overall Statistics Cards -->
     <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <h5 class="text-gray-700">
+                <i class="bx bx-stats me-2"></i>Overall Statistics
+            </h5>
+        </div>
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
@@ -98,6 +103,72 @@
                         </div>
                         <div class="col-auto">
                             <i class="bx bx-task fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Separate Dashboards for Hours and Days -->
+    <div class="row mb-4">
+        <!-- Hours-Based Requests Dashboard -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bx bx-time me-2"></i>Hours-Based Requests Dashboard
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $hoursStats['total'] }}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $hoursStats['pending'] }}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $hoursStats['approved'] }}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rejected</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $hoursStats['rejected'] }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Days-Based Requests Dashboard -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="bx bx-calendar me-2"></i>Days-Based Requests Dashboard
+                        <small class="text-muted">(Max 7 Days)</small>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $daysStats['total'] }}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $daysStats['pending'] }}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $daysStats['approved'] }}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Rejected</div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">{{ $daysStats['rejected'] }}</div>
                         </div>
                     </div>
                 </div>
@@ -640,12 +711,16 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Time Mode *</label>
-                        <select name="time_mode" class="form-select" required>
+                        <select name="time_mode" id="time_mode" class="form-select" required>
                             <option value="">-- Select --</option>
                             <option value="hours">Hours</option>
-                            <option value="days">Days</option>
+                            <option value="days">Days (Maximum 7 days)</option>
                         </select>
-                        <small class="text-muted">Select "Hours" for short permissions or "Days" for full day(s) permissions</small>
+                        <small class="text-muted">Select "Hours" for short permissions or "Days" for full day(s) permissions (max 7 days)</small>
+                        <div id="days-limit-warning" class="alert alert-warning mt-2" style="display: none;">
+                            <i class="bx bx-error-circle me-1"></i>
+                            <strong>Note:</strong> Days-based permission requests cannot exceed 7 days.
+                        </div>
                     </div>
                     
                     <div class="row">
@@ -1541,6 +1616,46 @@ $(document).ready(function() {
     // Update datetime fields when date or time changes
     $('#start_date, #start_time, #end_date, #end_time').on('change', function() {
         updateDateTimeFields();
+        
+        // Validate 7 days limit for days mode
+        const timeMode = $('#time_mode').val();
+        if (timeMode === 'days') {
+            const startDate = $('#start_date').val();
+            const startTime = $('#start_time').val();
+            const endDate = $('#end_date').val();
+            const endTime = $('#end_time').val();
+            
+            if (startDate && startTime && endDate && endTime) {
+                const startDateTime = new Date(startDate + 'T' + startTime);
+                const endDateTime = new Date(endDate + 'T' + endTime);
+                
+                if (endDateTime > startDateTime) {
+                    const diffTime = endDateTime - startDateTime;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays > 7) {
+                        $('#days-limit-warning').show();
+                        $('#end_date, #end_time').addClass('is-invalid');
+                    } else {
+                        $('#days-limit-warning').hide();
+                        $('#end_date, #end_time').removeClass('is-invalid');
+                    }
+                }
+            }
+        } else {
+            $('#days-limit-warning').hide();
+            $('#end_date, #end_time').removeClass('is-invalid');
+        }
+    });
+    
+    // Show/hide days limit warning when time mode changes
+    $('#time_mode').on('change', function() {
+        if ($(this).val() === 'days') {
+            $('#days-limit-warning').show();
+        } else {
+            $('#days-limit-warning').hide();
+            $('#end_date, #end_time').removeClass('is-invalid');
+        }
     });
     
     $('#requestPermissionForm').on('submit', function(e) {
@@ -1566,6 +1681,18 @@ $(document).ready(function() {
         if (endDateTime <= startDateTime) {
             showAlert('Invalid Date/Time', 'The end date and time must be after the start date and time.', 'warning');
             return;
+        }
+        
+        // Validate 7 days maximum for days-based requests
+        const timeMode = $('#time_mode').val();
+        if (timeMode === 'days') {
+            const diffTime = endDateTime - startDateTime;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 7) {
+                showAlert('Days Limit Exceeded', 'Permission requests for days cannot exceed 7 days. Please select a maximum of 7 days.', 'error');
+                return;
+            }
         }
         
         const formData = $(this).serialize();
