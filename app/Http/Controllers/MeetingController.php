@@ -495,11 +495,7 @@ class MeetingController extends Controller
 
             DB::commit();
 
-            if ($request->action === 'submit') {
-                return redirect()->route('modules.meetings.show', $meetingId)->with('success', 'Meeting created and submitted for approval successfully.');
-            }
-
-            return redirect()->route('modules.meetings.show', $meetingId)->with('success', 'Meeting created successfully.');
+            return redirect()->route('modules.meetings.show', $meetingId)->with('success', 'Meeting created successfully and is pending for approval.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Meeting creation error: ' . $e->getMessage(), [
