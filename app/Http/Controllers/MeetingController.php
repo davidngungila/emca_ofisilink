@@ -314,23 +314,25 @@ class MeetingController extends Controller
                 'venue' => $request->venue ?? $request->location ?? null,
                 'meeting_type' => $request->meeting_type ?? 'physical',
                 'description' => $request->description ?? null,
-                'status' => $request->action === 'submit' ? 'pending_approval' : 'draft',
+                'status' => 'pending_approval', // All new meetings are automatically pending for approval
                 'created_by' => Auth::id(),
                 'created_at' => now(),
                 'updated_at' => now()
             ];
             
-            // Add approver_id if column exists and when submitting for approval
-            if ($request->action === 'submit' && $request->approver_id) {
+            // Add approver_id if column exists and approver is specified
+            if ($request->approver_id) {
                 if (Schema::hasColumn('meetings', 'approver_id')) {
                     $meetingData['approver_id'] = $request->approver_id;
                 }
-                if (Schema::hasColumn('meetings', 'submitted_by')) {
-                    $meetingData['submitted_by'] = Auth::id();
-                }
-                if (Schema::hasColumn('meetings', 'submitted_at')) {
-                    $meetingData['submitted_at'] = now();
-                }
+            }
+            
+            // Set submitted_by and submitted_at since meeting is automatically submitted for approval
+            if (Schema::hasColumn('meetings', 'submitted_by')) {
+                $meetingData['submitted_by'] = Auth::id();
+            }
+            if (Schema::hasColumn('meetings', 'submitted_at')) {
+                $meetingData['submitted_at'] = now();
             }
             
             // Create meeting
