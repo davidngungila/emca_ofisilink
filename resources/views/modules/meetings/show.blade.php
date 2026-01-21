@@ -95,6 +95,9 @@
                                     <i class="bx bx-file me-1"></i>View Minutes
                                 </a>
                             @endif
+                            <a href="{{ route('modules.meetings.resolutions', $meeting->id) }}" class="btn btn-warning btn-lg shadow-sm">
+                                <i class="bx bx-file-blank me-1"></i>View Resolutions
+                            </a>
                         </div>
                     </div>
                 </div>
