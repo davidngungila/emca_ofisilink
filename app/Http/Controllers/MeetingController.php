@@ -1595,6 +1595,219 @@ class MeetingController extends Controller
     }
 
     public function minutesApproval($id) { return view('modules.meetings.minutes.approval'); }
+    
+    /**
+     * Display meeting resolutions
+     */
+    public function resolutions($id)
+    {
+        $user = Auth::user();
+        
+        // Load meeting
+        $meeting = DB::table('meetings')
+            ->leftJoin('meeting_categories', 'meetings.category_id', '=', 'meeting_categories.id')
+            ->leftJoin('branches', 'meetings.branch_id', '=', 'branches.id')
+            ->leftJoin('users as creator', 'meetings.created_by', '=', 'creator.id')
+            ->select(
+                'meetings.*',
+                'meeting_categories.name as category_name',
+                'branches.name as branch_name',
+                'branches.code as branch_code',
+                'creator.name as creator_name'
+            )
+            ->where('meetings.id', $id)
+            ->first();
+
+        if (!$meeting) {
+            abort(404, 'Meeting not found');
+        }
+
+        // Load resolutions
+        $resolutions = DB::table('meeting_resolutions')
+            ->leftJoin('users as proposer', 'meeting_resolutions.proposed_by', '=', 'proposer.id')
+            ->leftJoin('users as seconder', 'meeting_resolutions.seconded_by', '=', 'seconder.id')
+            ->leftJoin('users as approver', 'meeting_resolutions.approved_by', '=', 'approver.id')
+            ->where('meeting_resolutions.meeting_id', $id)
+            ->select(
+                'meeting_resolutions.*',
+                'proposer.name as proposer_name',
+                'seconder.name as seconder_name',
+                'approver.name as approver_name'
+            )
+            ->orderBy('meeting_resolutions.order_index')
+            ->orderBy('meeting_resolutions.resolution_number')
+            ->get();
+
+        // Load organization settings
+        $orgSettings = \App\Models\OrganizationSetting::getSettings();
+        $organizationInfo = [
+            'name' => is_array($orgSettings->company_name ?? null) 
+                ? config('app.name', 'Organization') 
+                : (string)($orgSettings->company_name ?? config('app.name', 'Organization')),
+            'address' => is_array($orgSettings->company_address ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_address ?? ''),
+            'city' => is_array($orgSettings->company_city ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_city ?? ''),
+            'state' => is_array($orgSettings->company_state ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_state ?? ''),
+            'country' => is_array($orgSettings->company_country ?? null) 
+                ? 'Tanzania' 
+                : (string)($orgSettings->company_country ?? 'Tanzania'),
+            'postal_code' => is_array($orgSettings->company_postal_code ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_postal_code ?? ''),
+            'phone' => is_array($orgSettings->company_phone ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_phone ?? ''),
+            'email' => is_array($orgSettings->company_email ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_email ?? ''),
+            'website' => is_array($orgSettings->company_website ?? null) 
+                ? '' 
+                : (string)($orgSettings->company_website ?? ''),
+            'logo' => $orgSettings->company_logo ?? null,
+        ];
+        
+        $addressParts = array_filter([
+            $organizationInfo['address'],
+            $organizationInfo['city'],
+            $organizationInfo['state'],
+            $organizationInfo['postal_code'],
+            $organizationInfo['country']
+        ], function($part) {
+            return !empty($part) && is_string($part);
+        });
+        $organizationInfo['full_address'] = trim(implode(', ', $addressParts));
+
+        $meeting = (object) $meeting;
+
+        return view('modules.meetings.resolutions.index', compact(
+            'meeting',
+            'resolutions',
+            'organizationInfo'
+        ));
+    }
+    
+    /**
+     * Generate PDF for meeting resolutions
+     */
+    public function generateResolutionsPdf($id)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Load meeting
+            $meeting = DB::table('meetings')
+                ->leftJoin('meeting_categories', 'meetings.category_id', '=', 'meeting_categories.id')
+                ->leftJoin('branches', 'meetings.branch_id', '=', 'branches.id')
+                ->leftJoin('users as creator', 'meetings.created_by', '=', 'creator.id')
+                ->select(
+                    'meetings.*',
+                    'meeting_categories.name as category_name',
+                    'branches.name as branch_name',
+                    'branches.code as branch_code',
+                    'creator.name as creator_name'
+                )
+                ->where('meetings.id', $id)
+                ->first();
+
+            if (!$meeting) {
+                abort(404, 'Meeting not found');
+            }
+
+            // Load resolutions
+            $resolutions = DB::table('meeting_resolutions')
+                ->leftJoin('users as proposer', 'meeting_resolutions.proposed_by', '=', 'proposer.id')
+                ->leftJoin('users as seconder', 'meeting_resolutions.seconded_by', '=', 'seconder.id')
+                ->leftJoin('users as approver', 'meeting_resolutions.approved_by', '=', 'approver.id')
+                ->where('meeting_resolutions.meeting_id', $id)
+                ->select(
+                    'meeting_resolutions.*',
+                    'proposer.name as proposer_name',
+                    'seconder.name as seconder_name',
+                    'approver.name as approver_name'
+                )
+                ->orderBy('meeting_resolutions.order_index')
+                ->orderBy('meeting_resolutions.resolution_number')
+                ->get();
+
+            // Load organization settings
+            $orgSettings = \App\Models\OrganizationSetting::getSettings();
+            $organizationInfo = [
+                'name' => is_array($orgSettings->company_name ?? null) 
+                    ? config('app.name', 'Organization') 
+                    : (string)($orgSettings->company_name ?? config('app.name', 'Organization')),
+                'address' => is_array($orgSettings->company_address ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_address ?? ''),
+                'city' => is_array($orgSettings->company_city ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_city ?? ''),
+                'state' => is_array($orgSettings->company_state ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_state ?? ''),
+                'country' => is_array($orgSettings->company_country ?? null) 
+                    ? 'Tanzania' 
+                    : (string)($orgSettings->company_country ?? 'Tanzania'),
+                'postal_code' => is_array($orgSettings->company_postal_code ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_postal_code ?? ''),
+                'phone' => is_array($orgSettings->company_phone ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_phone ?? ''),
+                'email' => is_array($orgSettings->company_email ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_email ?? ''),
+                'website' => is_array($orgSettings->company_website ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_website ?? ''),
+                'logo' => $orgSettings->company_logo ?? null,
+            ];
+            
+            $addressParts = array_filter([
+                $organizationInfo['address'],
+                $organizationInfo['city'],
+                $organizationInfo['state'],
+                $organizationInfo['postal_code'],
+                $organizationInfo['country']
+            ], function($part) {
+                return !empty($part) && is_string($part);
+            });
+            $organizationInfo['full_address'] = trim(implode(', ', $addressParts));
+
+            $meeting = (object) $meeting;
+
+            $data = compact(
+                'meeting',
+                'resolutions',
+                'organizationInfo'
+            );
+
+            // Generate PDF
+            $pdf = Pdf::loadView('modules.meetings.resolutions.pdf', $data);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOption('enable-local-file-access', true);
+            $pdf->setOption('isHtml5ParserEnabled', true);
+            $pdf->setOption('isRemoteEnabled', true);
+
+            $filename = 'Meeting_Resolutions_' . ($meeting->reference_code ?? $meeting->id) . '_' . \Carbon\Carbon::parse($meeting->meeting_date)->format('Ymd') . '.pdf';
+
+            return $pdf->stream($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Meeting Resolutions PDF generation error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'meeting_id' => $id
+            ]);
+
+            return redirect()->route('modules.meetings.show', $id)
+                ->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+    
     /**
      * Handle AJAX requests for meetings
      */
