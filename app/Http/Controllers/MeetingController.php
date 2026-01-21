@@ -1700,7 +1700,99 @@ class MeetingController extends Controller
         }
     }
     
-    public function submitForApproval($id) { return redirect()->back(); }
+    /**
+     * Submit meeting for approval
+     */
+    public function submitForApproval(Request $request, $id)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        $canManageMeetings = $user->hasPermission('manage_meetings') || 
+                            $user->hasAnyRole(['System Admin', 'admin', 'super_admin', 'hod', 'ceo', 'General Manager', 'HR Officer']);
+        
+        if (!$canManageMeetings) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to submit meetings for approval.'
+                ], 403);
+            }
+            return redirect()->back()->with('error', 'You do not have permission to submit meetings for approval.');
+        }
+        
+        $meeting = DB::table('meetings')->where('id', $id)->first();
+        
+        if (!$meeting) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting not found.'
+                ], 404);
+            }
+            return redirect()->back()->with('error', 'Meeting not found.');
+        }
+        
+        // Check if meeting can be submitted (not already approved or pending)
+        if ($meeting->status === 'pending_approval') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting is already pending for approval.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'Meeting is already pending for approval.');
+        }
+        
+        if ($meeting->status === 'approved') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting is already approved.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'Meeting is already approved.');
+        }
+        
+        try {
+            $updateData = [
+                'status' => 'pending_approval',
+                'updated_at' => now()
+            ];
+            
+            if (Schema::hasColumn('meetings', 'submitted_by')) {
+                $updateData['submitted_by'] = $user->id;
+            }
+            if (Schema::hasColumn('meetings', 'submitted_at')) {
+                $updateData['submitted_at'] = now();
+            }
+            if (Schema::hasColumn('meetings', 'updated_by')) {
+                $updateData['updated_by'] = $user->id;
+            }
+            
+            DB::table('meetings')->where('id', $id)->update($updateData);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Meeting submitted for approval successfully.'
+                ]);
+            }
+            
+            return redirect()->back()->with('success', 'Meeting submitted for approval successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to submit meeting for approval: ' . $e->getMessage());
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to submit meeting: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Failed to submit meeting: ' . $e->getMessage());
+        }
+    }
     public function approve($id) { return redirect()->back(); }
     public function reject($id) { return redirect()->back(); }
 

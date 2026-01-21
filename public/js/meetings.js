@@ -111,6 +111,9 @@ $(document).ready(function() {
             const id = $(this).data('id');
             window.location.href = `/modules/meetings/${id}`;
         });
+        $(document).on('click', '.submit-approval-btn', function() { 
+            submitMeetingForApproval($(this).data('id'));
+        });
 
         // Minutes
         $('#select-meeting-for-minutes').on('change', loadMeetingForMinutes);
@@ -444,6 +447,7 @@ $(document).ready(function() {
         const canEdit = meeting.status === 'draft' || meeting.status === 'pending_approval';
         const canApprove = meeting.status === 'pending_approval';
         const canDelete = meeting.status === 'draft' || meeting.status === 'rejected';
+        const canSubmitForApproval = meeting.status !== 'pending_approval' && meeting.status !== 'approved' && meeting.status !== 'completed';
         
         return `
             <tr>
@@ -460,6 +464,7 @@ $(document).ready(function() {
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-info view-meeting-btn" data-id="${meeting.id}" title="View"><i class="bx bx-show"></i></button>
                         ${canEdit ? `<button class="btn btn-outline-warning edit-meeting-btn" data-id="${meeting.id}" title="Edit"><i class="bx bx-edit"></i></button>` : ''}
+                        ${canSubmitForApproval ? `<button class="btn btn-outline-primary submit-approval-btn" data-id="${meeting.id}" title="Submit for Approval"><i class="bx bx-paper-plane"></i></button>` : ''}
                         ${canApprove ? `<button class="btn btn-outline-success approve-btn" data-id="${meeting.id}" title="Review & Approve"><i class="bx bx-check-shield"></i></button>` : ''}
                         ${canDelete ? `<button class="btn btn-outline-danger delete-meeting-btn" data-id="${meeting.id}" title="Delete"><i class="bx bx-trash"></i></button>` : ''}
                     </div>
@@ -1031,6 +1036,40 @@ $(document).ready(function() {
                         } else {
                             Swal.fire('Error', response.message, 'error');
                         }
+                    }
+                });
+            }
+        });
+    }
+
+    // Submit Meeting for Approval
+    function submitMeetingForApproval(id) {
+        Swal.fire({
+            title: 'Submit for Approval?',
+            text: 'This meeting will be submitted for approval and cannot be edited until approved or rejected.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Submit for Approval',
+            confirmButtonColor: '#007bff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/modules/meetings/${id}/submit`,
+                    method: 'POST',
+                    data: {
+                        _token: csrfToken
+                    },
+                    success: function(response) {
+                        if (response.success || response.status === 'success') {
+                            Swal.fire('Submitted!', 'Meeting submitted for approval successfully', 'success');
+                            refreshAll();
+                        } else {
+                            Swal.fire('Error', response.message || 'Failed to submit meeting', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        const errorMsg = xhr.responseJSON?.message || 'Failed to submit meeting. Please try again.';
+                        Swal.fire('Error', errorMsg, 'error');
                     }
                 });
             }
