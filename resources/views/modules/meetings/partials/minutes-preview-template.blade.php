@@ -1,5 +1,8 @@
 {{-- Template-based Minutes Preview --}}
 {{-- This follows the structured format documented in the template guide --}}
+@php
+use Illuminate\Support\Facades\Storage;
+@endphp
 
 <div class="minutes-preview p-4" style="font-family: 'Times New Roman', serif;">
     
