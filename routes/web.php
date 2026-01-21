@@ -989,6 +989,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         // Cash & Bank Management
         Route::get('/cash-bank/accounts', [CashBankController::class, 'bankAccounts'])->name('cash-bank.accounts');
         Route::post('/cash-bank/accounts', [CashBankController::class, 'store'])->name('cash-bank.accounts.store');
+        Route::get('/cash-bank/accounts/{id}', [CashBankController::class, 'show'])->name('cash-bank.accounts.show')->where('id', '[0-9]+');
         Route::put('/cash-bank/accounts/{id}', [CashBankController::class, 'update'])->name('cash-bank.accounts.update')->where('id', '[0-9]+');
         Route::delete('/cash-bank/accounts/{id}', [CashBankController::class, 'destroy'])->name('cash-bank.accounts.destroy')->where('id', '[0-9]+');
         Route::post('/cash-bank/accounts/data', [CashBankController::class, 'getBankAccountsData'])->name('cash-bank.accounts.data');

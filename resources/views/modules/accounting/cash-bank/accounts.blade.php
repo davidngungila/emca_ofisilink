@@ -1015,73 +1015,10 @@
         });
     }
     
-    // View Account Details
+    // View Account Details - Navigate to full page
     window.viewAccount = function(id) {
-        const account = allAccounts.find(a => a.id === id);
-        if (!account) {
-            if(typeof window.AdvancedToast !== 'undefined') {
-                window.AdvancedToast.error('Error', 'Account not found', { duration: 5000 });
-            } else {
-                alert('Account not found');
-            }
-            return;
-        }
-        
-        let details = `
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bx bx-info-circle me-2"></i>Bank Account Details</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Account Name:</strong></div>
-                        <div class="col-md-6">${escapeHtml(account.name || 'N/A')}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Bank Name:</strong></div>
-                        <div class="col-md-6">${escapeHtml(account.bank_name || 'N/A')}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Account Number:</strong></div>
-                        <div class="col-md-6"><code>${escapeHtml(account.account_number || 'N/A')}</code></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Account Holder:</strong></div>
-                        <div class="col-md-6">${escapeHtml(account.account_name || 'N/A')}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Branch:</strong></div>
-                        <div class="col-md-6">${escapeHtml(account.branch_name || 'N/A')}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>SWIFT Code:</strong></div>
-                        <div class="col-md-6">${escapeHtml(account.swift_code || 'N/A')}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Balance:</strong></div>
-                        <div class="col-md-6"><span class="fw-bold ${account.balance >= 0 ? 'text-success' : 'text-danger'}">${formatCurrency(account.balance)}</span></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>Status:</strong></div>
-                        <div class="col-md-6">
-                            <span class="badge ${account.is_active ? 'bg-success' : 'bg-secondary'}">${account.is_active ? 'Active' : 'Inactive'}</span>
-                            ${account.is_primary ? '<span class="badge bg-warning ms-1">Primary</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><strong>User:</strong></div>
-                        <div class="col-md-6">${escapeHtml(account.user_name || 'Organization Account')}</div>
-                    </div>
-                    ${account.notes ? `<div class="row mb-3"><div class="col-12"><strong>Notes:</strong><br>${escapeHtml(account.notes)}</div></div>` : ''}
-                </div>
-            </div>
-        `;
-        
-        if(typeof window.AdvancedToast !== 'undefined') {
-            window.AdvancedToast.info('Account Details', details, { duration: 0, html: true });
-        } else {
-            alert('Account: ' + account.bank_name + ' - ' + account.account_number);
-        }
+        // Navigate to account details page
+        window.location.href = `{{ route('modules.accounting.cash-bank.accounts.show', ['id' => ':id']) }}`.replace(':id', id);
     };
     
     // Edit Account

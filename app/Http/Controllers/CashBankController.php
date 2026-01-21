@@ -202,6 +202,81 @@ class CashBankController extends Controller
     }
 
     /**
+     * Show bank account details
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return redirect()->route('login');
+        }
+        
+        if (!$user->hasAnyRole(['Accountant', 'System Admin'])) {
+            abort(403, 'Access denied. You do not have permission to view this account.');
+        }
+
+        try {
+            $bankAccount = \App\Models\BankAccount::with([
+                'user' => function($query) {
+                    $query->select('id', 'name', 'email');
+                },
+                'account'
+            ])->findOrFail($id);
+
+            // Get related chart of account if exists
+            $chartAccount = null;
+            if ($bankAccount->account_id) {
+                $chartAccount = ChartOfAccount::find($bankAccount->account_id);
+            }
+
+            // Get transaction summary
+            $transactionSummary = [
+                'total_transactions' => 0,
+                'total_debits' => 0,
+                'total_credits' => 0,
+                'opening_balance' => 0,
+                'closing_balance' => (float)($bankAccount->balance ?? 0),
+            ];
+
+            if ($chartAccount) {
+                $ledgerEntries = GeneralLedger::where('account_id', $chartAccount->id)->get();
+                $transactionSummary['total_transactions'] = $ledgerEntries->count();
+                $transactionSummary['total_debits'] = $ledgerEntries->sum('debit_amount');
+                $transactionSummary['total_credits'] = $ledgerEntries->sum('credit_amount');
+            }
+
+            // Get activity logs if available
+            $activityLogs = [];
+            try {
+                if (class_exists(\App\Models\ActivityLog::class)) {
+                    $activityLogs = \App\Models\ActivityLog::where('model_type', \App\Models\BankAccount::class)
+                        ->where('model_id', $bankAccount->id)
+                        ->with('user')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(10)
+                        ->get();
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to load activity logs for bank account: ' . $e->getMessage());
+            }
+
+            return view('modules.accounting.cash-bank.account-show', compact(
+                'bankAccount',
+                'chartAccount',
+                'transactionSummary',
+                'activityLogs'
+            ));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Bank account not found: ' . $e->getMessage());
+            return redirect()->route('modules.accounting.cash-bank.accounts')->with('error', 'Bank account not found.');
+        } catch (\Exception $e) {
+            Log::error('Error loading bank account: ' . $e->getMessage());
+            return redirect()->route('modules.accounting.cash-bank.accounts')->with('error', 'An error occurred while loading the account.');
+        }
+    }
+
+    /**
      * Delete a bank account
      */
     public function destroy($id)
