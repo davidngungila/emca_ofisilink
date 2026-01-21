@@ -746,7 +746,9 @@ class IncidentController extends Controller
             'connected' => $configs->where('connection_status', 'connected')->count(),
             'disconnected' => $configs->where('connection_status', 'disconnected')->count(),
             'failed' => $configs->where('connection_status', 'failed')->count(),
-            'unknown' => $configs->where('connection_status', 'unknown')->orWhereNull('connection_status')->count(),
+            'unknown' => $configs->filter(function($config) {
+                return $config->connection_status === 'unknown' || $config->connection_status === null;
+            })->count(),
             'total_syncs' => $configs->sum('sync_count') ?? 0,
             'total_failed_syncs' => $configs->sum('failed_sync_count') ?? 0,
             'live_mode' => $configs->filter(function($config) {
