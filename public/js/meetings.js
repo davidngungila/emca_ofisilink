@@ -410,6 +410,8 @@ $(document).ready(function() {
         const canEdit = meeting.status === 'draft' || meeting.status === 'pending_approval';
         const canApprove = meeting.status === 'pending_approval';
         const canDelete = meeting.status === 'draft' || meeting.status === 'rejected';
+        // Only show submit button if meeting is draft or rejected (not approved, not pending, not completed, not cancelled)
+        const canSubmitForApproval = (meeting.status === 'draft' || meeting.status === 'rejected') && meeting.status !== 'pending_approval' && meeting.status !== 'approved' && meeting.status !== 'completed';
         
         return `
             <div class="col-md-4 mb-3">
@@ -422,6 +424,7 @@ $(document).ready(function() {
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item view-meeting-btn" href="#" data-id="${meeting.id}"><i class="bx bx-show"></i> View</a></li>
                                     ${canEdit ? `<li><a class="dropdown-item edit-meeting-btn" href="#" data-id="${meeting.id}"><i class="bx bx-edit"></i> Edit</a></li>` : ''}
+                                    ${canSubmitForApproval ? `<li><a class="dropdown-item text-primary submit-approval-btn" href="#" data-id="${meeting.id}"><i class="bx bx-paper-plane"></i> Submit for Approval</a></li>` : ''}
                                     ${canApprove ? `<li><a class="dropdown-item text-success approve-btn" href="#" data-id="${meeting.id}"><i class="bx bx-check-shield"></i> Review & Approve</a></li>` : ''}
                                     ${canDelete ? `<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger delete-meeting-btn" href="#" data-id="${meeting.id}"><i class="bx bx-trash"></i> Delete</a></li>` : ''}
                                 </ul>
