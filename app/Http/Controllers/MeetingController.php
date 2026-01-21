@@ -6,6 +6,7 @@ use App\Models\Meeting;
 use App\Models\MeetingCategory;
 use App\Models\Branch;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,12 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class MeetingController extends Controller
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     /**
      * Display a listing of meetings.
      */
@@ -1469,6 +1476,10 @@ class MeetingController extends Controller
                     return $this->updateCategory($request, $request->input('category_id'));
                 case 'delete_meeting':
                     return $this->destroy($request->input('meeting_id'));
+                case 'approve_meeting':
+                    return $this->approveMeeting($request);
+                case 'reject_meeting':
+                    return $this->rejectMeeting($request);
                 case 'save_minutes_section':
                     return $this->saveMinutesSection($request, $user);
                 case 'save_agenda_minutes':
@@ -1891,8 +1902,285 @@ class MeetingController extends Controller
             return redirect()->back()->with('error', 'Failed to submit meeting: ' . $e->getMessage());
         }
     }
-    public function approve($id) { return redirect()->back(); }
-    public function reject($id) { return redirect()->back(); }
+    /**
+     * Approve a meeting via AJAX
+     */
+    public function approveMeeting(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        $canApproveMeetings = $user->hasPermission('approve_meetings') || 
+                             $user->hasAnyRole(['System Admin', 'General Manager', 'HOD', 'HR Officer']);
+        
+        if (!$canApproveMeetings) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to approve meetings.'
+            ], 403);
+        }
+        
+        $meetingId = $request->input('meeting_id');
+        $customMessage = $request->input('custom_message', '');
+        
+        if (!$meetingId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meeting ID is required.'
+            ], 400);
+        }
+        
+        $meeting = DB::table('meetings')->where('id', $meetingId)->first();
+        
+        if (!$meeting) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meeting not found.'
+            ], 404);
+        }
+        
+        if ($meeting->status !== 'pending_approval') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only meetings pending approval can be approved.'
+            ], 400);
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update meeting status
+            $updateData = [
+                'status' => 'approved',
+                'approved_at' => now(),
+                'approved_by' => $user->id,
+                'updated_at' => now()
+            ];
+            
+            if (Schema::hasColumn('meetings', 'updated_by')) {
+                $updateData['updated_by'] = $user->id;
+            }
+            
+            DB::table('meetings')
+                ->where('id', $meetingId)
+                ->update($updateData);
+            
+            // Get participants
+            $participants = DB::table('meeting_participants')
+                ->leftJoin('users', function($join) {
+                    $join->on('meeting_participants.user_id', '=', 'users.id')
+                         ->where('meeting_participants.participant_type', '=', 'staff');
+                })
+                ->where('meeting_participants.meeting_id', $meetingId)
+                ->select('users.id', 'users.name', 'users.email', 'users.phone')
+                ->whereNotNull('users.id')
+                ->get();
+            
+            // Send notifications to participants
+            $meetingTitle = $meeting->title;
+            $meetingDate = date('M d, Y', strtotime($meeting->meeting_date));
+            $meetingTime = $meeting->start_time;
+            $venue = $meeting->venue ?? 'TBD';
+            
+            $smsMessage = $customMessage ?: "Meeting Approved: {$meetingTitle} on {$meetingDate} at {$meetingTime}, Venue: {$venue}. Please confirm your attendance.";
+            $emailSubject = "Meeting Approved: {$meetingTitle}";
+            $emailMessage = "The meeting '{$meetingTitle}' scheduled for {$meetingDate} at {$meetingTime} (Venue: {$venue}) has been approved.{$customMessage ? ' ' . $customMessage : ''}";
+            
+            foreach ($participants as $participant) {
+                if ($participant->id) {
+                    try {
+                        $this->notificationService->notify(
+                            $participant->id,
+                            $emailMessage,
+                            route('modules.meetings.show', $meetingId),
+                            $emailSubject
+                        );
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send notification to participant: ' . $e->getMessage(), [
+                            'participant_id' => $participant->id,
+                            'meeting_id' => $meetingId
+                        ]);
+                    }
+                }
+            }
+            
+            // Log activity
+            try {
+                \App\Services\ActivityLogService::logAction(
+                    'approved',
+                    'Meeting',
+                    $meetingId,
+                    "Meeting '{$meetingTitle}' approved by {$user->name}",
+                    $user->id,
+                    [
+                        'meeting_id' => $meetingId,
+                        'meeting_title' => $meetingTitle,
+                        'approved_by' => $user->id,
+                        'approved_by_name' => $user->name,
+                        'custom_message' => $customMessage
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to log meeting approval activity: ' . $e->getMessage());
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Meeting approved successfully and notifications sent to participants.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to approve meeting: ' . $e->getMessage(), [
+                'meeting_id' => $meetingId,
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve meeting: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Reject a meeting via AJAX
+     */
+    public function rejectMeeting(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Check permissions
+        $canApproveMeetings = $user->hasPermission('approve_meetings') || 
+                             $user->hasAnyRole(['System Admin', 'General Manager', 'HOD', 'HR Officer']);
+        
+        if (!$canApproveMeetings) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to reject meetings.'
+            ], 403);
+        }
+        
+        $meetingId = $request->input('meeting_id');
+        $reason = $request->input('reason', '');
+        
+        if (!$meetingId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meeting ID is required.'
+            ], 400);
+        }
+        
+        if (empty($reason)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Rejection reason is required.'
+            ], 400);
+        }
+        
+        $meeting = DB::table('meetings')->where('id', $meetingId)->first();
+        
+        if (!$meeting) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meeting not found.'
+            ], 404);
+        }
+        
+        if ($meeting->status !== 'pending_approval') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only meetings pending approval can be rejected.'
+            ], 400);
+        }
+        
+        DB::beginTransaction();
+        try {
+            // Update meeting status
+            $updateData = [
+                'status' => 'rejected',
+                'rejected_at' => now(),
+                'rejected_by' => $user->id,
+                'updated_at' => now()
+            ];
+            
+            if (Schema::hasColumn('meetings', 'rejection_reason')) {
+                $updateData['rejection_reason'] = $reason;
+            }
+            
+            if (Schema::hasColumn('meetings', 'updated_by')) {
+                $updateData['updated_by'] = $user->id;
+            }
+            
+            DB::table('meetings')
+                ->where('id', $meetingId)
+                ->update($updateData);
+            
+            // Get meeting creator
+            $creator = DB::table('users')->where('id', $meeting->created_by)->first();
+            
+            // Send notification to creator
+            if ($creator) {
+                try {
+                    $meetingTitle = $meeting->title;
+                    $emailMessage = "Your meeting '{$meetingTitle}' has been rejected. Reason: {$reason}";
+                    $emailSubject = "Meeting Rejected: {$meetingTitle}";
+                    
+                    $this->notificationService->notify(
+                        $creator->id,
+                        $emailMessage,
+                        route('modules.meetings.show', $meetingId),
+                        $emailSubject
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to send rejection notification to creator: ' . $e->getMessage(), [
+                        'creator_id' => $creator->id,
+                        'meeting_id' => $meetingId
+                    ]);
+                }
+            }
+            
+            // Log activity
+            try {
+                \App\Services\ActivityLogService::logAction(
+                    'rejected',
+                    'Meeting',
+                    $meetingId,
+                    "Meeting '{$meeting->title}' rejected by {$user->name}",
+                    $user->id,
+                    [
+                        'meeting_id' => $meetingId,
+                        'meeting_title' => $meeting->title,
+                        'rejected_by' => $user->id,
+                        'rejected_by_name' => $user->name,
+                        'rejection_reason' => $reason
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to log meeting rejection activity: ' . $e->getMessage());
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Meeting rejected successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to reject meeting: ' . $e->getMessage(), [
+                'meeting_id' => $meetingId,
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject meeting: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     /**
      * Save a minutes section
