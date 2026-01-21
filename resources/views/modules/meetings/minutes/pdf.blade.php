@@ -28,48 +28,111 @@
 </head>
 <body>
     @php
+        use Illuminate\Support\Facades\Storage;
         $orgSettings = \App\Models\OrganizationSetting::getSettings();
         $timezone = $orgSettings->timezone ?? config('app.timezone', 'Africa/Dar_es_Salaam');
         $documentDate = \Carbon\Carbon::parse($meeting->meeting_date)->setTimezone($timezone)->format($orgSettings->date_format ?? 'd M Y');
-        $documentRef = 'MEETING-MINUTES-' . $meeting->reference_code ?? $meeting->id . '-' . now()->setTimezone($timezone)->format('YmdHis');
+        $documentRef = 'MEETING-MINUTES-' . ($meeting->reference_code ?? $meeting->id) . '-' . now()->setTimezone($timezone)->format('YmdHis');
+        
+        // Get logo path for PDF
+        $logoPath = null;
+        if (isset($organizationInfo['logo']) && $organizationInfo['logo']) {
+            $logoFile = $organizationInfo['logo'];
+            if (Storage::disk('public')->exists($logoFile)) {
+                $logoPath = storage_path('app/public/' . $logoFile);
+            } elseif (file_exists(public_path('storage/' . $logoFile))) {
+                $logoPath = public_path('storage/' . $logoFile);
+            }
+        }
     @endphp
     
-    @include('components.pdf-header', [
-        'documentTitle' => 'MEETING MINUTES',
-        'documentRef' => $documentRef,
-        'documentDate' => $documentDate
-    ])
-
     <main>
-        <h1>Meeting Minutes</h1>
-        <h2 style="text-align: center; margin-bottom: 20px;">{{ $meeting->title }}</h2>
+        {{-- Organization Header Section --}}
+        <div style="text-align: center; margin-bottom: 25px; border-bottom: 3px solid #333; padding-bottom: 15px;">
+            @if($logoPath && file_exists($logoPath))
+                <div style="margin-bottom: 10px;">
+                    <img src="{{ $logoPath }}" alt="Organization Logo" style="max-height: 70px; max-width: 180px;">
+                </div>
+            @endif
+            
+            <h1 style="font-size: 22pt; margin-bottom: 8px; color: #000; letter-spacing: 1px;">
+                {{ $organizationInfo['name'] ?? config('app.name', 'Organization') }}
+            </h1>
+            
+            <div style="font-size: 8pt; line-height: 1.6; color: #555; margin-bottom: 10px;">
+                @if($organizationInfo['full_address'])
+                    <p style="margin: 2px 0;"><strong>Address:</strong> {{ $organizationInfo['full_address'] }}</p>
+                @endif
+                <div style="margin: 3px 0;">
+                    @if($organizationInfo['phone'])
+                        <span style="margin-right: 15px;"><strong>Phone:</strong> {{ $organizationInfo['phone'] }}</span>
+                    @endif
+                    @if($organizationInfo['email'])
+                        <span style="margin-right: 15px;"><strong>Email:</strong> {{ $organizationInfo['email'] }}</span>
+                    @endif
+                    @if($organizationInfo['website'])
+                        <span><strong>Website:</strong> {{ $organizationInfo['website'] }}</span>
+                    @endif
+                </div>
+                @if($organizationInfo['registration_number'] || $organizationInfo['tax_id'])
+                <div style="margin: 3px 0;">
+                    @if($organizationInfo['registration_number'])
+                        <span style="margin-right: 15px;"><strong>Reg. No:</strong> {{ $organizationInfo['registration_number'] }}</span>
+                    @endif
+                    @if($organizationInfo['tax_id'])
+                        <span><strong>Tax ID:</strong> {{ $organizationInfo['tax_id'] }}</span>
+                    @endif
+                </div>
+                @endif
+            </div>
+            
+            <h2 style="font-size: 16pt; margin-top: 15px; margin-bottom: 8px; color: #000;">
+                {{ strtoupper($meeting->category_name ?? 'MEETING') }}
+            </h2>
+            <h3 style="font-size: 14pt; margin-bottom: 8px; color: #333; font-weight: 600;">
+                MINUTES OF THE {{ strtoupper($meeting->category_name ?? 'BOARD') }} MEETING
+            </h3>
+        </div>
+        
+        {{-- Meeting Title and Details --}}
+        <h2 style="text-align: center; margin-bottom: 15px; font-size: 15pt; color: #500000;">{{ $meeting->title }}</h2>
         
         <!-- Meeting Details -->
-        <table>
+        <table style="margin-bottom: 20px;">
             <tr>
-                <th style="width: 20%;">Date</th>
-                <td>{{ \Carbon\Carbon::parse($meeting->meeting_date)->format('l, d F Y') }}</td>
-                <th style="width: 20%;">Time</th>
-                <td>{{ $meeting->start_time }} - {{ $meeting->end_time }}</td>
+                <th style="width: 18%; background-color: #f9f9f9;">Date</th>
+                <td style="width: 32%;">{{ \Carbon\Carbon::parse($meeting->meeting_date)->format('l, d F Y') }}</td>
+                <th style="width: 18%; background-color: #f9f9f9;">Time</th>
+                <td style="width: 32%;">
+                    {{ \Carbon\Carbon::parse($meeting->start_time)->format('h:i A') }}
+                    @if($meeting->end_time)
+                        - {{ \Carbon\Carbon::parse($meeting->end_time)->format('h:i A') }}
+                    @endif
+                </td>
             </tr>
             <tr>
-                <th>Venue</th>
-                <td colspan="3">{{ $meeting->venue ?? $meeting->location ?? 'N/A' }}</td>
+                <th style="background-color: #f9f9f9;">Venue</th>
+                <td colspan="3">
+                    {{ $meeting->venue ?? $meeting->location ?? 'N/A' }}
+                    @if($meeting->branch_name)
+                        ({{ $meeting->branch_name }}@if($meeting->branch_code) - {{ $meeting->branch_code }}@endif)
+                    @endif
+                </td>
             </tr>
             <tr>
-                <th>Category</th>
+                <th style="background-color: #f9f9f9;">Meeting Type</th>
                 <td colspan="3">{{ $meeting->category_name ?? 'N/A' }}</td>
             </tr>
-            @if($meeting->branch_name)
-            <tr>
-                <th>Branch</th>
-                <td colspan="3">{{ $meeting->branch_name }} @if($meeting->branch_code)({{ $meeting->branch_code }})@endif</td>
-            </tr>
-            @endif
             @if($meeting->creator_name)
             <tr>
-                <th>Organized By</th>
+                <th style="background-color: #f9f9f9;">Organized By</th>
                 <td colspan="3">{{ $meeting->creator_name }}</td>
+            </tr>
+            @endif
+            @if($meeting->description)
+            <tr>
+                <th style="background-color: #f9f9f9;">Description</th>
+                <td colspan="3" style="text-align: justify;">{{ $meeting->description }}</td>
             </tr>
             @endif
         </table>

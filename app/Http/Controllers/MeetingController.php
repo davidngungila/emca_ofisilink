@@ -1469,6 +1469,59 @@ class MeetingController extends Controller
                 $approvedByUser = DB::table('users')->where('id', $minutes->approved_by)->first();
             }
 
+            // Load organization settings
+            $orgSettings = \App\Models\OrganizationSetting::getSettings();
+            
+            // Build organization information
+            $organizationInfo = [
+                'name' => is_array($orgSettings->company_name ?? null) 
+                    ? config('app.name', 'Organization') 
+                    : (string)($orgSettings->company_name ?? config('app.name', 'Organization')),
+                'registration_number' => is_array($orgSettings->company_registration_number ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_registration_number ?? ''),
+                'tax_id' => is_array($orgSettings->company_tax_id ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_tax_id ?? ''),
+                'address' => is_array($orgSettings->company_address ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_address ?? ''),
+                'city' => is_array($orgSettings->company_city ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_city ?? ''),
+                'state' => is_array($orgSettings->company_state ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_state ?? ''),
+                'country' => is_array($orgSettings->company_country ?? null) 
+                    ? 'Tanzania' 
+                    : (string)($orgSettings->company_country ?? 'Tanzania'),
+                'postal_code' => is_array($orgSettings->company_postal_code ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_postal_code ?? ''),
+                'phone' => is_array($orgSettings->company_phone ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_phone ?? ''),
+                'email' => is_array($orgSettings->company_email ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_email ?? ''),
+                'website' => is_array($orgSettings->company_website ?? null) 
+                    ? '' 
+                    : (string)($orgSettings->company_website ?? ''),
+                'logo' => $orgSettings->company_logo ?? null,
+            ];
+            
+            // Build full address
+            $addressParts = array_filter([
+                $organizationInfo['address'],
+                $organizationInfo['city'],
+                $organizationInfo['state'],
+                $organizationInfo['postal_code'],
+                $organizationInfo['country']
+            ], function($part) {
+                return !empty($part) && is_string($part);
+            });
+            $organizationInfo['full_address'] = trim(implode(', ', $addressParts));
+            
             // Convert to object for view compatibility
             $meeting = (object) $meeting;
             $minutes = (object) $minutes;
@@ -1482,7 +1535,8 @@ class MeetingController extends Controller
                 'agendas',
                 'actionItems',
                 'preparedByUser',
-                'approvedByUser'
+                'approvedByUser',
+                'organizationInfo'
             );
 
             // Generate PDF
