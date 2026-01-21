@@ -236,10 +236,11 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Notices/Announcements Routes
-    Route::prefix('notices')->name('notices.')->group(function () {
+    Route::prefix('modules/notices')->name('notices.')->group(function () {
         Route::get('/', [NoticeController::class, 'index'])->name('index');
         Route::get('/create', [NoticeController::class, 'create'])->name('create');
         Route::post('/', [NoticeController::class, 'store'])->name('store');
+        Route::get('/unacknowledged', [NoticeController::class, 'getUnacknowledged'])->name('unacknowledged');
         Route::get('/{notice}', [NoticeController::class, 'show'])->name('show');
         Route::get('/{notice}/edit', [NoticeController::class, 'edit'])->name('edit');
         Route::put('/{notice}', [NoticeController::class, 'update'])->name('update');

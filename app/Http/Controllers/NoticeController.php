@@ -327,6 +327,57 @@ class NoticeController extends Controller
     }
 
     /**
+     * Get unacknowledged notices for current user (for popup display)
+     */
+    public function getUnacknowledged(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Get all active notices that should be shown to user and haven't been acknowledged
+        $notices = Notice::with(['creator', 'attachments', 'roles'])
+            ->where('is_active', true)
+            ->where(function($query) use ($user) {
+                $query->where('show_to_all', true)
+                    ->orWhereHas('roles', function($q) use ($user) {
+                        $q->whereIn('roles.id', $user->roles->pluck('id'));
+                    });
+            })
+            ->where(function($query) {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', now());
+            })
+            ->where(function($query) {
+                $query->whereNull('expiry_date')
+                    ->orWhere('expiry_date', '>=', now());
+            })
+            ->whereDoesntHave('acknowledgments', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->orderBy('priority', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->filter(function($notice) use ($user) {
+                return $notice->shouldShowToUser($user);
+            })
+            ->map(function($notice) {
+                return [
+                    'id' => $notice->id,
+                    'title' => $notice->title,
+                    'content' => $notice->content,
+                    'priority' => $notice->priority,
+                    'require_acknowledgment' => $notice->require_acknowledgment,
+                    'created_at' => $notice->created_at->format('Y-m-d H:i:s'),
+                    'creator_name' => $notice->creator->name ?? 'System',
+                ];
+            });
+        
+        return response()->json([
+            'success' => true,
+            'notices' => $notices->values(),
+        ]);
+    }
+
+    /**
      * Get acknowledgment statistics
      */
     public function acknowledgmentStats($id)

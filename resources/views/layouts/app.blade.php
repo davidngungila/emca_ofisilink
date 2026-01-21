@@ -640,6 +640,195 @@
       document.getElementById('notifBell').addEventListener('click', function(){ loadNotifDropdown(true); });
     })();
 
+    // Notice Popups - Display immediately on page load
+    (function() {
+      const NOTICE_STORAGE_KEY = 'ofisilink_notices_acknowledged';
+      
+      function getAcknowledgedNotices() {
+        try {
+          const stored = localStorage.getItem(NOTICE_STORAGE_KEY);
+          return stored ? JSON.parse(stored) : [];
+        } catch(e) {
+          return [];
+        }
+      }
+      
+      function markNoticeAcknowledged(noticeId) {
+        try {
+          const acknowledged = getAcknowledgedNotices();
+          if (!acknowledged.includes(noticeId)) {
+            acknowledged.push(noticeId);
+            // Keep only last 100
+            if (acknowledged.length > 100) {
+              acknowledged.shift();
+            }
+            localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(acknowledged));
+          }
+        } catch(e) {}
+      }
+      
+      function showNoticeModal(notice) {
+        // Check if already acknowledged in localStorage (for this session)
+        const acknowledged = getAcknowledgedNotices();
+        if (acknowledged.includes(notice.id)) {
+          return;
+        }
+        
+        // Don't show if require_acknowledgment is false and already seen in this session
+        if (!notice.require_acknowledgment) {
+          const sessionNotices = sessionStorage.getItem('notices_shown') || '[]';
+          const shown = JSON.parse(sessionNotices);
+          if (shown.includes(notice.id)) {
+            return;
+          }
+          shown.push(notice.id);
+          sessionStorage.setItem('notices_shown', JSON.stringify(shown));
+        }
+        
+        const priorityClass = {
+          'urgent': 'danger',
+          'important': 'warning',
+          'normal': 'info'
+        }[notice.priority] || 'info';
+        
+        const priorityIcon = {
+          'urgent': 'bx-error-circle',
+          'important': 'bx-info-circle',
+          'normal': 'bx-bell'
+        }[notice.priority] || 'bx-bell';
+        
+        const modalHtml = `
+          <div class="modal fade" id="noticeModal${notice.id}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index: 999998;">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-${priorityClass} text-white">
+                  <h5 class="modal-title">
+                    <i class="bx ${priorityIcon} me-2"></i>${escapeHtml(notice.title)}
+                  </h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                  <div class="notice-content">
+                    ${escapeHtml(notice.content).replace(/\n/g, '<br>')}
+                  </div>
+                  ${notice.require_acknowledgment ? `
+                    <div class="mt-3">
+                      <textarea class="form-control" id="noticeNotes${notice.id}" rows="2" placeholder="Optional notes (optional)"></textarea>
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="modal-footer">
+                  ${notice.require_acknowledgment ? `
+                    <button type="button" class="btn btn-secondary" onclick="acknowledgeNotice(${notice.id}, false)">Close</button>
+                    <button type="button" class="btn btn-${priorityClass}" onclick="acknowledgeNotice(${notice.id}, true)">
+                      <i class="bx bx-check me-1"></i>Acknowledge
+                    </button>
+                  ` : `
+                    <button type="button" class="btn btn-${priorityClass}" data-bs-dismiss="modal">Close</button>
+                  `}
+                  <a href="{{ url('/modules/notices') }}/${notice.id}" class="btn btn-outline-${priorityClass}">
+                    <i class="bx bx-show me-1"></i>View Details
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById(`noticeModal${notice.id}`);
+        if (existingModal) {
+          existingModal.remove();
+        }
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Show modal
+        const modalElement = document.getElementById(`noticeModal${notice.id}`);
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        // Mark as shown when modal is hidden (if not requiring acknowledgment)
+        if (!notice.require_acknowledgment) {
+          modalElement.addEventListener('hidden.bs.modal', function() {
+            markNoticeAcknowledged(notice.id);
+            modalElement.remove();
+          });
+        }
+      }
+      
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+      
+      window.acknowledgeNotice = function(noticeId, acknowledged) {
+        const notes = document.getElementById(`noticeNotes${noticeId}`)?.value || '';
+        
+        if (acknowledged) {
+          // Send acknowledgment to server
+          fetch(`{{ url('/modules/notices') }}/${noticeId}/acknowledge`, {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ notes: notes })
+          }).catch(() => {});
+        }
+        
+        // Mark as acknowledged in localStorage
+        markNoticeAcknowledged(noticeId);
+        
+        // Close modal
+        const modalElement = document.getElementById(`noticeModal${noticeId}`);
+        if (modalElement) {
+          const modal = bootstrap.Modal.getInstance(modalElement);
+          if (modal) {
+            modal.hide();
+          }
+          setTimeout(() => modalElement.remove(), 300);
+        }
+      };
+      
+      async function loadAndShowNotices() {
+        try {
+          const res = await fetch('{{ route("notices.unacknowledged") }}', {
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+          });
+          if (!res.ok) return;
+          
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.notices) && data.notices.length > 0) {
+            const acknowledged = getAcknowledgedNotices();
+            const noticesToShow = data.notices.filter(n => !acknowledged.includes(n.id));
+            
+            // Show notices one by one with a delay
+            noticesToShow.forEach((notice, index) => {
+              setTimeout(() => {
+                showNoticeModal(notice);
+              }, index * 1000); // 1 second delay between notices
+            });
+          }
+        } catch(e) {
+          // Silent fail
+        }
+      }
+      
+      // Load notices immediately on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        // Wait a bit for page to fully load
+        setTimeout(loadAndShowNotices, 1000);
+      });
+      
+      // Also poll for new notices every 30 seconds
+      setInterval(loadAndShowNotices, 30000);
+    })();
+
     // Auto-logout on idle with 30-second warning
     (function() {
       @php
