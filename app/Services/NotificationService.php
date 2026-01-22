@@ -78,10 +78,9 @@ class NotificationService
 
         foreach ($users as $user) {
             // Enhance data with user information for email template
+            // Note: recipient_name, recipient_email, recipient_id are excluded from display
             $enhancedData = array_merge($data, [
-                'recipient_name' => $user->name,
-                'recipient_email' => $user->email,
-                'recipient_id' => $user->id,
+                // User info is available but not displayed in email template
             ]);
 
             // Add employee information if available
@@ -127,8 +126,8 @@ class NotificationService
                 try {
                     $emailSubject = $subject ?? 'OfisiLink Notification';
                     
-                    // Add link to data for email template
-                    $enhancedData['link'] = $link;
+                    // Link is not included in email template (removed per user request)
+                    // $enhancedData['link'] = $link;
                     
                     $emailResult = $this->sendEmail($user->email, $emailSubject, $message, $enhancedData);
                     if ($emailResult) {

@@ -277,32 +277,6 @@
                 </div>
             @endif
 
-            @if(isset($data) && !empty($data))
-                @php
-                    $excludedKeys = ['is_html', 'skip_sms', 'skip_email', 'type', 'purpose', 'otp_code', 'staff_name', 'creator_name', 'user_name', 'employee_name', 'request_id', 'voucher_no', 'request_no', 'reference_number', 'amount', 'requested_amount', 'total_amount', 'purpose', 'reason', 'description', 'document_attached', 'has_attachment', 'attachment', 'document_name', 'attachment_name', 'status', 'comments', 'remarks', 'request_date', 'created_at', 'submitted_at', 'department', 'department_name', 'employee_id', 'staff_id'];
-                    $additionalData = array_filter($data, function($key) use ($excludedKeys) {
-                        return !in_array($key, $excludedKeys);
-                    }, ARRAY_FILTER_USE_KEY);
-                @endphp
-
-                @if(!empty($additionalData))
-                    <div class="info-section">
-                        <h3>Additional Information</h3>
-                        @foreach($additionalData as $key => $value)
-                            <div class="info-item">
-                                <strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
-                                <span>{{ is_array($value) ? json_encode($value, JSON_PRETTY_PRINT) : (is_bool($value) ? ($value ? 'Yes' : 'No') : $value) }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            @endif
-
-            @if(isset($link) && $link)
-                <div class="button-container">
-                    <a href="{{ $link }}" class="btn-primary">View Full Details</a>
-                </div>
-            @endif
 
             <div class="divider"></div>
 
