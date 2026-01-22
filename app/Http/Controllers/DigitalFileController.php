@@ -3245,7 +3245,7 @@ class DigitalFileController extends Controller
                 'expiry_date' => $doc->expiry_date,
                 'issued_by' => $doc->issued_by ?? ($doc->uploader->name ?? 'System'),
                 'file_size' => $doc->file_size,
-                'file_path' => $filePath,
+                'file_path' => $doc->file_path, // Keep original file_path for detection
                 'file_url' => $fileUrl,
                 'folder_name' => 'Employee Documents',
                 'created_at' => $doc->created_at,

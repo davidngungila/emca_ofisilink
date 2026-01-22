@@ -198,7 +198,7 @@
                                                         $downloadUrl = $docUrl;
                                                     }
                                                 @endphp
-                                                <button class="btn btn-sm btn-success" onclick="previewDocument('{{ $previewUrl }}', '{{ addslashes($document['document_name']) }}', '{{ $document['type'] }}', '{{ $downloadUrl }}')" title="Preview">
+                                                <button class="btn btn-sm btn-success" onclick="previewDocument('{{ $previewUrl }}', '{{ addslashes($document['document_name']) }}', '{{ $document['type'] }}', '{{ $downloadUrl }}', '{{ $document['file_path'] ?? '' }}')" title="Preview">
                                                     <i class="bx bx-show"></i>
                                                 </button>
                                                 <a href="{{ $downloadUrl }}" download class="btn btn-sm btn-outline-success" title="Download">
@@ -590,7 +590,7 @@ $('#uploadDocumentForm').on('submit', function(e) {
 });
 
 // Preview document
-function previewDocument(fileUrl, fileName, docType, downloadUrl) {
+function previewDocument(fileUrl, fileName, docType, downloadUrl, filePath) {
     const modal = new bootstrap.Modal(document.getElementById('previewModal'));
     const title = document.getElementById('previewModalTitle');
     const content = $('#previewModalContent'); // Use jQuery selector
@@ -604,15 +604,45 @@ function previewDocument(fileUrl, fileName, docType, downloadUrl) {
     downloadLink.href = downloadUrl || fileUrl;
     downloadLink.download = fileName;
     
-    // Determine file type for preview
-    const ext = fileName.split('.').pop().toLowerCase();
+    // Determine file type for preview - check extension, URL, and file path
+    const ext = fileName ? fileName.split('.').pop().toLowerCase() : '';
+    const fileUrlLower = fileUrl ? fileUrl.toLowerCase() : '';
+    const filePathLower = filePath ? filePath.toLowerCase() : '';
     
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
+    // Check if it's a PDF (by extension, URL, or file path)
+    const isPdf = ext === 'pdf' || 
+                  fileUrlLower.includes('.pdf') || 
+                  fileUrlLower.includes('/pdf') ||
+                  filePathLower.includes('.pdf') ||
+                  filePathLower.endsWith('pdf');
+    
+    // Check if it's an image
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+    const isImage = imageExts.includes(ext) || 
+                    fileUrlLower.match(/\.(jpg|jpeg|png|gif|webp|bmp)(\?|$)/i) ||
+                    filePathLower.match(/\.(jpg|jpeg|png|gif|webp|bmp)(\?|$)/i);
+    
+    if (isImage) {
         // Image preview
         content.html(`<img src="${fileUrl}" class="img-fluid" alt="${fileName}" style="max-height: 70vh; width: auto; display: block; margin: 0 auto;">`);
-    } else if (ext === 'pdf') {
+    } else if (isPdf) {
         // PDF preview using iframe
-        content.html(`<iframe src="${fileUrl}" style="width: 100%; height: 70vh; border: none;"></iframe>`);
+        // Use embed tag as fallback for better browser compatibility
+        content.html(`
+            <div style="width: 100%; height: 70vh; overflow: auto;">
+                <embed 
+                    src="${fileUrl}" 
+                    type="application/pdf" 
+                    style="width: 100%; height: 100%; border: none;"
+                    title="PDF Preview">
+                <iframe 
+                    src="${fileUrl}" 
+                    style="width: 100%; height: 100%; border: none; display: none;" 
+                    onload="this.style.display='block'; this.previousElementSibling.style.display='none';"
+                    title="PDF Preview">
+                </iframe>
+            </div>
+        `);
     } else {
         // For other file types, show download option
         content.html(`
