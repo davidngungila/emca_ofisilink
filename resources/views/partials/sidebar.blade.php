@@ -59,7 +59,7 @@
       <div data-i18n="File Management" style="font-weight: bold;">File Management</div>
     </a>
     <ul class="menu-sub">
-      <li class="menu-item {{ request()->routeIs('modules.files.digital') || request()->routeIs('modules.files.digital.*') ? 'active' : '' }}">
+      <li class="menu-item {{ request()->routeIs('modules.files.digital') || request()->routeIs('modules.files.digital.*') || request()->routeIs('modules.files.digital.my-documents') ? 'active' : '' }}">
         <a href="{{ route('modules.files.digital') }}" class="menu-link">
           <div data-i18n="Digital Files" style="font-weight: bold;">Digital Files</div>
         </a>
