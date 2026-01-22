@@ -487,13 +487,26 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Access Level <span class="text-danger">*</span></label>
-                            <select class="form-select" name="access_level" required>
+                            <select class="form-select" name="access_level" id="folderAccessLevel" required>
                                 <option value="private" selected>Private (Only me)</option>
                                 <option value="department">Department (My Department)</option>
                                 <option value="public">Public (All users)</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="departmentFieldContainer" style="display: none;">
+                            <label class="form-label fw-bold">Department <span class="text-danger">*</span></label>
+                            <select class="form-select" name="department_id" id="folderDepartmentId">
+                                <option value="">-- Select Department --</option>
+                                @php
+                                    $userDeptId = Auth::user()->department_id ?? null;
+                                    $departments = \App\Models\Department::where('is_active', true)->orderBy('name')->get();
+                                @endphp
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ $userDeptId == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="folderCodeContainer">
                             <label class="form-label fw-bold">Folder Code</label>
                             <input type="text" class="form-control" name="folder_code" placeholder="Optional folder code">
                         </div>
