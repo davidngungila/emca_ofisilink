@@ -812,20 +812,94 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.toString().replace(/[&<>"']/g, m => map[m]);
+}
+
 document.addEventListener('DOMContentLoaded', function(){
     // HOD/HR decisions on assessments
     function hodDecision(assessmentId, decision){
-        const comments = prompt('Enter comments for this decision:');
-        if (comments === null) return;
-        fetch("{{ route('assessments.hod-approve', ['assessment' => 0]) }}".replace('/0/', '/'+assessmentId+'/'), {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ decision: decision, comments: comments })
-        }).then(async (res)=>{
-            const data = await res.json().catch(()=>({success:false}));
-            if(!res.ok || !data.success){ throw new Error(data.message||'Failed'); }
-            window.location.reload();
-        }).catch((e)=>{ alert(e.message||'Failed'); });
+        const actionText = decision === 'approve' ? 'approve' : 'reject';
+        const actionTitle = decision === 'approve' ? 'Approve Assessment' : 'Reject Assessment';
+        const actionIcon = decision === 'approve' ? 'question' : 'warning';
+        const confirmButtonText = decision === 'approve' ? 'Yes, Approve' : 'Yes, Reject';
+        const confirmButtonColor = decision === 'approve' ? '#28a745' : '#dc3545';
+        
+        Swal.fire({
+            title: actionTitle,
+            html: '<div class="mb-3"><label class="form-label">Enter comments for this decision:</label><textarea id="swal-comments" class="form-control" rows="4" placeholder="Enter your comments here..."></textarea></div>',
+            icon: actionIcon,
+            showCancelButton: true,
+            confirmButtonText: confirmButtonText,
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: confirmButtonColor,
+            cancelButtonColor: '#6c757d',
+            focusConfirm: false,
+            preConfirm: () => {
+                const comments = document.getElementById('swal-comments').value;
+                if (!comments || comments.trim() === '') {
+                    Swal.showValidationMessage('Please enter comments');
+                    return false;
+                }
+                return comments;
+            },
+            didOpen: () => {
+                const textarea = document.getElementById('swal-comments');
+                if (textarea) {
+                    textarea.focus();
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const comments = result.value;
+                // Show loading
+                Swal.fire({
+                    title: 'Processing...',
+                    text: 'Please wait',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                fetch("{{ route('assessments.hod-approve', ['assessment' => 0]) }}".replace('/0/', '/'+assessmentId+'/'), {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ decision: decision, comments: comments })
+                }).then(async (res)=>{
+                    const data = await res.json().catch(()=>({success:false}));
+                    if(!res.ok || !data.success){ 
+                        throw new Error(data.message||'Failed'); 
+                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message || 'Assessment ' + actionText + 'd successfully',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#28a745'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }).catch((e)=>{ 
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: e.message || 'Failed to ' + actionText + ' assessment',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
     }
     document.querySelectorAll('.approve-assessment').forEach(function(btn){
         btn.addEventListener('click', function(){ hodDecision(this.dataset.id, 'approve'); });
@@ -837,16 +911,129 @@ document.addEventListener('DOMContentLoaded', function(){
     // All modals removed - using dedicated pages instead
     // Approve/Reject progress reports (HOD)
     function reportDecision(reportId, decision){
-        const comments = decision==='reject' ? prompt('Enter comments (optional):') : '';
-        fetch("{{ route('assessments.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ decision: decision, comments: comments })
-        }).then(async (res)=>{
-            const data = await res.json().catch(()=>({success:false}));
-            if(!res.ok || !data.success){ throw new Error(data.message||'Failed'); }
-            window.location.reload();
-        }).catch((e)=>{ alert(e.message||'Failed'); });
+        const actionText = decision === 'approve' ? 'approve' : 'reject';
+        const actionTitle = decision === 'approve' ? 'Approve Progress Report' : 'Reject Progress Report';
+        const actionIcon = decision === 'approve' ? 'question' : 'warning';
+        const confirmButtonText = decision === 'approve' ? 'Yes, Approve' : 'Yes, Reject';
+        const confirmButtonColor = decision === 'approve' ? '#28a745' : '#dc3545';
+        
+        if (decision === 'approve') {
+            // For approval, show confirmation dialog
+            Swal.fire({
+                title: actionTitle,
+                text: 'Are you sure you want to approve this progress report?',
+                icon: actionIcon,
+                showCancelButton: true,
+                confirmButtonText: confirmButtonText,
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: confirmButtonColor,
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    fetch("{{ route('assessments.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ decision: decision, comments: '' })
+                    }).then(async (res)=>{
+                        const data = await res.json().catch(()=>({success:false}));
+                        if(!res.ok || !data.success){ 
+                            throw new Error(data.message||'Failed'); 
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: data.message || 'Progress report approved successfully',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#28a745'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch((e)=>{ 
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: e.message || 'Failed to approve progress report',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+                }
+            });
+        } else {
+            // For rejection, show input dialog for comments
+            Swal.fire({
+                title: actionTitle,
+                html: '<div class="mb-3"><label class="form-label">Enter rejection comments (optional):</label><textarea id="swal-comments" class="form-control" rows="4" placeholder="Enter rejection comments here..."></textarea></div>',
+                icon: actionIcon,
+                showCancelButton: true,
+                confirmButtonText: confirmButtonText,
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: confirmButtonColor,
+                cancelButtonColor: '#6c757d',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const comments = document.getElementById('swal-comments').value;
+                    return comments || '';
+                },
+                didOpen: () => {
+                    const textarea = document.getElementById('swal-comments');
+                    if (textarea) {
+                        textarea.focus();
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const comments = result.value || '';
+                    // Show loading
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    fetch("{{ route('assessments.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ decision: decision, comments: comments })
+                    }).then(async (res)=>{
+                        const data = await res.json().catch(()=>({success:false}));
+                        if(!res.ok || !data.success){ 
+                            throw new Error(data.message||'Failed'); 
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: data.message || 'Progress report rejected successfully',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#28a745'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    }).catch((e)=>{ 
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: e.message || 'Failed to reject progress report',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+                }
+            });
+        }
     }
     document.querySelectorAll('.approve-report').forEach(function(btn){
         btn.addEventListener('click', function(){ reportDecision(this.dataset.id, 'approve'); });
@@ -992,25 +1179,67 @@ document.addEventListener('DOMContentLoaded', function(){
             const btn = e.target.closest('.btn-delete-assessment');
             const id = btn.dataset.assessmentId;
             const name = btn.dataset.assessmentName;
-            if (confirm('Are you sure you want to delete the assessment "' + name + '"?\n\nThis will also delete all related activities and progress reports. This action cannot be undone.')) {
-                fetch("{{ route('assessments.destroy', ['assessment' => 0]) }}".replace('/0/', '/'+id+'/'), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    }
-                }).then(async res => {
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        alert('Assessment deleted successfully');
-                        window.location.reload();
-                    } else {
-                        alert('Failed to delete: ' + (data.message || 'Unknown error'));
-                    }
-                }).catch(err => {
-                    alert('Error: ' + err.message);
-                });
-            }
+            
+            Swal.fire({
+                title: 'Delete Assessment?',
+                html: '<p>Are you sure you want to delete the assessment <strong>"' + escapeHtml(name) + '"</strong>?</p><p class="text-danger"><strong>Warning:</strong> This will also delete all related activities and progress reports. This action cannot be undone.</p>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    fetch("{{ route('assessments.destroy', ['assessment' => 0]) }}".replace('/0/', '/'+id+'/'), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    }).then(async res => {
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'Assessment deleted successfully',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#28a745'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to delete: ' + (data.message || 'Unknown error'),
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    }).catch(err => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error: ' + err.message,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+                }
+            });
         }
     });
 
@@ -1020,25 +1249,67 @@ document.addEventListener('DOMContentLoaded', function(){
             const btn = e.target.closest('.btn-delete-activity');
             const id = btn.dataset.activityId;
             const name = btn.dataset.activityName;
-            if (confirm('Are you sure you want to delete the activity "' + name + '"?\n\nThis will also delete all related progress reports. This action cannot be undone.')) {
-                fetch("{{ route('assessments.activities.destroy', ['activity' => 0]) }}".replace('/0/', '/'+id+'/'), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    }
-                }).then(async res => {
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        alert('Activity deleted successfully');
-                        window.location.reload();
-                    } else {
-                        alert('Failed to delete: ' + (data.message || 'Unknown error'));
-                    }
-                }).catch(err => {
-                    alert('Error: ' + err.message);
-                });
-            }
+            
+            Swal.fire({
+                title: 'Delete Activity?',
+                html: '<p>Are you sure you want to delete the activity <strong>"' + escapeHtml(name) + '"</strong>?</p><p class="text-danger"><strong>Warning:</strong> This will also delete all related progress reports. This action cannot be undone.</p>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    fetch("{{ route('assessments.activities.destroy', ['activity' => 0]) }}".replace('/0/', '/'+id+'/'), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    }).then(async res => {
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'Activity deleted successfully',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#28a745'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to delete: ' + (data.message || 'Unknown error'),
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    }).catch(err => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error: ' + err.message,
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+                }
+            });
         }
     });
 
@@ -1073,8 +1344,18 @@ document.addEventListener('DOMContentLoaded', function(){
                         if (info.event.extendedProps.type === 'assessment') {
                             window.location.href = '/assessments/' + info.event.extendedProps.assessment_id;
                         } else if (info.event.extendedProps.type === 'progress_report') {
-                            // Could show report details in a modal or redirect
-                            alert('Progress Report: ' + info.event.extendedProps.activity + '\nEmployee: ' + info.event.extendedProps.employee + '\nStatus: ' + info.event.extendedProps.status);
+                            // Show report details in a pop-up
+                            Swal.fire({
+                                title: 'Progress Report Details',
+                                html: '<div class="text-start">' +
+                                    '<p><strong>Activity:</strong> ' + escapeHtml(info.event.extendedProps.activity) + '</p>' +
+                                    '<p><strong>Employee:</strong> ' + escapeHtml(info.event.extendedProps.employee) + '</p>' +
+                                    '<p><strong>Status:</strong> <span class="badge bg-' + (info.event.extendedProps.status === 'approved' ? 'success' : info.event.extendedProps.status === 'pending_approval' ? 'warning' : 'danger') + '">' + escapeHtml(info.event.extendedProps.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())) + '</span></p>' +
+                                    '</div>',
+                                icon: 'info',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#007bff'
+                            });
                         }
                     },
                     eventDisplay: 'block',
