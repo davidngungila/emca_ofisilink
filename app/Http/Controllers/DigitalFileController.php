@@ -139,7 +139,7 @@ class DigitalFileController extends Controller
         // Determine if this is a write operation that needs transaction
         $writeOperations = [
             'create_folder', 'upload_file', 'request_file_access', 'approve_request',
-            'reject_request', 'add_user_assignment', 'remove_user_assignment',
+            'reject_request', 'add_user_assignment', 'remove_user_assignment', 'assign_document_to_staff',
             'bulk_upload', 'cancel_request', 'bulk_create_folders', 'update_folder',
             'delete_folder', 'delete_file', 'move_folder', 'bulk_delete_folders', 'bulk_move_folders',
             'bulk_assign_folders_to_staff', 'bulk_assign_folders_to_department',
@@ -211,7 +211,9 @@ class DigitalFileController extends Controller
                 case 'remove_user_assignment':
                     $response = $this->handleRemoveUserAssignment($request);
                     break;
-                    
+                case 'assign_document_to_staff':
+                    $response = $this->handleAssignDocumentToStaff($request);
+                    break;
                 case 'search_all':
                     $response = $this->handleSearchAll($request);
                     break;
@@ -936,6 +938,99 @@ class DigitalFileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Assignment removed successfully'
+        ]);
+    }
+    
+    /**
+     * Handle Assign Document to Staff (from My Documents)
+     */
+    private function handleAssignDocumentToStaff(Request $request)
+    {
+        $user = Auth::user();
+        
+        $request->validate([
+            'file_id' => 'required|integer|exists:files,id',
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'integer|exists:users,id'
+        ]);
+        
+        $file = FileModel::findOrFail($request->file_id);
+        
+        // Check if user owns the file or has permission
+        if ($file->uploaded_by !== $user->id) {
+            $userRoles = $user->roles()->pluck('name')->toArray();
+            $canAssign = in_array('System Admin', $userRoles) || 
+                        in_array('HR Officer', $userRoles) || 
+                        in_array('HOD', $userRoles) || 
+                        in_array('General Manager', $userRoles) ||
+                        in_array('Record Officer', $userRoles);
+            
+            if (!$canAssign) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to assign this document'
+                ], 403);
+            }
+        }
+        
+        $assignedCount = 0;
+        $assignedUsers = [];
+        
+        foreach ($request->user_ids as $userId) {
+            try {
+                // Create assignment
+                FileUserAssignment::updateOrCreate(
+                    [
+                        'file_id' => $file->id,
+                        'user_id' => $userId
+                    ],
+                    [
+                        'assigned_by' => $user->id,
+                        'permission_level' => 'view',
+                        'assigned_at' => now()
+                    ]
+                );
+                
+                $assignedUser = User::find($userId);
+                if ($assignedUser) {
+                    $assignedUsers[] = $assignedUser;
+                    $assignedCount++;
+                    
+                    // Send notification to assigned user
+                    try {
+                        $notificationService = new \App\Services\NotificationService();
+                        $notificationService->notify(
+                            $userId,
+                            "Document Assignment: You have been assigned access to document '{$file->original_name}' by {$user->name}.",
+                            route('modules.files.digital.preview', $file->id),
+                            'Document Assigned',
+                            [
+                                'file_name' => $file->original_name,
+                                'assigned_by' => $user->name,
+                                'document_type' => $file->getFileTypeAttribute()
+                            ]
+                        );
+                    } catch (\Exception $e) {
+                        \Log::error('Notification error in handleAssignDocumentToStaff: ' . $e->getMessage());
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error assigning document to user: ' . $e->getMessage());
+            }
+        }
+        
+        // Log activity
+        $this->logFileActivity($file->id, 'assignment_updated', $user->id, [
+            'assigned_users' => $request->user_ids,
+            'assigned_count' => $assignedCount
+        ]);
+        
+        $userNames = collect($assignedUsers)->pluck('name')->join(', ');
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Document '{$file->original_name}' has been assigned to {$assignedCount} staff member(s): {$userNames}",
+            'assigned_count' => $assignedCount
         ]);
     }
     
@@ -1818,13 +1913,25 @@ class DigitalFileController extends Controller
         ]);
     }
     
-    // Handle Get Users for Assignment
+    // Handle Get Users for Assignment (for My Documents)
     private function handleGetUsersForAssignment(Request $request)
     {
         $users = User::where('is_active', true)
-            ->select('id', 'name', 'email')
+            ->with('department')
+            ->select('id', 'name', 'email', 'primary_department_id')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'department' => $user->department ? [
+                        'id' => $user->department->id,
+                        'name' => $user->department->name
+                    ] : null
+                ];
+            });
         
         return response()->json([
             'success' => true,

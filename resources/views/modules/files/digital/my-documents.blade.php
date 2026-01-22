@@ -274,6 +274,11 @@
                                                 <a href="{{ $downloadUrl }}" download class="btn btn-sm btn-outline-success" title="Download">
                                                     <i class="bx bx-download"></i>
                                                 </a>
+                                                @if($document['type'] === 'digital_file')
+                                                <button class="btn btn-sm btn-info" onclick="openAssignModal({{ $document['id'] }}, '{{ addslashes($document['document_name']) }}')" title="Assign to Staff">
+                                                    <i class="bx bx-user-plus"></i>
+                                                </button>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -451,6 +456,63 @@
                     </button>
                     <button type="submit" class="btn btn-success">
                         <i class="bx bx-upload me-1"></i>Upload Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Document Modal -->
+<div class="modal fade" id="assignDocumentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="bx bx-user-plus me-2"></i>Assign Document to Staff
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="assignDocumentForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Document:</label>
+                        <input type="text" id="assignDocumentName" class="form-control" readonly>
+                        <input type="hidden" id="assignDocumentId" name="file_id">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select Staff Members <span class="text-danger">*</span></label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="searchStaff" class="form-control" placeholder="Search staff by name or email...">
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearStaffSearch()">
+                                <i class="bx bx-x"></i>
+                            </button>
+                        </div>
+                        <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;" id="staffListContainer">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted">Select one or more staff members to assign this document to</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Selected Staff:</label>
+                        <div id="selectedStaffList" class="d-flex flex-wrap gap-2">
+                            <span class="text-muted">No staff selected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bx bx-x me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="bx bx-user-plus me-1"></i>Assign Document
                     </button>
                 </div>
             </form>
