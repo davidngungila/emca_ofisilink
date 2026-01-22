@@ -2009,13 +2009,6 @@ class DigitalFileController extends Controller
                         'time_ago' => $activity->created_at->diffForHumans()
                     ];
                 })
-                return [
-                    'type' => $activity->activity_type,
-                    'user' => $activity->user->name,
-                    'date' => $activity->created_at->format('M d, Y H:i'),
-                    'details' => $activity->details
-                ];
-            })
         ];
         
         return response()->json([
