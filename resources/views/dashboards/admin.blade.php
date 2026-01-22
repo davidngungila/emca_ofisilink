@@ -5,16 +5,26 @@
 @section('breadcrumb')
 <div class="row">
   <div class="col-12">
-    <div class="card border-0 shadow-lg bg-primary" style="border-radius: 15px; overflow: hidden;">
-      <div class="card-body text-white p-4">
+    <div class="card border-0 shadow-lg text-white" style="border-radius: 15px; overflow: hidden; background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);">
+      <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
           <div class="mb-3 mb-md-0">
             <h3 class="mb-2 text-white fw-bold">
               <i class="bx bx-shield-quarter me-2"></i>System Administration Dashboard
             </h3>
             <p class="mb-0 text-white-50 fs-6">
-              Welcome back, {{ auth()->user()->name }}! Comprehensive system overview and analytics
+              Welcome back, <strong class="text-white">{{ auth()->user()->name }}</strong>! Comprehensive system overview and analytics
             </p>
+            <div class="mt-3 d-flex gap-3 flex-wrap">
+              <div class="d-flex align-items-center">
+                <i class="bx bx-time me-2"></i>
+                <small class="text-white-50">{{ now()->format('l, F d, Y') }}</small>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bx bx-server me-2"></i>
+                <small class="text-white-50">System Status: <span class="badge bg-success bg-opacity-25 text-white">Online</span></small>
+              </div>
+            </div>
           </div>
           <div class="d-flex gap-2">
             <a href="{{ route('admin.system') }}" class="btn btn-light btn-lg shadow-sm">
@@ -128,15 +138,27 @@
   </div>
 
   <div class="col-lg-3 col-md-6 mb-4">
-    <div class="card border-0 shadow-sm bg-gradient-info text-white" style="background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);">
-      <div class="card-body">
+    <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); border-radius: 12px; transition: transform 0.3s;">
+      <div class="card-body" style="position: relative; overflow: hidden;">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <h6 class="text-white-50 mb-2">System Storage</h6>
+            <h6 class="text-white-50 mb-2"><i class="bx bx-server me-1"></i>System Storage</h6>
             <h2 class="mb-0 fw-bold">{{ $stats['total_storage_used'] ?? '0 B' }}</h2>
-            <small class="text-white-50">{{ $stats['total_digital_files'] ?? 0 }} + {{ $stats['total_physical_files'] ?? 0 }} files</small>
+            <small class="text-white-50 d-block mt-1">
+              <i class="bx bx-file me-1"></i>{{ $stats['total_digital_files'] ?? 0 }} digital
+              <span class="mx-1">•</span>
+              <i class="bx bx-archive me-1"></i>{{ $stats['total_physical_files'] ?? 0 }} physical
+            </small>
           </div>
-          <i class="bx bx-server fs-1 opacity-50"></i>
+          <div class="position-absolute" style="right: -10px; top: -10px; opacity: 0.2;">
+            <i class="bx bx-server fs-1"></i>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-top border-white border-opacity-25">
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-white-50">Storage Usage</small>
+            <small class="text-white fw-semibold">Active</small>
+          </div>
         </div>
       </div>
     </div>
@@ -607,8 +629,41 @@
 <style>
   .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
   .bg-gradient-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
-  .bg-gradient-info { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; }
+  .bg-gradient-info { 
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .bg-gradient-info:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 114, 255, 0.3) !important;
+  }
   .bg-gradient-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; }
+  
+  /* Enhanced card hover effects */
+  .card.border-0.shadow-sm {
+    transition: all 0.3s ease;
+  }
+  .card.border-0.shadow-sm:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12) !important;
+  }
+  
+  /* Gradient text effect */
+  .gradient-text {
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Pulse animation for important stats */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .pulse-animation {
+    animation: pulse 2s ease-in-out infinite;
+  }
 </style>
 @endpush
 
