@@ -203,7 +203,9 @@ class DigitalFileController extends Controller
                 case 'get_file_assignments':
                     $response = $this->handleGetFileAssignments($request);
                     break;
-                    
+                case 'get_file_details_for_my_documents':
+                    $response = $this->handleViewFileDetails($request);
+                    break;
                 case 'add_user_assignment':
                     $response = $this->handleAddUserAssignment($request);
                     break;
@@ -1983,7 +1985,30 @@ class DigitalFileController extends Controller
                     'expiry_date' => $assignment->expiry_date ? $assignment->expiry_date->format('M d, Y') : 'No expiry'
                 ];
             }),
-            'recent_activities' => $file->activities->take(5)->map(function($activity) {
+            'recent_activities' => $file->activities()->orderBy('created_at', 'desc')->take(20)->get()->map(function($activity) {
+                return [
+                    'id' => $activity->id,
+                    'action' => ucfirst(str_replace('_', ' ', $activity->activity_type ?? 'unknown')),
+                    'user_name' => $activity->user->name ?? 'System',
+                    'user_email' => $activity->user->email ?? null,
+                    'created_at' => $activity->created_at->format('M d, Y H:i:s'),
+                    'description' => $activity->details ? (is_array($activity->details) ? json_encode($activity->details) : $activity->details) : ''
+                ];
+            }),
+            'access_history' => $file->activities()
+                ->whereIn('activity_type', ['view', 'download', 'preview', 'file_upload', 'upload'])
+                ->orderBy('created_at', 'desc')
+                ->with('user')
+                ->get()
+                ->map(function($activity) {
+                    return [
+                        'user_name' => $activity->user->name ?? 'Unknown',
+                        'user_email' => $activity->user->email ?? null,
+                        'action' => ucfirst(str_replace('_', ' ', $activity->activity_type ?? 'unknown')),
+                        'accessed_at' => $activity->created_at->format('M d, Y H:i:s'),
+                        'time_ago' => $activity->created_at->diffForHumans()
+                    ];
+                })
                 return [
                     'type' => $activity->activity_type,
                     'user' => $activity->user->name,
@@ -3465,6 +3490,12 @@ class DigitalFileController extends Controller
         if (!$hasAccess) {
             abort(403, 'You do not have permission to view this file.');
         }
+        
+        // Log file view activity
+        $this->logFileActivity($file->id, 'view', $user->id, [
+            'file_name' => $file->original_name,
+            'access_method' => 'preview'
+        ]);
         
         // Get file path
         $filePath = Storage::disk('public')->path($file->file_path);

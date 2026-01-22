@@ -278,6 +278,9 @@
                                                 <button class="btn btn-sm btn-info" onclick="openAssignModal({{ $document['id'] }}, '{{ addslashes($document['document_name']) }}')" title="Assign to Staff">
                                                     <i class="bx bx-user-plus"></i>
                                                 </button>
+                                                <button class="btn btn-sm btn-primary" onclick="viewFileDetails({{ $document['id'] }})" title="View Details">
+                                                    <i class="bx bx-info-circle"></i>
+                                                </button>
                                                 @endif
                                             </div>
                                         </td>
@@ -516,6 +519,32 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- File Details Modal -->
+<div class="modal fade" id="fileDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="bx bx-info-circle me-2"></i>File Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="fileDetailsContent">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bx bx-x me-1"></i>Close
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -1109,5 +1138,161 @@ $('#assignDocumentForm').on('submit', function(e) {
         }
     });
 });
+
+// View File Details
+function viewFileDetails(fileId) {
+    const modal = new bootstrap.Modal(document.getElementById('fileDetailsModal'));
+    const content = $('#fileDetailsContent');
+    
+    content.html('<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2">Loading file details...</p></div>');
+    modal.show();
+    
+    $.ajax({
+        url: '{{ route("modules.files.digital.ajax") }}',
+        type: 'POST',
+        data: {
+            action: 'get_file_details_for_my_documents',
+            file_id: fileId,
+            _token: token
+        },
+        success: function(response) {
+            if (response.success && response.file) {
+                const file = response.file;
+                let html = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 fw-bold"><i class="bx bx-file me-2"></i>File Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <td class="fw-bold" style="width: 40%;">File Name:</td>
+                                            <td>${file.original_name || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">File Size:</td>
+                                            <td>${file.file_size || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">File Type:</td>
+                                            <td>${file.mime_type || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Description:</td>
+                                            <td>${file.description || 'No description'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Access Level:</td>
+                                            <td><span class="badge bg-info">${file.access_level || 'N/A'}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Confidential Level:</td>
+                                            <td><span class="badge bg-warning">${file.confidential_level || 'Normal'}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Uploaded By:</td>
+                                            <td>${file.uploaded_by || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Folder:</td>
+                                            <td>${file.folder || 'No folder'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Created:</td>
+                                            <td>${file.created_at || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Downloads:</td>
+                                            <td><span class="badge bg-success">${file.download_count || 0}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 fw-bold"><i class="bx bx-user-check me-2"></i>Assigned Staff (${file.assigned_users ? file.assigned_users.length : 0})</h6>
+                                </div>
+                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                `;
+                
+                if (file.assigned_users && file.assigned_users.length > 0) {
+                    html += '<div class="list-group">';
+                    file.assigned_users.forEach(function(assignment) {
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${assignment.name || 'N/A'}</h6>
+                                        <small class="text-muted">${assignment.email || 'N/A'}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted d-block">Assigned: ${assignment.assigned_at || 'N/A'}</small>
+                                        ${assignment.expiry_date && assignment.expiry_date !== 'No expiry' ? `<small class="text-muted">Expires: ${assignment.expiry_date}</small>` : '<small class="text-success">No expiry</small>'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                } else {
+                    html += '<div class="alert alert-info mb-0">No staff assigned to this document</div>';
+                }
+                
+                html += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 fw-bold"><i class="bx bx-history me-2"></i>Access History</h6>
+                                </div>
+                                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                `;
+                
+                if (file.access_history && file.access_history.length > 0) {
+                    html += '<div class="table-responsive"><table class="table table-sm table-hover mb-0"><thead><tr><th>Staff Member</th><th>Action</th><th>Accessed At</th><th>Time Ago</th></tr></thead><tbody>';
+                    file.access_history.forEach(function(access) {
+                        html += `
+                            <tr>
+                                <td>
+                                    <strong>${access.user_name || 'Unknown'}</strong><br>
+                                    <small class="text-muted">${access.user_email || ''}</small>
+                                </td>
+                                <td><span class="badge bg-primary">${access.action || 'N/A'}</span></td>
+                                <td>${access.accessed_at || 'N/A'}</td>
+                                <td><small class="text-muted">${access.time_ago || 'N/A'}</small></td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table></div>';
+                } else {
+                    html += '<div class="alert alert-info mb-0">No access history available</div>';
+                }
+                
+                html += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                content.html(html);
+            } else {
+                content.html('<div class="alert alert-danger">Failed to load file details</div>');
+            }
+        },
+        error: function(xhr) {
+            const response = xhr.responseJSON;
+            content.html(`<div class="alert alert-danger">Error: ${response?.message || 'Failed to load file details'}</div>`);
+        }
+    });
+}
 </script>
 @endpush
