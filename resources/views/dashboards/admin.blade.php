@@ -47,47 +47,55 @@
 <!-- Quick Action Buttons -->
 <div class="row mb-4">
   <div class="col-12">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <h5 class="card-title mb-3"><i class="bx bx-link-external me-2"></i>Quick Actions</h5>
+    <div class="card shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="card-title mb-0 gradient-text fw-bold">
+            <i class="bx bx-link-external me-2"></i>Quick Actions
+          </h5>
+          <small class="text-muted">Navigate to key system modules</small>
+        </div>
         <div class="row g-3">
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('admin.users.index') }}" class="btn btn-primary w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('admin.users.index') }}" class="btn btn-primary w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s;">
               <i class="bx bx-user fs-3 mb-2"></i>
-              <span>Users</span>
+              <span class="fw-semibold">Users</span>
               <small class="text-white-50">{{ $stats['total_users'] ?? 0 }} total</small>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('admin.roles') }}" class="btn btn-warning w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('admin.roles') }}" class="btn btn-warning w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s;">
               <i class="bx bx-shield fs-3 mb-2"></i>
-              <span>Roles</span>
+              <span class="fw-semibold">Roles</span>
               <small class="text-white-50">{{ $stats['total_roles'] ?? 0 }} roles</small>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.finance.petty') }}" class="btn btn-success w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.finance.petty') }}" class="btn btn-success w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s;">
               <i class="bx bx-money fs-3 mb-2"></i>
-              <span>Finance</span>
+              <span class="fw-semibold">Finance</span>
+              <small class="text-white-50">Petty Cash & Imprest</small>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-info w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.hr.employees') }}" class="btn text-white w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s; background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);">
               <i class="bx bx-group fs-3 mb-2"></i>
-              <span>HR</span>
+              <span class="fw-semibold">HR</span>
+              <small class="text-white-50">Human Resources</small>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.files.digital') }}" class="btn btn-danger w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.files.digital') }}" class="btn btn-danger w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s;">
               <i class="bx bx-folder fs-3 mb-2"></i>
-              <span>Files</span>
+              <span class="fw-semibold">Files</span>
               <small class="text-white-50">{{ $stats['total_digital_files'] ?? 0 }} files</small>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('admin.system') }}" class="btn btn-dark w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('admin.system') }}" class="btn btn-dark w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s;">
               <i class="bx bx-server fs-3 mb-2"></i>
-              <span>System</span>
+              <span class="fw-semibold">System</span>
+              <small class="text-white-50">Health & Settings</small>
             </a>
           </div>
         </div>
