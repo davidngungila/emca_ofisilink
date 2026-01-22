@@ -360,6 +360,15 @@ class DigitalFileController extends Controller
     private function handleCreateFolder(Request $request)
     {
         $user = Auth::user();
+        $userRoles = $user->roles()->pluck('name')->toArray();
+        
+        // Allow all authenticated users to create folders (staff can create their own folders)
+        // But restrict access level based on permissions
+        $canManageFiles = in_array('System Admin', $userRoles) || 
+                         in_array('HR Officer', $userRoles) || 
+                         in_array('HOD', $userRoles) || 
+                         in_array('General Manager', $userRoles) ||
+                         in_array('Record Officer', $userRoles);
         
         $request->validate([
             'folder_name' => 'required|string|max:255',
@@ -369,6 +378,46 @@ class DigitalFileController extends Controller
             'access_level' => 'required|in:public,department,private',
             'department_id' => 'required_if:access_level,department|nullable|integer|exists:departments,id'
         ]);
+        
+        // If user doesn't have manage permissions, restrict to private folders only
+        if (!$canManageFiles && $request->access_level !== 'private') {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only create private folders. Please contact an administrator to create public or department folders.'
+            ], 403);
+        }
+        
+        // Validate parent folder access if parent_id is provided
+        if ($request->parent_id && $request->parent_id != 0) {
+            $parentFolder = FileFolder::find($request->parent_id);
+            if (!$parentFolder) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parent folder not found.'
+                ], 404);
+            }
+            
+            // Check if user has access to the parent folder
+            if (!$canManageFiles) {
+                $userDeptId = $user->department_id ?? null;
+                $hasParentAccess = false;
+                
+                if ($parentFolder->access_level === 'public') {
+                    $hasParentAccess = true;
+                } elseif ($parentFolder->access_level === 'department' && $parentFolder->department_id === $userDeptId) {
+                    $hasParentAccess = true;
+                } elseif ($parentFolder->created_by === $user->id) {
+                    $hasParentAccess = true;
+                }
+                
+                if (!$hasParentAccess) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to create folders in the selected parent folder.'
+                    ], 403);
+                }
+            }
+        }
         
         // Get branch_id from parent folder or user's branch
         $branchId = null;
@@ -418,6 +467,15 @@ class DigitalFileController extends Controller
     private function handleUploadFile(Request $request)
     {
         $user = Auth::user();
+        $userRoles = $user->roles()->pluck('name')->toArray();
+        
+        // Allow all authenticated users to upload (staff can upload their own documents)
+        // But check folder access permissions
+        $canManageFiles = in_array('System Admin', $userRoles) || 
+                         in_array('HR Officer', $userRoles) || 
+                         in_array('HOD', $userRoles) || 
+                         in_array('General Manager', $userRoles) ||
+                         in_array('Record Officer', $userRoles);
         
         $request->validate([
             'file' => 'required|file|max:20480', // 20MB
@@ -429,6 +487,27 @@ class DigitalFileController extends Controller
         ]);
         
         $folder = FileFolder::findOrFail($request->folder_id);
+        
+        // Check if user has access to upload to this folder
+        // Staff can only upload to public folders or their department folders
+        if (!$canManageFiles) {
+            $userDeptId = $user->department_id ?? null;
+            $hasFolderAccess = false;
+            
+            if ($folder->access_level === 'public') {
+                $hasFolderAccess = true;
+            } elseif ($folder->access_level === 'department' && $folder->department_id === $userDeptId) {
+                $hasFolderAccess = true;
+            }
+            
+            if (!$hasFolderAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to upload to this folder. Please select a public folder or a folder in your department.'
+                ], 403);
+            }
+        }
+        
         $file = $request->file('file');
         
         // Get branch_id from folder or user's branch
@@ -1776,6 +1855,7 @@ class DigitalFileController extends Controller
             'id' => $file->id,
             'original_name' => $file->original_name,
             'filename' => $file->filename,
+            'file_path' => $file->file_path,
             'file_size' => $this->formatFileSize($file->file_size),
             'mime_type' => $file->mime_type,
             'description' => $file->description,
@@ -1786,6 +1866,7 @@ class DigitalFileController extends Controller
             'folder' => $file->folder->name,
             'created_at' => $file->created_at->format('M d, Y H:i'),
             'download_count' => $file->download_count,
+            'download_url' => Storage::disk('public')->url($file->file_path),
             'assigned_users' => $file->assignments->map(function($assignment) {
                 return [
                     'id' => $assignment->user->id,
@@ -3094,6 +3175,194 @@ class DigitalFileController extends Controller
     }
     
     /**
+     * My Documents - Staff view of their own documents
+     */
+    public function myDocuments()
+    {
+        $user = Auth::user();
+        
+        // Get all digital files uploaded by this user
+        $myFiles = FileModel::with(['folder', 'uploader'])
+            ->where('uploaded_by', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Get all employee documents for this user
+        $employeeDocuments = \App\Models\EmployeeDocument::with(['uploader'])
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Combine and format all documents for table display
+        $allDocuments = collect();
+        
+        // Add digital files
+        foreach ($myFiles as $file) {
+            $allDocuments->push([
+                'id' => $file->id,
+                'type' => 'digital_file',
+                'document_type' => ucfirst($file->file_type ?? 'Other'),
+                'document_name' => $file->original_name,
+                'document_number' => $file->id,
+                'issue_date' => $file->created_at,
+                'expiry_date' => $file->expiry_date ?? null,
+                'issued_by' => $file->uploader->name ?? 'System',
+                'file_size' => $file->file_size,
+                'file_path' => $file->file_path,
+                'folder_name' => $file->folder->name ?? 'No Folder',
+                'created_at' => $file->created_at,
+            ]);
+        }
+        
+        // Add employee documents
+        foreach ($employeeDocuments as $doc) {
+            $allDocuments->push([
+                'id' => $doc->id,
+                'type' => 'employee_document',
+                'document_type' => $doc->document_type ?? 'Other',
+                'document_name' => $doc->document_name,
+                'document_number' => $doc->document_number ?? 'N/A',
+                'issue_date' => $doc->issue_date,
+                'expiry_date' => $doc->expiry_date,
+                'issued_by' => $doc->issued_by ?? ($doc->uploader->name ?? 'System'),
+                'file_size' => $doc->file_size,
+                'file_path' => $doc->file_path,
+                'folder_name' => 'Employee Documents',
+                'created_at' => $doc->created_at,
+            ]);
+        }
+        
+        // Sort by created_at desc and paginate
+        $allDocuments = $allDocuments->sortByDesc('created_at')->values();
+        $perPage = 20;
+        $currentPage = request()->get('page', 1);
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allDocuments->forPage($currentPage, $perPage),
+            $allDocuments->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+        
+        // Get statistics
+        $totalFiles = $myFiles->count();
+        $totalEmployeeDocs = $employeeDocuments->count();
+        $totalSize = $myFiles->sum('file_size') + $employeeDocuments->sum('file_size');
+        
+        $byType = $allDocuments->groupBy('document_type')->map(function($group) {
+            return $group->count();
+        });
+        
+        $stats = [
+            'total' => $totalFiles + $totalEmployeeDocs,
+            'total_size' => $totalSize,
+            'by_type' => $byType,
+            'digital_files' => $totalFiles,
+            'employee_documents' => $totalEmployeeDocs,
+        ];
+        
+        // Get folders where user can upload (their department folders or public folders)
+        $userDeptId = $user->department_id ?? null;
+        $availableFolders = FileFolder::where(function($query) use ($userDeptId) {
+                $query->where('access_level', 'public')
+                    ->orWhere(function($q) use ($userDeptId) {
+                        $q->where('access_level', 'department')
+                          ->where('department_id', $userDeptId);
+                    });
+            })
+            ->orderBy('name')
+            ->get();
+        
+        // Get user's own folders (folders they created)
+        $myFolders = FileFolder::where('created_by', $user->id)
+            ->orderBy('name')
+            ->get();
+        
+        return view('modules.files.digital.my-documents', compact('paginated', 'stats', 'availableFolders', 'myFolders', 'user'));
+    }
+    
+    /**
+     * Preview File
+     */
+    public function previewFile($id)
+    {
+        $user = Auth::user();
+        
+        $file = FileModel::findOrFail($id);
+        
+        // Check if user has access to this file
+        $hasAccess = false;
+        
+        // Check if user uploaded the file
+        if ($file->uploaded_by === $user->id) {
+            $hasAccess = true;
+        }
+        
+        // Check if file is public
+        if ($file->access_level === 'public') {
+            $hasAccess = true;
+        }
+        
+        // Check if file is in user's department
+        if ($file->access_level === 'department' && $file->department_id === $user->department_id) {
+            $hasAccess = true;
+        }
+        
+        // Check if file is assigned to user
+        if ($file->access_level === 'private') {
+            $assignment = FileUserAssignment::where('file_id', $file->id)
+                ->where('user_id', $user->id)
+                ->where(function($q) {
+                    $q->whereNull('expiry_date')
+                      ->orWhere('expiry_date', '>=', now());
+                })
+                ->exists();
+            if ($assignment) {
+                $hasAccess = true;
+            }
+        }
+        
+        // Check if user has admin/manager role
+        $userRoles = $user->roles()->pluck('name')->toArray();
+        $canViewAll = in_array('System Admin', $userRoles) || 
+                      in_array('General Manager', $userRoles) || 
+                      in_array('HR Officer', $userRoles) || 
+                      in_array('Record Officer', $userRoles) ||
+                      in_array('HOD', $userRoles);
+        
+        if ($canViewAll) {
+            $hasAccess = true;
+        }
+        
+        if (!$hasAccess) {
+            abort(403, 'You do not have permission to view this file.');
+        }
+        
+        // Get file path
+        $filePath = Storage::disk('public')->path($file->file_path);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found on server.');
+        }
+        
+        // Determine file type for preview
+        $mimeType = $file->mime_type ?? Storage::disk('public')->mimeType($file->file_path);
+        $extension = strtolower(pathinfo($file->original_name, PATHINFO_EXTENSION));
+        
+        // For images and PDFs, return inline view
+        if (in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp']) || 
+            in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])) {
+            return response()->file($filePath);
+        } elseif ($mimeType === 'application/pdf' || $extension === 'pdf') {
+            return response()->file($filePath);
+        } else {
+            // For other files, return download or show preview page
+            return view('modules.files.digital.preview', compact('file'));
+        }
+    }
+    
+    /**
      * Analytics Page
      */
     public function analytics()
@@ -4362,6 +4631,7 @@ class DigitalFileController extends Controller
             'file' => [
                 'id' => $file->id,
                 'original_name' => $file->original_name,
+                'file_path' => $file->file_path,
                 'description' => $file->description,
                 'access_level' => $file->access_level,
                 'confidential_level' => $file->confidential_level,
@@ -4370,7 +4640,8 @@ class DigitalFileController extends Controller
                 'mime_type' => $file->mime_type,
                 'uploaded_by' => $file->uploader->name ?? 'System',
                 'folder_name' => $file->folder->name ?? 'N/A',
-                'created_at' => $file->created_at->format('M d, Y H:i')
+                'created_at' => $file->created_at->format('M d, Y H:i'),
+                'download_url' => Storage::disk('public')->url($file->file_path)
             ]
         ]);
     }

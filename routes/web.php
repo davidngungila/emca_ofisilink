@@ -336,6 +336,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings', [App\Http\Controllers\DigitalFileController::class, 'settings'])->name('settings');
         Route::get('/assign', [App\Http\Controllers\DigitalFileController::class, 'assign'])->name('assign');
         Route::get('/download-folder-template', [App\Http\Controllers\DigitalFileController::class, 'downloadFolderTemplate'])->name('download-folder-template');
+        Route::get('/my-documents', [App\Http\Controllers\DigitalFileController::class, 'myDocuments'])->name('my-documents');
+        Route::get('/preview/{file}', [App\Http\Controllers\DigitalFileController::class, 'previewFile'])->name('preview');
         Route::post('/ajax', [App\Http\Controllers\DigitalFileController::class, 'handleRequest'])->name('ajax');
     });
     

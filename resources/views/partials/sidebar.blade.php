@@ -64,6 +64,11 @@
           <div data-i18n="Digital Files" style="font-weight: bold;">Digital Files</div>
         </a>
       </li>
+      <li class="menu-item {{ request()->routeIs('modules.files.digital.my-documents') ? 'active' : '' }}">
+        <a href="{{ route('modules.files.digital.my-documents') }}" class="menu-link">
+          <div data-i18n="My Documents" style="font-weight: bold;">My Documents</div>
+        </a>
+      </li>
       <li class="menu-item {{ request()->routeIs('modules.files.physical') || request()->routeIs('modules.files.physical.*') ? 'active' : '' }}">
         <a href="{{ route('modules.files.physical') }}" class="menu-link">
           <div data-i18n="Physical Racks" style="font-weight: bold;">Physical Racks</div>
