@@ -5,7 +5,7 @@
 @section('breadcrumb')
 <div class="row">
   <div class="col-12">
-    <div class="card border-0 shadow-lg text-white" style="border-radius: 15px; overflow: hidden; background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);">
+    <div class="card border-0 shadow-lg bg-gradient-success text-white" style="border-radius: 15px; overflow: hidden; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
       <div class="card-body p-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
           <div class="mb-3 mb-md-0">
@@ -78,7 +78,7 @@
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.employees') }}" class="btn text-white w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s; background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);">
+            <a href="{{ route('modules.hr.employees') }}" class="btn text-white w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
               <i class="bx bx-group fs-3 mb-2"></i>
               <span class="fw-semibold">HR</span>
               <small class="text-white-50">Human Resources</small>
@@ -146,7 +146,7 @@
   </div>
 
   <div class="col-lg-3 col-md-6 mb-4">
-    <div class="card border-0 shadow-sm text-white" style="background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); border-radius: 12px; transition: transform 0.3s;">
+    <div class="card border-0 shadow-sm bg-gradient-success text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border-radius: 12px; transition: transform 0.3s;">
       <div class="card-body" style="position: relative; overflow: hidden;">
         <div class="d-flex justify-content-between align-items-center">
           <div>
@@ -645,6 +645,14 @@
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0, 114, 255, 0.3) !important;
   }
+  .bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .bg-gradient-success:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(17, 153, 142, 0.3) !important;
+  }
   .bg-gradient-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; }
   
   /* Enhanced card hover effects */
@@ -658,7 +666,7 @@
   
   /* Gradient text effect */
   .gradient-text {
-    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
