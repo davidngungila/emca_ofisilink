@@ -4,20 +4,199 @@
     <meta charset="UTF-8">
     <title>Meeting Resolutions - {{ $meeting->title }}</title>
     <style>
-        @page { margin: 20px 30px 60px 30px; }
-        body { font-family: "Helvetica", Arial, sans-serif; font-size: 10pt; color: #333; line-height: 1.6; }
-        h1, h2, h3 { color: #000; margin: 0 0 10px 0; font-weight: bold; }
-        h1 { font-size: 22pt; margin-bottom: 8px; letter-spacing: 1px; }
-        h2 { font-size: 16pt; margin-top: 20px; margin-bottom: 8px; }
-        h3 { font-size: 14pt; margin-top: 15px; margin-bottom: 8px; }
-        h4 { font-size: 12pt; margin-top: 12px; margin-bottom: 8px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { padding: 8px; text-align: left; vertical-align: top; border: 1px solid #ddd; }
-        th { background-color: #f9f9f9; font-weight: bold; font-size: 9pt; }
-        .resolution-section { page-break-inside: avoid; margin-bottom: 25px; padding: 15px; background-color: #fffbf0; border-left: 4px solid #ffc107; }
-        .resolution-text { background-color: #f8f9fa; padding: 12px; border-radius: 4px; margin: 10px 0; font-weight: 500; }
-        p { margin: 5px 0; }
-        .header-section { text-align: center; margin-bottom: 25px; border-bottom: 3px solid #333; padding-bottom: 15px; }
+        @page { 
+            margin: 25mm 20mm 30mm 20mm;
+            size: A4;
+        }
+        
+        body { 
+            font-family: "Times New Roman", "Times", serif; 
+            font-size: 11pt; 
+            color: #000; 
+            line-height: 1.5; 
+            text-align: justify;
+        }
+        
+        .header-section { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #000; 
+            padding-bottom: 15px;
+        }
+        
+        .logo-container {
+            margin-bottom: 15px;
+        }
+        
+        .logo-container img {
+            max-height: 60px;
+            max-width: 200px;
+        }
+        
+        .org-name {
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 10px 0;
+            letter-spacing: 0.5px;
+            color: #000;
+        }
+        
+        .org-details {
+            font-size: 9pt;
+            line-height: 1.8;
+            color: #333;
+            margin: 8px 0;
+        }
+        
+        .document-title {
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .meeting-info {
+            font-size: 10pt;
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+        
+        .meeting-info strong {
+            font-weight: bold;
+        }
+        
+        .resolution-section { 
+            page-break-inside: avoid; 
+            margin-bottom: 30px; 
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        
+        .resolution-header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .resolution-number {
+            display: inline-block;
+            background-color: #000;
+            color: #fff;
+            padding: 5px 15px;
+            font-weight: bold;
+            font-size: 11pt;
+            margin-right: 15px;
+        }
+        
+        .resolution-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+            display: inline-block;
+        }
+        
+        .resolution-content {
+            margin: 15px 0;
+        }
+        
+        .background-section {
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #666;
+        }
+        
+        .background-section h4 {
+            font-size: 10pt;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            color: #333;
+        }
+        
+        .background-section p {
+            margin: 0;
+            font-size: 10pt;
+            text-align: justify;
+        }
+        
+        .resolution-text-box {
+            background-color: #fff;
+            border: 2px solid #000;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .resolution-text-box h4 {
+            font-size: 10pt;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #000;
+            text-transform: uppercase;
+        }
+        
+        .resolution-text-box p {
+            margin: 0;
+            font-size: 11pt;
+            font-weight: normal;
+            text-align: justify;
+            line-height: 1.6;
+        }
+        
+        .resolution-footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 9pt;
+        }
+        
+        .resolution-footer table {
+            width: 100%;
+            border: none;
+            border-collapse: collapse;
+        }
+        
+        .resolution-footer td {
+            border: none;
+            padding: 5px 0;
+            vertical-align: top;
+        }
+        
+        .resolution-footer strong {
+            font-weight: bold;
+        }
+        
+        .approval-info {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 3px solid #28a745;
+        }
+        
+        .approval-info strong {
+            font-weight: bold;
+        }
+        
+        .no-resolutions {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 12pt;
+            font-style: italic;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        p {
+            margin: 8px 0;
+        }
+        
+        h4 {
+            margin: 12px 0 8px 0;
+        }
     </style>
 </head>
 <body>
@@ -39,101 +218,131 @@
         {{-- Organization Header Section --}}
         <div class="header-section">
             @if($logoPath && file_exists($logoPath))
-                <div style="margin-bottom: 10px;">
-                    <img src="{{ $logoPath }}" alt="Organization Logo" style="max-height: 70px; max-width: 180px;">
+                <div class="logo-container">
+                    <img src="{{ $logoPath }}" alt="Organization Logo">
                 </div>
             @endif
             
-            <h1>{{ $organizationInfo['name'] ?? config('app.name', 'Organization') }}</h1>
+            <div class="org-name">
+                {{ $organizationInfo['name'] ?? config('app.name', 'Organization') }}
+            </div>
             
-            <div style="font-size: 8pt; line-height: 1.6; color: #555; margin-bottom: 10px;">
+            <div class="org-details">
                 @if($organizationInfo['full_address'])
-                    <p style="margin: 2px 0;"><strong>Address:</strong> {{ $organizationInfo['full_address'] }}</p>
+                    <div>{{ $organizationInfo['full_address'] }}</div>
                 @endif
-                <div style="margin: 3px 0;">
+                <div>
                     @if($organizationInfo['phone'])
-                        <span style="margin-right: 15px;"><strong>Phone:</strong> {{ $organizationInfo['phone'] }}</span>
+                        <span>Tel: {{ $organizationInfo['phone'] }}</span>
+                        @if($organizationInfo['email'] || $organizationInfo['website'])
+                            <span> | </span>
+                        @endif
                     @endif
                     @if($organizationInfo['email'])
-                        <span style="margin-right: 15px;"><strong>Email:</strong> {{ $organizationInfo['email'] }}</span>
+                        <span>Email: {{ $organizationInfo['email'] }}</span>
+                        @if($organizationInfo['website'])
+                            <span> | </span>
+                        @endif
                     @endif
                     @if($organizationInfo['website'])
-                        <span><strong>Website:</strong> {{ $organizationInfo['website'] }}</span>
+                        <span>Website: {{ $organizationInfo['website'] }}</span>
                     @endif
                 </div>
             </div>
             
-            <h2>MEETING RESOLUTIONS</h2>
-            <h3 style="font-size: 14pt; margin-bottom: 8px; color: #333; font-weight: 600;">
-                {{ strtoupper($meeting->category_name ?? 'MEETING') }} - {{ $meeting->title }}
-            </h3>
-            <p style="font-size: 10pt; margin-top: 8px;">
-                <strong>Date:</strong> {{ \Carbon\Carbon::parse($meeting->meeting_date)->format('l, d F Y') }}<br>
-                <strong>Venue:</strong> {{ $meeting->venue ?? 'N/A' }}
-            </p>
+            <div class="document-title">MEETING RESOLUTIONS</div>
+            
+            <div class="meeting-info">
+                <div><strong>Meeting:</strong> {{ $meeting->title }}</div>
+                @if($meeting->category_name)
+                <div><strong>Category:</strong> {{ $meeting->category_name }}</div>
+                @endif
+                <div><strong>Date:</strong> {{ \Carbon\Carbon::parse($meeting->meeting_date)->format('l, d F Y') }}</div>
+                @if($meeting->location)
+                <div><strong>Venue:</strong> {{ $meeting->location }}</div>
+                @endif
+                @if($meeting->reference_code)
+                <div><strong>Reference:</strong> {{ $meeting->reference_code }}</div>
+                @endif
+            </div>
         </div>
         
         {{-- Resolutions --}}
         @if($resolutions->count() > 0)
             @foreach($resolutions as $index => $resolution)
             <div class="resolution-section">
-                <h3>
-                    <span style="background-color: #ffc107; color: #000; padding: 4px 12px; border-radius: 4px; font-size: 11pt; margin-right: 10px;">
+                <div class="resolution-header">
+                    <span class="resolution-number">
                         {{ $resolution->resolution_number ?? 'RES-' . str_pad($index + 1, 3, '0', STR_PAD_LEFT) }}
                     </span>
-                    {{ $resolution->title }}
-                </h3>
-                
-                @if($resolution->description)
-                <div style="margin-bottom: 12px;">
-                    <h4 style="font-size: 10pt; color: #666; margin-bottom: 5px;">Background/Context:</h4>
-                    <p style="text-align: justify; font-size: 9pt; color: #555;">{{ $resolution->description }}</p>
-                </div>
-                @endif
-                
-                <div class="resolution-text">
-                    <h4 style="font-size: 10pt; color: #666; margin-bottom: 5px;">Resolution:</h4>
-                    <p style="text-align: justify; font-size: 10pt; font-weight: 500; margin: 0;">{{ $resolution->resolution_text }}</p>
+                    <span class="resolution-title">{{ $resolution->title }}</span>
                 </div>
                 
-                <div style="margin-top: 12px; font-size: 9pt; color: #666;">
-                    <table style="width: 100%; border: none;">
-                        <tr style="border: none;">
-                            <td style="border: none; padding: 4px 0;">
+                <div class="resolution-content">
+                    @if($resolution->description)
+                    <div class="background-section">
+                        <h4>BACKGROUND</h4>
+                        <p>{{ $resolution->description }}</p>
+                    </div>
+                    @endif
+                    
+                    <div class="resolution-text-box">
+                        <h4>RESOLUTION</h4>
+                        <p>{{ $resolution->resolution_text }}</p>
+                    </div>
+                </div>
+                
+                <div class="resolution-footer">
+                    <table>
+                        <tr>
+                            <td style="width: 50%;">
                                 @if($resolution->proposer_name)
-                                    <strong>Proposed By:</strong> {{ $resolution->proposer_name }}
+                                    <div><strong>Proposed By:</strong></div>
+                                    <div style="margin-top: 5px;">{{ $resolution->proposer_name }}</div>
                                 @endif
                             </td>
-                            <td style="border: none; padding: 4px 0; text-align: right;">
+                            <td style="width: 50%; text-align: right;">
                                 @if($resolution->seconder_name)
-                                    <strong>Seconded By:</strong> {{ $resolution->seconder_name }}
+                                    <div><strong>Seconded By:</strong></div>
+                                    <div style="margin-top: 5px;">{{ $resolution->seconder_name }}</div>
                                 @endif
                             </td>
                         </tr>
                         @if($resolution->approved_at && $resolution->approver_name)
-                        <tr style="border: none;">
-                            <td colspan="2" style="border: none; padding: 4px 0; text-align: right;">
-                                <strong>Approved By:</strong> {{ $resolution->approver_name }} 
-                                on {{ \Carbon\Carbon::parse($resolution->approved_at)->format('M d, Y') }}
+                        <tr>
+                            <td colspan="2" style="text-align: right; padding-top: 10px;">
+                                <div class="approval-info">
+                                    <div><strong>Approved By:</strong> {{ $resolution->approver_name }}</div>
+                                    <div style="margin-top: 5px;"><strong>Date:</strong> {{ \Carbon\Carbon::parse($resolution->approved_at)->format('d F Y') }}</div>
+                                </div>
                             </td>
                         </tr>
                         @endif
                     </table>
+                    
+                    @if($resolution->approval_notes)
+                    <div style="margin-top: 15px; padding: 10px; background-color: #f9f9f9; border-left: 3px solid #007bff; font-size: 9pt;">
+                        <strong>Approval Notes:</strong> {{ $resolution->approval_notes }}
+                    </div>
+                    @endif
                 </div>
-                
-                @if($resolution->approval_notes)
-                <div style="margin-top: 10px; padding: 8px; background-color: #e7f3ff; border-radius: 4px; font-size: 9pt;">
-                    <strong>Notes:</strong> {{ $resolution->approval_notes }}
-                </div>
-                @endif
             </div>
             @endforeach
         @else
-            <div style="text-align: center; padding: 40px;">
-                <p style="font-size: 12pt; color: #999;">No resolutions have been prepared for this meeting.</p>
+            <div class="no-resolutions">
+                <p>No resolutions have been prepared for this meeting.</p>
             </div>
         @endif
+        
+        {{-- Footer Section --}}
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 9pt; text-align: center; color: #666;">
+            <p>This document was generated on {{ \Carbon\Carbon::now()->format('d F Y \a\t H:i') }}</p>
+            <p style="margin-top: 5px;">{{ $organizationInfo['name'] ?? config('app.name', 'Organization') }}</p>
+        </div>
     </main>
 </body>
 </html>
+
+
+
 
