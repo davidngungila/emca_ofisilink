@@ -557,6 +557,31 @@
                         </div>
                         @endif
                     </div>
+                    
+                    <!-- Approval Section for Pending Approval -->
+                    @if($canApprove && property_exists($minutes, 'status') && $minutes->status === 'pending_approval')
+                    <div class="mt-4 pt-4 border-top">
+                        <div class="alert alert-warning mb-3">
+                            <i class="bx bx-info-circle me-2"></i>
+                            <strong>Action Required:</strong> These minutes are pending your approval.
+                        </div>
+                        <form id="minutesApprovalForm">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label">Comments (Optional)</label>
+                                <textarea class="form-control" id="approval-comments" rows="3" placeholder="Add any comments or notes..."></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-success btn-lg" id="approve-minutes-btn">
+                                    <i class="bx bx-check me-2"></i>Approve Minutes
+                                </button>
+                                <button type="button" class="btn btn-danger btn-lg" id="reject-minutes-btn">
+                                    <i class="bx bx-x me-2"></i>Reject Minutes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    @endif
                 </div>
             </div>
             @elseif($meeting->status === 'approved' || $meeting->status === 'completed')
@@ -613,6 +638,11 @@
                             <a href="{{ route('modules.meetings.minutes.pdf', $meeting->id) }}" class="btn btn-danger btn-lg" target="_blank">
                                 <i class="bx bx-file-pdf me-1"></i> Download PDF
                             </a>
+                            @if($canApprove && property_exists($minutes, 'status') && $minutes->status === 'pending_approval')
+                                <a href="{{ route('modules.meetings.minutes.approval', $meeting->id) }}" class="btn btn-success btn-lg">
+                                    <i class="bx bx-check-circle me-1"></i> Approve Minutes
+                                </a>
+                            @endif
                         @endif
                         <a href="{{ route('modules.meetings.resolutions', $meeting->id) }}" class="btn btn-warning btn-lg">
                             <i class="bx bx-file-blank me-1"></i> View Resolutions

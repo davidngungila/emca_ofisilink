@@ -1842,6 +1842,10 @@ class MeetingController extends Controller
                     return $this->saveAllMinutes($request, $user);
                 case 'finalize_minutes':
                     return $this->finalizeMinutes($request, $user);
+                case 'approve_minutes':
+                    return $this->approveMinutes($request, $user);
+                case 'reject_minutes':
+                    return $this->rejectMinutes($request, $user);
                 default:
                     return response()->json([
                         'success' => false,
