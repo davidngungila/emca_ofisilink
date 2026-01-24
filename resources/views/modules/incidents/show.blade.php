@@ -669,7 +669,7 @@ document.getElementById('commentForm').addEventListener('submit', async function
     
     const formData = new FormData();
     formData.append('comment', comment);
-    formData.append('is_internal', isInternal);
+    formData.append('is_internal', isInternal ? '1' : '0');
     
     try {
         const res = await fetch(`/modules/incidents/${incidentId}/comment`, {
