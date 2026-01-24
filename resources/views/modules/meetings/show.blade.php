@@ -951,6 +951,104 @@ $('#reject-meeting-btn').on('click', function() {
         }
     });
 });
+
+@if($minutes && $canApprove && property_exists($minutes, 'status') && $minutes->status === 'pending_approval')
+// Approve Minutes
+$('#approve-minutes-btn').on('click', function() {
+    Swal.fire({
+        title: 'Approve Minutes?',
+        text: 'Are you sure you want to approve these meeting minutes?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Approve',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: ajaxUrl,
+                method: 'POST',
+                data: {
+                    _token: csrfToken,
+                    action: 'approve_minutes',
+                    meeting_id: meetingId,
+                    comments: $('#approval-comments').val() || ''
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Approved!',
+                            text: response.message || 'Minutes have been approved successfully',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to approve minutes', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.message || 'Failed to approve minutes. Please try again.';
+                    Swal.fire('Error', errorMsg, 'error');
+                }
+            });
+        }
+    });
+});
+
+// Reject Minutes
+$('#reject-minutes-btn').on('click', function() {
+    Swal.fire({
+        title: 'Reject Minutes?',
+        input: 'textarea',
+        inputLabel: 'Reason for rejection',
+        inputPlaceholder: 'Please provide a reason for rejecting these minutes...',
+        inputAttributes: { required: true },
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Reject',
+        cancelButtonText: 'Cancel',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'You need to provide a reason!';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            $.ajax({
+                url: ajaxUrl,
+                method: 'POST',
+                data: {
+                    _token: csrfToken,
+                    action: 'reject_minutes',
+                    meeting_id: meetingId,
+                    reason: result.value
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Rejected',
+                            text: response.message || 'Minutes have been rejected',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to reject minutes', 'error');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.message || 'Failed to reject minutes. Please try again.';
+                    Swal.fire('Error', errorMsg, 'error');
+                }
+            });
+        }
+    });
+});
 @endif
 </script>
 @endpush
