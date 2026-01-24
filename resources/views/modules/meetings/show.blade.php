@@ -461,7 +461,7 @@
                                             </div>
                                         </div>
                                     @endif
-                                    @if($agenda->status)
+                                    @if(isset($agenda->status) && $agenda->status)
                                         <div class="mt-2">
                                             <span class="badge bg-{{ $agenda->status == 'done' ? 'success' : ($agenda->status == 'in_progress' ? 'info' : 'warning') }}">
                                                 {{ ucfirst(str_replace('_', ' ', $agenda->status)) }}
