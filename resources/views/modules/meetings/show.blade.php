@@ -951,6 +951,7 @@ $('#reject-meeting-btn').on('click', function() {
         }
     });
 });
+@endif
 
 @if($minutes && $canApprove && property_exists($minutes, 'status') && $minutes->status === 'pending_approval')
 // Approve Minutes
