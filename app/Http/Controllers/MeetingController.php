@@ -2719,4 +2719,280 @@ class MeetingController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to finalize minutes: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Approve meeting minutes
+     */
+    private function approveMinutes(Request $request, $user)
+    {
+        try {
+            // Check permissions
+            $canApprove = $user->hasPermission('approve_meetings') || 
+                         $user->hasAnyRole(['System Admin', 'General Manager', 'HOD', 'HR Officer', 'CEO']);
+            
+            if (!$canApprove) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to approve minutes.'
+                ], 403);
+            }
+
+            $meetingId = $request->input('meeting_id');
+            $comments = $request->input('comments', '');
+
+            if (!$meetingId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting ID is required.'
+                ], 400);
+            }
+
+            $minutes = DB::table('meeting_minutes')->where('meeting_id', $meetingId)->first();
+            
+            if (!$minutes) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting minutes not found.'
+                ], 404);
+            }
+
+            // Check if minutes are pending approval
+            if (property_exists($minutes, 'status') && $minutes->status !== 'pending_approval') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only minutes pending approval can be approved.'
+                ], 400);
+            }
+
+            // Check if user is the designated approver (if approver_id exists)
+            if (property_exists($minutes, 'approver_id') && $minutes->approver_id && $minutes->approver_id != $user->id) {
+                // System Admin can always approve, but others must be the designated approver
+                if (!$user->hasRole('System Admin')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not the designated approver for these minutes.'
+                    ], 403);
+                }
+            }
+
+            DB::beginTransaction();
+
+            $updateData = [
+                'updated_at' => now()
+            ];
+
+            if (Schema::hasColumn('meeting_minutes', 'status')) {
+                $updateData['status'] = 'approved';
+            }
+            if (Schema::hasColumn('meeting_minutes', 'approved_by')) {
+                $updateData['approved_by'] = $user->id;
+            }
+            if (Schema::hasColumn('meeting_minutes', 'approved_at')) {
+                $updateData['approved_at'] = now();
+            }
+            if (Schema::hasColumn('meeting_minutes', 'approval_comments') && $comments) {
+                $updateData['approval_comments'] = $comments;
+            }
+
+            DB::table('meeting_minutes')
+                ->where('meeting_id', $meetingId)
+                ->update($updateData);
+
+            // Get meeting and prepared by user for notification
+            $meeting = DB::table('meetings')->where('id', $meetingId)->first();
+            $preparedBy = property_exists($minutes, 'prepared_by') ? DB::table('users')->where('id', $minutes->prepared_by)->first() : null;
+
+            // Send notification to preparer
+            if ($preparedBy) {
+                try {
+                    $this->notificationService->notify(
+                        $preparedBy->id,
+                        "Meeting minutes for '{$meeting->title}' have been approved by {$user->name}.",
+                        route('modules.meetings.show', $meetingId),
+                        "Minutes Approved: {$meeting->title}"
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to send approval notification: ' . $e->getMessage());
+                }
+            }
+
+            // Log activity
+            try {
+                \App\Services\ActivityLogService::logAction(
+                    'approved',
+                    "Meeting minutes for '{$meeting->title}' approved by {$user->name}",
+                    null,
+                    [
+                        'meeting_id' => $meetingId,
+                        'meeting_title' => $meeting->title,
+                        'approved_by' => $user->id,
+                        'approved_by_name' => $user->name
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to log minutes approval activity: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Meeting minutes approved successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to approve minutes: ' . $e->getMessage(), [
+                'meeting_id' => $request->input('meeting_id'),
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve minutes: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject meeting minutes
+     */
+    private function rejectMinutes(Request $request, $user)
+    {
+        try {
+            // Check permissions
+            $canApprove = $user->hasPermission('approve_meetings') || 
+                         $user->hasAnyRole(['System Admin', 'General Manager', 'HOD', 'HR Officer', 'CEO']);
+            
+            if (!$canApprove) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to reject minutes.'
+                ], 403);
+            }
+
+            $meetingId = $request->input('meeting_id');
+            $reason = $request->input('reason', '');
+
+            if (!$meetingId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting ID is required.'
+                ], 400);
+            }
+
+            if (empty($reason)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Rejection reason is required.'
+                ], 400);
+            }
+
+            $minutes = DB::table('meeting_minutes')->where('meeting_id', $meetingId)->first();
+            
+            if (!$minutes) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Meeting minutes not found.'
+                ], 404);
+            }
+
+            // Check if minutes are pending approval
+            if (property_exists($minutes, 'status') && $minutes->status !== 'pending_approval') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only minutes pending approval can be rejected.'
+                ], 400);
+            }
+
+            // Check if user is the designated approver (if approver_id exists)
+            if (property_exists($minutes, 'approver_id') && $minutes->approver_id && $minutes->approver_id != $user->id) {
+                // System Admin can always reject, but others must be the designated approver
+                if (!$user->hasRole('System Admin')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not the designated approver for these minutes.'
+                    ], 403);
+                }
+            }
+
+            DB::beginTransaction();
+
+            $updateData = [
+                'updated_at' => now()
+            ];
+
+            if (Schema::hasColumn('meeting_minutes', 'status')) {
+                $updateData['status'] = 'rejected';
+            }
+            if (Schema::hasColumn('meeting_minutes', 'rejected_by')) {
+                $updateData['rejected_by'] = $user->id;
+            }
+            if (Schema::hasColumn('meeting_minutes', 'rejected_at')) {
+                $updateData['rejected_at'] = now();
+            }
+            if (Schema::hasColumn('meeting_minutes', 'rejection_reason')) {
+                $updateData['rejection_reason'] = $reason;
+            }
+
+            DB::table('meeting_minutes')
+                ->where('meeting_id', $meetingId)
+                ->update($updateData);
+
+            // Get meeting and prepared by user for notification
+            $meeting = DB::table('meetings')->where('id', $meetingId)->first();
+            $preparedBy = property_exists($minutes, 'prepared_by') ? DB::table('users')->where('id', $minutes->prepared_by)->first() : null;
+
+            // Send notification to preparer
+            if ($preparedBy) {
+                try {
+                    $this->notificationService->notify(
+                        $preparedBy->id,
+                        "Meeting minutes for '{$meeting->title}' have been rejected by {$user->name}. Reason: {$reason}",
+                        route('modules.meetings.show', $meetingId),
+                        "Minutes Rejected: {$meeting->title}"
+                    );
+                } catch (\Exception $e) {
+                    Log::error('Failed to send rejection notification: ' . $e->getMessage());
+                }
+            }
+
+            // Log activity
+            try {
+                \App\Services\ActivityLogService::logAction(
+                    'rejected',
+                    "Meeting minutes for '{$meeting->title}' rejected by {$user->name}",
+                    null,
+                    [
+                        'meeting_id' => $meetingId,
+                        'meeting_title' => $meeting->title,
+                        'rejected_by' => $user->id,
+                        'rejected_by_name' => $user->name,
+                        'rejection_reason' => $reason
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to log minutes rejection activity: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Meeting minutes rejected successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to reject minutes: ' . $e->getMessage(), [
+                'meeting_id' => $request->input('meeting_id'),
+                'user_id' => $user->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject minutes: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
