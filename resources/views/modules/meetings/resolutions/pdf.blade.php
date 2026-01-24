@@ -258,10 +258,18 @@
                 <div><strong>Category:</strong> {{ $meeting->category_name }}</div>
                 @endif
                 <div><strong>Date:</strong> {{ \Carbon\Carbon::parse($meeting->meeting_date)->format('l, d F Y') }}</div>
-                @if($meeting->location)
-                <div><strong>Venue:</strong> {{ $meeting->location }}</div>
+                @php
+                    $venue = null;
+                    if (property_exists($meeting, 'location') && $meeting->location) {
+                        $venue = $meeting->location;
+                    } elseif (property_exists($meeting, 'venue') && $meeting->venue) {
+                        $venue = $meeting->venue;
+                    }
+                @endphp
+                @if($venue)
+                <div><strong>Venue:</strong> {{ $venue }}</div>
                 @endif
-                @if($meeting->reference_code)
+                @if(property_exists($meeting, 'reference_code') && $meeting->reference_code)
                 <div><strong>Reference:</strong> {{ $meeting->reference_code }}</div>
                 @endif
             </div>
