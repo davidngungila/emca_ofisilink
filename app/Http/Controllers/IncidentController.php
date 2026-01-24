@@ -2056,6 +2056,11 @@ class IncidentController extends Controller
      */
     public function addComment(Request $request, $id)
     {
+        // Convert is_internal to boolean before validation
+        if ($request->has('is_internal')) {
+            $request->merge(['is_internal' => filter_var($request->is_internal, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false]);
+        }
+        
         $request->validate([
             'comment' => 'required|string|min:1',
             'is_internal' => 'boolean',
