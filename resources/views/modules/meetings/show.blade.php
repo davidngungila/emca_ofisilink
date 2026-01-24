@@ -638,11 +638,6 @@
                             <a href="{{ route('modules.meetings.minutes.pdf', $meeting->id) }}" class="btn btn-danger btn-lg" target="_blank">
                                 <i class="bx bx-file-pdf me-1"></i> Download PDF
                             </a>
-                            @if($canApprove && property_exists($minutes, 'status') && $minutes->status === 'pending_approval')
-                                <a href="{{ route('modules.meetings.minutes.approval', $meeting->id) }}" class="btn btn-success btn-lg">
-                                    <i class="bx bx-check-circle me-1"></i> Approve Minutes
-                                </a>
-                            @endif
                         @endif
                         <a href="{{ route('modules.meetings.resolutions', $meeting->id) }}" class="btn btn-warning btn-lg">
                             <i class="bx bx-file-blank me-1"></i> View Resolutions
