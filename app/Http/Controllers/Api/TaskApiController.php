@@ -103,12 +103,12 @@ class TaskApiController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $task = MainTask::with(['teamLeader', 'activities.assignedUsers.user'])
+        $task = MainTask::with(['teamLeader', 'activities.assignedUsers'])
             ->findOrFail($id);
 
         // Check access
         if ($task->team_leader_id != $user->id && 
-            !$task->activities->pluck('assignedUsers')->flatten()->pluck('user_id')->contains($user->id) &&
+            !$task->activities->pluck('assignedUsers')->flatten()->pluck('id')->contains($user->id) &&
             !$user->hasAnyRole(['System Admin', 'CEO', 'HOD'])) {
             return response()->json([
                 'success' => false,
@@ -281,7 +281,7 @@ class TaskApiController extends Controller
      */
     public function activities($id)
     {
-        $task = MainTask::with(['activities.assignedUsers.user'])->findOrFail($id);
+        $task = MainTask::with(['activities.assignedUsers'])->findOrFail($id);
         
         return response()->json([
             'success' => true,
@@ -293,10 +293,10 @@ class TaskApiController extends Controller
                     'priority' => $activity->priority,
                     'start_date' => $activity->start_date,
                     'end_date' => $activity->end_date,
-                    'assigned_users' => $activity->assignedUsers->map(function ($assignment) {
+                    'assigned_users' => $activity->assignedUsers->map(function ($user) {
                         return [
-                            'id' => $assignment->user->id,
-                            'name' => $assignment->user->name,
+                            'id' => $user->id,
+                            'name' => $user->name,
                         ];
                     }),
                 ];

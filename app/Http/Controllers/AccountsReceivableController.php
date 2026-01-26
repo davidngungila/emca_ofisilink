@@ -2386,7 +2386,7 @@ class AccountsReceivableController extends Controller
     }
 
     /**
-     * Approve Invoice (HOD)
+     * Approve Invoice (HOD or CEO)
      */
     public function approveInvoice(Request $request, $id)
     {
@@ -2395,15 +2395,18 @@ class AccountsReceivableController extends Controller
         
         // Check if user has HOD or CEO role
         if (!$user->hasAnyRole(['HOD', 'CEO', 'Director', 'System Admin'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Only HOD, CEO, or System Admin can approve invoices.'
-            ], 403);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Only HOD, CEO, or System Admin can approve invoices.'
+                ], 403);
+            }
+            abort(403, 'Unauthorized. Only HOD, CEO, or System Admin can approve invoices.');
         }
 
         try {
             $invoice = Invoice::findOrFail($id);
-            $comments = $request->input('comments');
+            $comments = $request->input('comments') ?? $request->input('approval_comments');
             
             // Determine approval level
             $isHOD = $user->hasAnyRole(['HOD', 'System Admin']);
@@ -2413,10 +2416,13 @@ class AccountsReceivableController extends Controller
             if ($isHOD && !$isCEO && $invoice->status === 'Pending for Approval') {
                 // HOD approves, move to CEO approval
                 if (!$isSystemAdmin && !$user->hasRole('HOD')) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Unauthorized. Only HOD can approve at this level.'
-                    ], 403);
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Unauthorized. Only HOD can approve at this level.'
+                        ], 403);
+                    }
+                    return redirect()->back()->with('error', 'Unauthorized. Only HOD can approve at this level.');
                 }
 
                 $oldStatus = $invoice->status;
@@ -2436,28 +2442,40 @@ class AccountsReceivableController extends Controller
                 ]);
 
                 // Notify CEO for approval
-                $notificationService = new \App\Services\NotificationService();
-                $link = route('modules.accounting.ar.invoices.show', ['id' => $invoice->id]);
-                $notificationService->notifyCEO(
-                    "Invoice {$invoice->invoice_no} approved by HOD, pending your approval",
-                    $link,
-                    'Invoice Pending CEO Approval'
-                );
+                try {
+                    $notificationService = new \App\Services\NotificationService();
+                    $link = route('modules.accounting.ar.invoices.show', ['id' => $invoice->id]);
+                    $notificationService->notifyCEO(
+                        "Invoice {$invoice->invoice_no} approved by HOD, pending your approval",
+                        $link,
+                        'Invoice Pending CEO Approval'
+                    );
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send notification: ' . $e->getMessage());
+                }
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Invoice approved by HOD. Waiting for CEO approval.',
-                    'invoice' => $invoice
-                ]);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Invoice approved by HOD. Waiting for CEO approval.',
+                        'invoice' => $invoice
+                    ]);
+                }
+
+                return redirect()->route('modules.accounting.ar.invoices.show', ['id' => $invoice->id])
+                    ->with('success', 'Invoice approved by HOD. Waiting for CEO approval.');
             }
             
             // CEO approval
             if ($isCEO && $invoice->status === 'Pending CEO Approval') {
                 if (!$isSystemAdmin && !$user->hasAnyRole(['CEO', 'Director'])) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Unauthorized. Only CEO/Director can give final approval.'
-                    ], 403);
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Unauthorized. Only CEO/Director can give final approval.'
+                        ], 403);
+                    }
+                    return redirect()->back()->with('error', 'Unauthorized. Only CEO/Director can give final approval.');
                 }
 
                 $oldStatus = $invoice->status;
@@ -2479,11 +2497,16 @@ class AccountsReceivableController extends Controller
                     'invoice_amount' => $invoice->total_amount,
                 ]);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Invoice approved successfully by CEO. Invoice can now be paid.',
-                    'invoice' => $invoice
-                ]);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Invoice approved successfully by CEO. Invoice can now be paid.',
+                        'invoice' => $invoice
+                    ]);
+                }
+
+                return redirect()->route('modules.accounting.ar.invoices.show', ['id' => $invoice->id])
+                    ->with('success', 'Invoice approved successfully by CEO. Invoice can now be paid.');
             }
             
             // System Admin can approve directly
@@ -2506,68 +2529,126 @@ class AccountsReceivableController extends Controller
                     'invoice_no' => $invoice->invoice_no,
                 ]);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Invoice approved successfully',
-                    'invoice' => $invoice
-                ]);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Invoice approved successfully',
+                        'invoice' => $invoice
+                    ]);
+                }
+
+                return redirect()->route('modules.accounting.ar.invoices.show', ['id' => $invoice->id])
+                    ->with('success', 'Invoice approved successfully');
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Invoice is not pending approval or already processed'
-            ], 400);
+            $errorMessage = 'Invoice is not pending approval or already processed';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 400);
+            }
 
+            return redirect()->back()->with('error', $errorMessage);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice not found'
+                ], 404);
+            }
+            return redirect()->route('modules.accounting.ar.invoices')
+                ->with('error', 'Invoice not found');
         } catch (\Exception $e) {
             Log::error('Error approving invoice: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error approving invoice: ' . $e->getMessage()
-            ], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error approving invoice: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()
+                ->with('error', 'Error approving invoice: ' . $e->getMessage());
         }
     }
 
     /**
-     * Reject Invoice (HOD)
+     * Reject Invoice (HOD or CEO)
      */
     public function rejectInvoice(Request $request, $id)
     {
+        $user = Auth::user();
+        
+        // Check permissions
+        if (!$user->hasAnyRole(['HOD', 'CEO', 'Director', 'System Admin'])) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Only HOD, CEO, or System Admin can reject invoices.'
+                ], 403);
+            }
+            abort(403, 'Unauthorized. Only HOD, CEO, or System Admin can reject invoices.');
+        }
+
         try {
             $invoice = Invoice::findOrFail($id);
             
-            if ($invoice->status !== 'Pending for Approval') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invoice is not pending approval'
-                ], 400);
+            // Allow rejection of invoices pending approval at any level
+            if (!in_array($invoice->status, ['Pending for Approval', 'Pending CEO Approval'])) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invoice is not pending approval'
+                    ], 400);
+                }
+                return redirect()->back()->with('error', 'Invoice is not pending approval');
             }
 
             $oldStatus = $invoice->status;
-            $rejectionReason = $request->rejection_reason ?? 'No reason provided';
+            $rejectionReason = $request->rejection_reason ?? $request->input('rejection_reason') ?? 'No reason provided';
             $invoice->status = 'Rejected';
             $invoice->notes = ($invoice->notes ?? '') . "\n\nRejected: " . $rejectionReason;
             $invoice->updated_by = Auth::id();
             $invoice->save();
 
             // Log activity
-            ActivityLogService::logRejected($invoice, "Invoice #{$invoice->invoice_number} rejected", Auth::user()->name, $rejectionReason, [
+            ActivityLogService::logRejected($invoice, "Invoice #{$invoice->invoice_no} rejected", Auth::user()->name, $rejectionReason, [
                 'old_status' => $oldStatus,
                 'new_status' => 'Rejected',
-                'invoice_number' => $invoice->invoice_number,
+                'invoice_no' => $invoice->invoice_no,
                 'invoice_amount' => $invoice->total_amount,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Invoice rejected successfully',
-                'invoice' => $invoice
-            ]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice rejected successfully',
+                    'invoice' => $invoice
+                ]);
+            }
+
+            return redirect()->route('modules.accounting.ar.invoices.show', ['id' => $invoice->id])
+                ->with('success', 'Invoice rejected successfully');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice not found'
+                ], 404);
+            }
+            return redirect()->route('modules.accounting.ar.invoices')
+                ->with('error', 'Invoice not found');
         } catch (\Exception $e) {
             Log::error('Error rejecting invoice: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error rejecting invoice: ' . $e->getMessage()
-            ], 500);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error rejecting invoice: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()
+                ->with('error', 'Error rejecting invoice: ' . $e->getMessage());
         }
     }
 

@@ -122,6 +122,46 @@
         </div>
     </div>
 
+    @php
+        $user = auth()->user();
+        $isHOD = $user->hasAnyRole(['HOD', 'System Admin']);
+        $isCEO = $user->hasAnyRole(['CEO', 'Director', 'System Admin']);
+        $isSystemAdmin = $user->hasRole('System Admin');
+        
+        $canHodApprove = $isHOD && !$isCEO && $invoice->status === 'Pending for Approval';
+        $canCeoApprove = $isCEO && $invoice->status === 'Pending CEO Approval';
+        $canSystemAdminApprove = $isSystemAdmin && $invoice->status === 'Pending for Approval';
+        $canReject = ($isHOD || $isCEO || $isSystemAdmin) && in_array($invoice->status, ['Pending for Approval', 'Pending CEO Approval']);
+    @endphp
+
+    <!-- Approval Actions -->
+    @if($canHodApprove || $canCeoApprove || $canSystemAdminApprove || $canReject)
+    <div class="card border-0 shadow-sm mb-4 bg-primary">
+        <div class="card-body text-white">
+            <h5 class="text-white mb-3"><i class="bx bx-cog me-2"></i>Available Actions</h5>
+            <div class="d-flex flex-wrap gap-2">
+                @if($canHodApprove || $canSystemAdminApprove)
+                <button class="btn btn-light btn-lg" onclick="openApprovalModal('approve')">
+                    <i class="bx bx-check me-1"></i>Approve @if($canHodApprove)(HOD)@else(System Admin)@endif
+                </button>
+                @endif
+
+                @if($canCeoApprove)
+                <button class="btn btn-light btn-lg" onclick="openApprovalModal('approve')">
+                    <i class="bx bx-check-double me-1"></i>Final Approval (CEO)
+                </button>
+                @endif
+
+                @if($canReject)
+                <button class="btn btn-light btn-lg" onclick="openRejectionModal()">
+                    <i class="bx bx-x me-1"></i>Reject
+                </button>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
@@ -667,5 +707,178 @@
         </div>
     </div>
 </div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">Approve Invoice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="approvalForm" method="POST" action="{{ route('modules.accounting.ar.invoices.approve', $invoice->id) }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="approval_comments" class="form-label">Comments (Optional)</label>
+                        <textarea class="form-control" id="approval_comments" name="comments" rows="3" placeholder="Enter approval comments..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bx bx-check me-1"></i>Approve Invoice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectionModalLabel">Reject Invoice</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectionForm" method="POST" action="{{ route('modules.accounting.ar.invoices.reject', $invoice->id) }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bx bx-error-circle me-1"></i>
+                        <strong>Warning:</strong> This action cannot be undone. Please provide a reason for rejection.
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="4" required placeholder="Enter reason for rejection..."></textarea>
+                        <div class="form-text">This reason will be added to the invoice notes.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bx bx-x me-1"></i>Reject Invoice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    function openApprovalModal() {
+        const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
+        modal.show();
+    }
+
+    function openRejectionModal() {
+        const modal = new bootstrap.Modal(document.getElementById('rejectionModal'));
+        modal.show();
+    }
+
+    // Handle approval form submission
+    document.getElementById('approvalForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const formData = new FormData(form);
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to approve invoice'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'An error occurred while approving the invoice'
+            });
+        });
+    });
+
+    // Handle rejection form submission
+    document.getElementById('rejectionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const formData = new FormData(form);
+        
+        if (!formData.get('rejection_reason').trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Required Field',
+                text: 'Please provide a rejection reason'
+            });
+            return;
+        }
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to reject invoice'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'An error occurred while rejecting the invoice'
+            });
+        });
+    });
+</script>
+@endpush
+
 @endsection
 
