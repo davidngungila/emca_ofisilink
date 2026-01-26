@@ -15,6 +15,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -119,6 +120,95 @@ class RecruitmentController extends Controller
     }
 
     /**
+     * Display Jobs Management Page
+     */
+    public function jobsPage()
+    {
+        $user = Auth::user();
+        $canCreateJobs = $user->hasAnyRole(['HR Officer', 'System Admin']);
+        $canApproveJobs = $user->hasAnyRole(['CEO', 'Director', 'System Admin']);
+        $canEditPendingJobs = $user->hasAnyRole(['HR Officer', 'System Admin']);
+        
+        // Calculate statistics
+        $advancedStats = [];
+        $advancedStats['total_jobs'] = RecruitmentJob::count();
+        $advancedStats['active_jobs'] = RecruitmentJob::where('status', 'Active')->count();
+        $advancedStats['pending_approval'] = RecruitmentJob::where('status', 'Pending Approval')->count();
+        $advancedStats['closed_jobs'] = RecruitmentJob::where('status', 'Closed')->count();
+        
+        return view('modules.hr.recruitment.jobs', compact(
+            'advancedStats',
+            'canCreateJobs',
+            'canApproveJobs',
+            'canEditPendingJobs'
+        ));
+    }
+
+    /**
+     * Display Applications Management Page
+     */
+    public function applicationsPage()
+    {
+        $user = Auth::user();
+        $canManageApplications = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director']);
+        
+        if (!$canManageApplications) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Calculate statistics
+        $advancedStats = [];
+        $advancedStats['total_applications'] = JobApplication::count();
+        $advancedStats['shortlisted'] = JobApplication::where('status', 'Shortlisted')->count();
+        $advancedStats['interviewing'] = JobApplication::where('status', 'Interviewing')->count();
+        $advancedStats['hired'] = JobApplication::where('status', 'Hired')->count();
+        
+        return view('modules.hr.recruitment.applications', compact(
+            'advancedStats',
+            'canManageApplications'
+        ));
+    }
+
+    /**
+     * Display Interviews Management Page
+     */
+    public function interviewsPage()
+    {
+        $user = Auth::user();
+        $canManageApplications = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director']);
+        
+        if (!$canManageApplications) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        // Calculate statistics
+        $advancedStats = [];
+        $advancedStats['upcoming_interviews'] = InterviewSchedule::where('status', 'scheduled')
+            ->where('interview_date', '>=', now()->format('Y-m-d'))
+            ->count();
+        
+        return view('modules.hr.recruitment.interviews', compact(
+            'advancedStats',
+            'canManageApplications'
+        ));
+    }
+
+    /**
+     * Display Analytics Page
+     */
+    public function analyticsPage()
+    {
+        $user = Auth::user();
+        $canManageApplications = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director']);
+        
+        if (!$canManageApplications) {
+            abort(403, 'Unauthorized access');
+        }
+        
+        return view('modules.hr.recruitment.analytics', compact('canManageApplications'));
+    }
+
+    /**
      * Handle AJAX requests
      */
     public function handleRequest(Request $request)
@@ -174,6 +264,8 @@ class RecruitmentController extends Controller
                     return $this->getAnalytics($request, $user);
                 case 'submit_application':
                     return $this->submitApplication($request, $user);
+                case 'get_all_jobs':
+                    return $this->getAllJobs($request, $user);
                 default:
                     return response()->json([
                         'success' => false,
@@ -538,6 +630,40 @@ class RecruitmentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Job has been manually closed.'
+        ]);
+    }
+
+    /**
+     * Get all jobs for listing
+     */
+    private function getAllJobs(Request $request, $user)
+    {
+        $jobs = RecruitmentJob::with(['creator'])
+            ->withCount('applications')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($job) {
+                return [
+                    'id' => $job->id,
+                    'job_title' => $job->job_title,
+                    'job_description' => $job->job_description,
+                    'qualifications' => $job->qualifications,
+                    'application_deadline' => $job->application_deadline->format('Y-m-d'),
+                    'status' => $job->status,
+                    'created_at' => $job->created_at->toDateTimeString(),
+                    'applications_count' => $job->applications_count,
+                    'interview_mode' => $job->interview_mode,
+                    'required_attachments' => $job->required_attachments,
+                    'creator' => $job->creator ? [
+                        'id' => $job->creator->id,
+                        'name' => $job->creator->name
+                    ] : null
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'jobs' => $jobs
         ]);
     }
 
@@ -988,7 +1114,7 @@ class RecruitmentController extends Controller
         if ($request->has('filter')) {
             $filter = $request->filter;
             if ($filter === 'upcoming') {
-                $query->where('interview_date', '>=', now()->format('Y-m-d'))
+                $query->where('scheduled_at', '>=', now())
                       ->where('status', 'Scheduled');
             } elseif ($filter === 'completed') {
                 $query->where('status', 'Completed');
@@ -1008,25 +1134,35 @@ class RecruitmentController extends Controller
             return [
                 'id' => $s->id,
                 'status' => $s->status,
+                'interview_type' => $s->interview_type,
                 'interview_mode' => $s->interview_type, // map to expected key
+                'scheduled_at' => $s->scheduled_at ? $s->scheduled_at->toDateTimeString() : null,
                 'interview_date' => optional($s->scheduled_at)->toDateString(),
                 'interview_time' => optional($s->scheduled_at)->format('H:i'),
                 'location' => $s->location,
+                'notes' => $s->notes,
                 'application' => $s->relationLoaded('application') && $s->application ? [
                     'id' => $s->application->id,
                     'first_name' => $s->application->first_name,
                     'last_name' => $s->application->last_name,
+                    'email' => $s->application->email,
+                    'phone' => $s->application->phone,
                     'job' => $s->application->relationLoaded('job') && $s->application->job ? [
                         'id' => $s->application->job->id,
                         'job_title' => $s->application->job->job_title,
                     ] : null,
+                ] : null,
+                'interviewer' => $s->relationLoaded('interviewer') && $s->interviewer ? [
+                    'id' => $s->interviewer->id,
+                    'name' => $s->interviewer->name,
                 ] : null,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'schedules' => $normalized,
+            'interviews' => $normalized,
+            'schedules' => $normalized, // Keep for backward compatibility
         ]);
     }
 
@@ -1360,13 +1496,15 @@ class RecruitmentController extends Controller
         }
 
         // Optional: department/location/type if added to schema later
-        if (request()->filled('department')) {
+        // Note: These columns may not exist in the current schema, so we check first
+        $columns = Schema::getColumnListing('recruitment_jobs');
+        if (request()->filled('department') && in_array('department', $columns)) {
             $query->where('department', request('department'));
         }
-        if (request()->filled('location')) {
+        if (request()->filled('location') && in_array('location', $columns)) {
             $query->where('location', request('location'));
         }
-        if (request()->filled('employment_type')) {
+        if (request()->filled('employment_type') && in_array('employment_type', $columns)) {
             $query->where('employment_type', request('employment_type'));
         }
 
@@ -1465,6 +1603,8 @@ class RecruitmentController extends Controller
                 'last_name' => $request->last_name,
                 'email' => $request->email,
                 'phone' => $request->phone,
+                'current_address' => $request->current_address ?? null,
+                'cover_letter' => $request->cover_letter ?? null,
                 'status' => 'Applied',
                 'application_date' => now(),
             ]);

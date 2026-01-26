@@ -15,6 +15,8 @@ class JobApplication extends Model
         'last_name',
         'email',
         'phone',
+        'current_address',
+        'cover_letter',
         'status',
         'shortlisted_by',
         'shortlisted_at',
