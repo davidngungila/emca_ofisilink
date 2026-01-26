@@ -50,6 +50,8 @@ class SystemDatabaseBackup extends Command
 
         $backupSuccess = false;
         $errorMessage = null;
+        $zipPath = null;
+        $fullZipPath = null;
         
         // Create backup record in database
         $backupRecord = DatabaseBackup::create([
@@ -152,6 +154,32 @@ class SystemDatabaseBackup extends Command
                 'size_human' => $this->formatBytes($fileSize),
                 'sql_path' => $sqlPath
             ]);
+            
+            // Create password-protected ZIP file
+            $zipPath = $backupDir . "/{$baseName}.zip";
+            $fullZipPath = storage_path('app' . DIRECTORY_SEPARATOR . $backupDir . DIRECTORY_SEPARATOR . $baseName . '.zip');
+            $password = 'Ofisilink';
+            
+            // Try to create password-protected ZIP
+            $zipCreated = false;
+            if (class_exists(\ZipArchive::class)) {
+                $zipCreated = $this->zipWithPassword($fullSqlPath, $fullZipPath, $password);
+            }
+            
+            // Note: Don't update backup record here - it will be updated later after verification
+            if ($zipCreated && file_exists($fullZipPath)) {
+                \Log::info('Password-protected ZIP created', [
+                    'zip_path' => $fullZipPath,
+                    'zip_size' => filesize($fullZipPath)
+                ]);
+            } else {
+                // If ZIP creation fails, keep SQL file but log warning
+                $zipPath = null;
+                $fullZipPath = null;
+                \Log::warning('Failed to create password-protected ZIP, keeping SQL file', [
+                    'sql_path' => $fullSqlPath
+                ]);
+            }
 
         } catch (\Throwable $e) {
             $errorMessage = $e->getMessage();
@@ -161,12 +189,18 @@ class SystemDatabaseBackup extends Command
 
         // Update backup record in database
         if (isset($backupRecord)) {
-            if ($backupSuccess && isset($fullSqlPath) && file_exists($fullSqlPath)) {
+            // Check if ZIP file exists (password-protected), otherwise use SQL file
+            $finalPath = isset($fullZipPath) && file_exists($fullZipPath) ? $fullZipPath : (isset($fullSqlPath) && file_exists($fullSqlPath) ? $fullSqlPath : null);
+            $finalStoragePath = isset($fullZipPath) && file_exists($fullZipPath) ? $zipPath : $sqlPath;
+            $finalFilename = isset($fullZipPath) && file_exists($fullZipPath) ? $baseName . '.zip' : $baseName . '.sql';
+            
+            if ($backupSuccess && $finalPath && file_exists($finalPath)) {
                 // Ensure file_path is correct (use forward slash for Laravel storage convention)
-                $fileSize = filesize($fullSqlPath);
+                $fileSize = filesize($finalPath);
                 $backupRecord->update([
                     'status' => 'completed',
-                    'file_path' => $sqlPath, // Ensure we use the storage path format
+                    'filename' => $finalFilename,
+                    'file_path' => $finalStoragePath, // Use ZIP if created, otherwise SQL
                     'file_size' => $fileSize,
                     'completed_at' => now(),
                     'error_message' => null,
@@ -177,7 +211,8 @@ class SystemDatabaseBackup extends Command
                     'filename' => $backupRecord->filename,
                     'file_path' => $backupRecord->file_path,
                     'file_size' => $fileSize,
-                    'full_path' => $fullSqlPath
+                    'full_path' => $finalPath,
+                    'is_zip' => isset($fullZipPath) && file_exists($fullZipPath)
                 ]);
             } else {
                 $backupRecord->update([
@@ -194,14 +229,20 @@ class SystemDatabaseBackup extends Command
         }
 
         // Always send notifications (success or failure)
-        $this->sendNotifications($notifier, $now, $backupSuccess, $sqlPath ?? null, $errorMessage);
+        // Use ZIP path if available, otherwise SQL path
+        $notificationPath = isset($zipPath) && isset($fullZipPath) && file_exists($fullZipPath) ? $zipPath : ($sqlPath ?? null);
+        $this->sendNotifications($notifier, $now, $backupSuccess, $notificationPath, $errorMessage);
 
-        if ($backupSuccess && isset($fullSqlPath) && file_exists($fullSqlPath)) {
+        // Check final file (ZIP or SQL)
+        $finalFile = isset($fullZipPath) && file_exists($fullZipPath) ? $fullZipPath : (isset($fullSqlPath) && file_exists($fullSqlPath) ? $fullSqlPath : null);
+        if ($backupSuccess && $finalFile) {
+            $outputPath = isset($zipPath) && isset($fullZipPath) && file_exists($fullZipPath) ? $zipPath : $sqlPath;
             if ($this->option('return')) {
                 // Only output the file path if successful - no other output
-                $this->line($sqlPath);
+                $this->line($outputPath);
             } else {
-                $this->info('Backup completed: ' . $sqlPath);
+                $fileType = isset($zipPath) && isset($fullZipPath) && file_exists($fullZipPath) ? 'ZIP (password-protected)' : 'SQL';
+                $this->info('Backup completed: ' . $outputPath . ' (' . $fileType . ')');
             }
             return self::SUCCESS;
         } else {
@@ -347,10 +388,13 @@ class SystemDatabaseBackup extends Command
                 return false;
             }
 
-            // Write header
+            // Write header with password protection information
             fwrite($handle, "-- OfisiLink Database Backup\n");
             fwrite($handle, "-- Generated: " . now()->toDateTimeString() . "\n");
-            fwrite($handle, "-- Database: {$database}\n\n");
+            fwrite($handle, "-- Database: {$database}\n");
+            fwrite($handle, "-- Password Protection: Ofisilink (case-sensitive)\n");
+            fwrite($handle, "-- This backup requires database password: Ofisilink\n");
+            fwrite($handle, "-- IMPORTANT: Keep this password secure and confidential\n\n");
             fwrite($handle, "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n");
             fwrite($handle, "SET time_zone = \"+00:00\";\n\n");
             fwrite($handle, "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n");
@@ -469,7 +513,9 @@ class SystemDatabaseBackup extends Command
 
             if ($success && $sqlPath) {
                 $downloadUrl = route('admin.system.backup.download', ['file' => basename($sqlPath)], false);
-                $message = 'Backup for OfisiLink System completed at ' . $now->toDateTimeString() . '. Password: Ofisilink. Download: ' . url($downloadUrl);
+                $isZip = str_ends_with($sqlPath, '.zip');
+                $passwordNote = $isZip ? 'Password-protected ZIP (Password: Ofisilink)' : 'SQL file (Database Password: Ofisilink)';
+                $message = 'Backup for OfisiLink System completed at ' . $now->toDateTimeString() . '. ' . $passwordNote . '. Download: ' . url($downloadUrl);
                 $subject = 'OfisiLink System Backup Completed - ' . $now->format('Y-m-d H:i:s');
                 $fullPath = storage_path('app/backups/' . basename($sqlPath));
             } else {
@@ -507,12 +553,14 @@ class SystemDatabaseBackup extends Command
             // Prepare email content
             if ($success && $fullPath && file_exists($fullPath)) {
                 // Success: Prepare success email
+                $isZip = str_ends_with($sqlPath, '.zip');
                 $emailBody = View::make('emails.backup-completed', [
                     'admin' => (object)['name' => 'Administrator'],
                     'backup_file' => basename($sqlPath),
                     'completed_at' => $now->toDateTimeString(),
                     'download_url' => $downloadUrl ? url($downloadUrl) : null,
                     'password' => 'Ofisilink',
+                    'is_zip' => $isZip,
                     'file_size' => $this->formatBytes(filesize($fullPath)),
                 ])->render();
                 

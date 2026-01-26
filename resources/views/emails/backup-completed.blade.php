@@ -235,10 +235,16 @@
 
             @if(isset($password))
             <div class="password-box">
-                <h3>⚠️ Important: Database Password</h3>
+                <h3>⚠️ Important: Password Protection</h3>
                 <div class="password">{{ $password }}</div>
                 <div class="note">
-                    This is a normal SQL file. The password is for database access when restoring. The password is case-sensitive. Please store this backup securely and do not share it with unauthorized personnel.
+                    @if(isset($is_zip) && $is_zip)
+                    <strong>Password-Protected ZIP File:</strong> This backup is stored in a password-protected ZIP archive. Use the password above to extract the SQL file. The password is case-sensitive (Ofisilink).
+                    @else
+                    <strong>SQL File:</strong> This is a normal SQL file. The password is for database access when restoring. The password is case-sensitive (Ofisilink).
+                    @endif
+                    <br><br>
+                    Please store this backup securely and do not share it with unauthorized personnel.
                 </div>
             </div>
             @endif

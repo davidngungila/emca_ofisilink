@@ -11,8 +11,53 @@ class Kernel extends ConsoleKernel
     {
         // Send reminders daily at 08:00
         $schedule->command('assessments:send-reminders')->dailyAt('08:00');
-        // Daily full DB backup at 23:59:30
-        $schedule->command('system:backup-db --sleep-30')->dailyAt('23:59');
+        
+        // Automatic database backup - respects settings
+        // Check every hour if backup should run
+        $schedule->call(function () {
+            $enabled = \App\Models\SystemSetting::getValue('backup_auto_enabled', true);
+            if (!$enabled) {
+                return;
+            }
+            
+            $frequency = \App\Models\SystemSetting::getValue('backup_schedule', 'daily');
+            $scheduleTime = \App\Models\SystemSetting::getValue('backup_schedule_time', '23:59');
+            
+            // Parse time
+            [$hour, $minute] = explode(':', $scheduleTime);
+            $currentHour = (int)now()->format('H');
+            $currentMinute = (int)now()->format('i');
+            $scheduledHour = (int)$hour;
+            $scheduledMinute = (int)$minute;
+            
+            // Check if it's time to run backup based on frequency
+            $shouldRun = false;
+            
+            if ($frequency === 'daily') {
+                // Daily: run if current time matches scheduled time
+                $shouldRun = ($currentHour === $scheduledHour && $currentMinute === $scheduledMinute);
+            } elseif ($frequency === 'weekly') {
+                // Weekly: run on Sunday at scheduled time
+                $shouldRun = (now()->dayOfWeek === 0 && $currentHour === $scheduledHour && $currentMinute === $scheduledMinute);
+            } elseif ($frequency === 'monthly') {
+                // Monthly: run on 1st of month at scheduled time
+                $shouldRun = (now()->day === 1 && $currentHour === $scheduledHour && $currentMinute === $scheduledMinute);
+            }
+            
+            if ($shouldRun) {
+                \Illuminate\Support\Facades\Artisan::call('system:backup-db', ['--sleep-30' => true]);
+                \Illuminate\Support\Facades\Log::info('Automatic backup executed', [
+                    'frequency' => $frequency,
+                    'scheduled_time' => $scheduleTime
+                ]);
+            }
+        })->hourly()->when(function () {
+            // Only run if enabled
+            return \App\Models\SystemSetting::getValue('backup_auto_enabled', true);
+        });
+        
+        // Cleanup old backups daily at 02:00
+        $schedule->command('system:cleanup-backups')->dailyAt('02:00');
         // Sync incident emails in live mode every 1 minute
         $schedule->call(function () {
             $configs = \App\Models\IncidentEmailConfig::where('is_active', true)->get();

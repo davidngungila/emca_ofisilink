@@ -1834,10 +1834,41 @@ function cleanupOldBackups() {
                 }
             });
             
-            // This would require a backend endpoint - for now just show message
-            setTimeout(() => {
-                Swal.fire('Info', 'Backup cleanup feature requires backend implementation. Old backups are automatically cleaned based on retention policy.', 'info');
-            }, 1000);
+            fetch('{{ route("admin.system.backup.cleanup") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Cleanup Completed!',
+                        html: data.message + '<br><br>Deleted: ' + data.deleted_count + ' backup(s)<br>Space Freed: ' + data.space_freed,
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        loadBackupsList();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cleanup Failed',
+                        text: data.message || 'An error occurred during cleanup'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Cleanup error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to cleanup backups. Please try again.'
+                });
+            });
         }
     });
 }

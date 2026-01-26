@@ -2367,10 +2367,28 @@ class AccountsReceivableController extends Controller
     public function exportInvoicePdf($id)
     {
         try {
-            $invoice = Invoice::with(['customer', 'items.account'])->findOrFail($id);
+            $invoice = Invoice::with([
+                'customer',
+                'items.account',
+                'payments.bankAccount',
+                'payments.creator',
+                'hodApprover',
+                'ceoApprover',
+                'creator',
+                'updater'
+            ])->findOrFail($id);
+            
+            // Calculate days outstanding
+            $daysOutstanding = $invoice->due_date ? (int)now()->diffInDays($invoice->due_date, false) : 0;
+            
+            // Get organization settings
+            $orgSettings = \App\Models\OrganizationSetting::getSettings();
             
             $data = [
                 'invoice' => $invoice,
+                'payments' => $invoice->payments()->orderBy('payment_date', 'desc')->get(),
+                'daysOutstanding' => $daysOutstanding,
+                'orgSettings' => $orgSettings,
                 'companyName' => config('app.name', 'Company'),
                 'generatedAt' => now()->format('d M Y H:i:s'),
             ];

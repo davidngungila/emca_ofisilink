@@ -1081,6 +1081,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::get('system/backup/list', [SystemController::class, 'listBackups'])->name('admin.system.backup.list');
         Route::get('system/backup/download/{file}', [SystemController::class, 'downloadBackup'])->name('admin.system.backup.download');
         Route::post('system/backup/schedule', [SystemController::class, 'updateBackupSchedule'])->name('admin.system.backup.schedule');
+        Route::post('system/backup/cleanup', [SystemController::class, 'cleanupOldBackups'])->name('admin.system.backup.cleanup');
         Route::delete('system/backup/{backup}', [SystemController::class, 'deleteBackup'])->name('admin.system.backup.delete');
         // System User Management
         Route::post('system/users', [SystemController::class, 'getUsers'])->name('admin.system.users');

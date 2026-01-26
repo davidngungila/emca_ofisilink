@@ -1367,6 +1367,92 @@ class SystemController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Cleanup old backups based on retention policy
+     */
+    public function cleanupOldBackups()
+    {
+        try {
+            $retentionDays = SystemSetting::getValue('backup_retention_days', 30);
+            $cutoffDate = now()->subDays($retentionDays);
+            
+            $oldBackups = DatabaseBackup::where('created_at', '<', $cutoffDate)->get();
+            
+            if ($oldBackups->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No old backups found to clean up.',
+                    'deleted_count' => 0
+                ]);
+            }
+            
+            $deletedCount = 0;
+            $failedCount = 0;
+            $totalSizeFreed = 0;
+            
+            foreach ($oldBackups as $backup) {
+                try {
+                    $filePath = $backup->file_path;
+                    $fullPath = storage_path('app/' . $filePath);
+                    
+                    // Get file size before deletion
+                    $fileSize = 0;
+                    if (file_exists($fullPath)) {
+                        $fileSize = filesize($fullPath);
+                    } elseif (Storage::disk('local')->exists($filePath)) {
+                        $fileSize = Storage::disk('local')->size($filePath);
+                    }
+                    
+                    // Delete file
+                    $fileDeleted = false;
+                    if (file_exists($fullPath)) {
+                        $fileDeleted = @unlink($fullPath);
+                    } elseif (Storage::disk('local')->exists($filePath)) {
+                        $fileDeleted = Storage::disk('local')->delete($filePath);
+                    }
+                    
+                    // Delete database record
+                    $backup->delete();
+                    
+                    if ($fileDeleted || !file_exists($fullPath)) {
+                        $deletedCount++;
+                        $totalSizeFreed += $fileSize;
+                    } else {
+                        $failedCount++;
+                    }
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    Log::error('Error deleting backup during cleanup', [
+                        'backup_id' => $backup->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Log activity
+            ActivityLogService::logAction('backup_cleanup', "Cleaned up {$deletedCount} old backup(s)", null, [
+                'deleted_count' => $deletedCount,
+                'failed_count' => $failedCount,
+                'retention_days' => $retentionDays,
+                'space_freed' => $this->formatBytes($totalSizeFreed)
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Cleanup completed. Deleted {$deletedCount} backup(s), freed " . $this->formatBytes($totalSizeFreed),
+                'deleted_count' => $deletedCount,
+                'failed_count' => $failedCount,
+                'space_freed' => $this->formatBytes($totalSizeFreed)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Backup cleanup failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Cleanup failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
 
 
