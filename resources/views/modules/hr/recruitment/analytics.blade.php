@@ -25,16 +25,16 @@
                             <button class="btn btn-light btn-lg shadow-sm" id="export-excel-btn">
                                 <i class="bx bx-spreadsheet me-2"></i>Export Excel
                             </button>
-                            <a href="{{ route('modules.hr.recruitment.jobs') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.list') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-briefcase me-2"></i>Job Vacancies
                             </a>
-                            <a href="{{ route('modules.hr.recruitment.applications') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.applications') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-user-check me-2"></i>Applications
                             </a>
-                            <a href="{{ route('modules.hr.recruitment.interviews') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.interviews') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-calendar me-2"></i>Interviews
                             </a>
-                            <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-arrow-back me-2"></i>Back
                             </a>
                         </div>

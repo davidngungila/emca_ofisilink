@@ -24,16 +24,16 @@
                                 <i class="bx bx-plus-circle me-2"></i>Create New Job
                             </button>
                             @endif
-                            <a href="{{ route('modules.hr.recruitment.applications') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.applications') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-user-check me-2"></i>Applications
                             </a>
-                            <a href="{{ route('modules.hr.recruitment.interviews') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.interviews') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-calendar me-2"></i>Interviews
                             </a>
-                            <a href="{{ route('modules.hr.recruitment.analytics') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.analytics') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-bar-chart me-2"></i>Analytics
                             </a>
-                            <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-arrow-back me-2"></i>Back
                             </a>
                         </div>

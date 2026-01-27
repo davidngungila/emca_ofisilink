@@ -178,8 +178,8 @@
       
       <!-- Recruitment - Available to HR, HOD, CEO, System Admin -->
       @if($isHR || $isHOD || $isCEO || $isSystemAdmin)
-      <li class="menu-item {{ request()->routeIs('modules.hr.recruitment') ? 'active' : '' }}">
-        <a href="{{ route('modules.hr.recruitment') }}" class="menu-link">
+      <li class="menu-item {{ request()->routeIs('jobs*') ? 'active' : '' }}">
+        <a href="{{ route('jobs') }}" class="menu-link">
           <div data-i18n="Recruitment" style="font-weight: bold;">Recruitment</div>
         </a>
       </li>

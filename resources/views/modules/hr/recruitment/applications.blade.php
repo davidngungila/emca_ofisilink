@@ -19,16 +19,16 @@
                             </p>
                         </div>
                         <div class="d-flex gap-2 flex-wrap align-items-center">
-                            <a href="{{ route('modules.hr.recruitment.jobs') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.list') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-briefcase me-2"></i>Job Vacancies
                             </a>
-                            <a href="{{ route('modules.hr.recruitment.interviews') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.interviews') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-calendar me-2"></i>Interviews
                             </a>
-                            <a href="{{ route('modules.hr.recruitment.analytics') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs.analytics') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-bar-chart me-2"></i>Analytics
                             </a>
-                            <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('jobs') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-arrow-back me-2"></i>Back
                             </a>
                         </div>

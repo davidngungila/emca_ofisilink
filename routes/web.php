@@ -452,12 +452,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/assessments', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.hr.assessments');
     Route::get('/modules/hr/departments', [App\Http\Controllers\DepartmentController::class, 'index'])->name('modules.hr.departments');
     Route::get('/modules/hr/positions', [App\Http\Controllers\PositionController::class, 'index'])->name('modules.hr.positions');
-    Route::get('/modules/hr/recruitment', [App\Http\Controllers\RecruitmentController::class, 'index'])->name('modules.hr.recruitment');
-    Route::get('/modules/hr/recruitment/jobs', [App\Http\Controllers\RecruitmentController::class, 'jobsPage'])->name('modules.hr.recruitment.jobs');
-    Route::get('/modules/hr/recruitment/applications', [App\Http\Controllers\RecruitmentController::class, 'applicationsPage'])->name('modules.hr.recruitment.applications');
-    Route::get('/modules/hr/recruitment/interviews', [App\Http\Controllers\RecruitmentController::class, 'interviewsPage'])->name('modules.hr.recruitment.interviews');
-    Route::get('/modules/hr/recruitment/analytics', [App\Http\Controllers\RecruitmentController::class, 'analyticsPage'])->name('modules.hr.recruitment.analytics');
-    Route::post('/modules/hr/recruitment/handle', [App\Http\Controllers\RecruitmentController::class, 'handleRequest'])->name('recruitment.handle');
+    Route::get('/jobs', [App\Http\Controllers\RecruitmentController::class, 'index'])->name('jobs');
+    Route::get('/jobs/list', [App\Http\Controllers\RecruitmentController::class, 'jobsPage'])->name('jobs.list');
+    Route::get('/jobs/applications', [App\Http\Controllers\RecruitmentController::class, 'applicationsPage'])->name('jobs.applications');
+    Route::get('/jobs/interviews', [App\Http\Controllers\RecruitmentController::class, 'interviewsPage'])->name('jobs.interviews');
+    Route::get('/jobs/analytics', [App\Http\Controllers\RecruitmentController::class, 'analyticsPage'])->name('jobs.analytics');
+    Route::post('/jobs/handle', [App\Http\Controllers\RecruitmentController::class, 'handleRequest'])->name('recruitment.handle');
     Route::get('/modules/hr/attendance', [App\Http\Controllers\AttendanceController::class, 'index'])->name('modules.hr.attendance');
     Route::get('/modules/hr/attendance/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');

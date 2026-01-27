@@ -7,17 +7,17 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0"><i class="bx bx-briefcase me-2"></i>Recruitment & Selection</h2>
         <div class="btn-group" role="group">
-            <a href="{{ route('modules.hr.recruitment.jobs') }}" class="btn btn-primary">
+            <a href="{{ route('jobs.list') }}" class="btn btn-primary">
                 <i class="bx bx-briefcase me-1"></i> Job Management
             </a>
             @if($canManageApplications)
-            <a href="{{ route('modules.hr.recruitment.applications') }}" class="btn btn-success">
+            <a href="{{ route('jobs.applications') }}" class="btn btn-success">
                 <i class="bx bx-user me-1"></i> Applications
             </a>
-            <a href="{{ route('modules.hr.recruitment.interviews') }}" class="btn btn-warning">
+            <a href="{{ route('jobs.interviews') }}" class="btn btn-warning">
                 <i class="bx bx-calendar me-1"></i> Interviews
             </a>
-            <a href="{{ route('modules.hr.recruitment.analytics') }}" class="btn btn-info">
+            <a href="{{ route('jobs.analytics') }}" class="btn btn-info">
                 <i class="bx bx-bar-chart me-1"></i> Analytics
             </a>
             @endif
