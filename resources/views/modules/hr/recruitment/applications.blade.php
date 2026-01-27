@@ -2,165 +2,115 @@
 
 @section('title', 'Job Applications Management - Recruitment')
 
-@section('breadcrumb')
-<div class="row">
-    <div class="col-lg-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h4 class="fw-bold py-3 mb-2">
-                    <i class="bx bx-user"></i> Job Applications Management
-                </h4>
-                <p class="text-muted">Review, evaluate, and manage job applications with comprehensive tracking and status updates</p>
-            </div>
-            <div class="btn-group" role="group">
-                <button class="btn btn-outline-secondary" id="refresh-btn">
-                    <i class="bx bx-refresh"></i> Refresh
-                </button>
-                <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-outline-dark">
-                    <i class="bx bx-arrow-back"></i> Back to Recruitment
-                </a>
+@section('content')
+<div class="container-xxl flex-grow-1 container-p-y">
+    <!-- Professional Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg bg-info" style="border-radius: 15px; overflow: hidden;">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="mb-3 mb-md-0">
+                            <h3 class="mb-2 text-white fw-bold">
+                                <i class="bx bx-user-check me-2"></i>Job Applications Management
+                            </h3>
+                            <p class="mb-0 text-white-50 fs-6">
+                                Review, evaluate, and manage job applications with comprehensive tracking and status updates
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <a href="{{ route('modules.hr.recruitment.jobs') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-briefcase me-2"></i>Job Vacancies
+                            </a>
+                            <a href="{{ route('modules.hr.recruitment.interviews') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-calendar me-2"></i>Interviews
+                            </a>
+                            <a href="{{ route('modules.hr.recruitment.analytics') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-bar-chart me-2"></i>Analytics
+                            </a>
+                            <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-arrow-back me-2"></i>Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-@endsection
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.css') }}">
-<style>
-    .application-card {
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        overflow: hidden;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid;
-    }
-    .application-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    .application-card.status-applied { border-left-color: #17a2b8; }
-    .application-card.status-shortlisted { border-left-color: #28a745; }
-    .application-card.status-interviewing { border-left-color: #ffc107; }
-    .application-card.status-offer_extended { border-left-color: #007bff; }
-    .application-card.status-hired { border-left-color: #28a745; }
-    .application-card.status-rejected { border-left-color: #dc3545; }
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: all 0.3s;
-        border-left: 4px solid;
-    }
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-    }
-    .stat-card.primary { border-left-color: #007bff; }
-    .stat-card.success { border-left-color: #28a745; }
-    .stat-card.warning { border-left-color: #ffc107; }
-    .stat-card.info { border-left-color: #17a2b8; }
-    .stat-card.danger { border-left-color: #dc3545; }
-    .applications-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-        padding: 20px 0;
-    }
-    .filter-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    .application-actions {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-    .application-card:hover .application-actions {
-        opacity: 1;
-    }
-</style>
-@endpush
-
-@section('content')
-<div class="container-fluid">
-    <!-- Dashboard Statistics -->
+    <!-- Advanced Statistics Dashboard -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card primary">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Total Applications</h6>
-                        <h3 class="mb-0 text-primary">{{ $advancedStats['total_applications'] ?? 0 }}</h3>
-                        <small class="text-info">
-                            <i class="bx bx-user"></i> All applications
-                        </small>
-                    </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-primary rounded">
-                            <i class="bx bx-user"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card success">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Shortlisted</h6>
-                        <h3 class="mb-0 text-success">{{ $advancedStats['shortlisted'] ?? 0 }}</h3>
-                        <small class="text-success">
-                            <i class="bx bx-check-circle"></i> Selected candidates
-                        </small>
-                    </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-success rounded">
-                            <i class="bx bx-check-circle"></i>
-                        </span>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 border-info" style="border-left: 4px solid var(--bs-info) !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3 bg-info">
+                            <i class="bx bx-user fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Total Applications</h6>
+                            <h3 class="mb-0 fw-bold text-info">{{ $advancedStats['total_applications'] ?? 0 }}</h3>
+                            <small class="text-success">
+                                <i class="bx bx-trending-up me-1"></i>All Candidates
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card warning">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Interviewing</h6>
-                        <h3 class="mb-0 text-warning">{{ $advancedStats['interviewing'] ?? 0 }}</h3>
-                        <small class="text-warning">
-                            <i class="bx bx-calendar"></i> In process
-                        </small>
-                    </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-warning rounded">
-                            <i class="bx bx-calendar"></i>
-                        </span>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #10b981 !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <i class="bx bx-check-circle fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Shortlisted</h6>
+                            <h3 class="mb-0 fw-bold text-success">{{ $advancedStats['shortlisted'] ?? 0 }}</h3>
+                            <small class="text-success">
+                                <i class="bx bx-info-circle me-1"></i>Selected Candidates
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card info">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Hired</h6>
-                        <h3 class="mb-0 text-info">{{ $advancedStats['hired'] ?? 0 }}</h3>
-                        <small class="text-success">
-                            <i class="bx bx-check-double"></i> Successful hires
-                        </small>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <i class="bx bx-calendar fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Interviewing</h6>
+                            <h3 class="mb-0 fw-bold text-warning">{{ $advancedStats['interviewing'] ?? 0 }}</h3>
+                            <small class="text-warning">
+                                <i class="bx bx-time me-1"></i>In Process
+                            </small>
+                        </div>
                     </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-info rounded">
-                            <i class="bx bx-check-double"></i>
-                        </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #3b82f6 !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                            <i class="bx bx-check-double fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Hired</h6>
+                            <h3 class="mb-0 fw-bold text-primary">{{ $advancedStats['hired'] ?? 0 }}</h3>
+                            <small class="text-primary">
+                                <i class="bx bx-check-double me-1"></i>Successful Hires
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -168,58 +118,68 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="filter-section">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Search Applications</label>
-                <input type="text" id="searchInput" class="form-control" placeholder="Search by name, email...">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Status</label>
-                <select id="statusFilter" class="form-select">
-                    <option value="">All Status</option>
-                    <option value="Applied">Applied</option>
-                    <option value="Shortlisted">Shortlisted</option>
-                    <option value="Interviewing">Interviewing</option>
-                    <option value="Offer Extended">Offer Extended</option>
-                    <option value="Hired">Hired</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Job</label>
-                <select id="jobFilter" class="form-select">
-                    <option value="">All Jobs</option>
-                    <!-- Jobs will be populated -->
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Sort By</label>
-                <select id="sortBy" class="form-select">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="name">Name A-Z</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <button class="btn btn-primary w-100" id="applyFilters">
-                    <i class="bx bx-filter"></i> Apply Filters
-                </button>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Search Applications</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search by name, email...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="Applied">Applied</option>
+                                <option value="Shortlisted">Shortlisted</option>
+                                <option value="Interviewing">Interviewing</option>
+                                <option value="Offer Extended">Offer Extended</option>
+                                <option value="Hired">Hired</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Job</label>
+                            <select id="jobFilter" class="form-select">
+                                <option value="">All Jobs</option>
+                                <!-- Jobs will be populated -->
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Sort By</label>
+                            <select id="sortBy" class="form-select">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="name">Name A-Z</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" id="applyFilters">
+                                <i class="bx bx-filter me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Applications Grid -->
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="bx bx-user me-2"></i>Job Applications
-            </h5>
-        </div>
-        <div class="card-body">
-            <div id="applicationsContainer">
-                <div class="applications-grid" id="applicationsGrid">
-                    <!-- Applications will be loaded here -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bx bx-user me-2"></i>Job Applications
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="applicationsContainer">
+                        <div class="row g-4" id="applicationsGrid">
+                            <!-- Applications will be loaded here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -296,6 +256,43 @@
 </div>
 @endsection
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.css') }}">
+<style>
+    .application-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 100%;
+        border-left: 4px solid;
+    }
+    .application-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .application-card.status-applied { border-left-color: #17a2b8; }
+    .application-card.status-shortlisted { border-left-color: #28a745; }
+    .application-card.status-interviewing { border-left-color: #ffc107; }
+    .application-card.status-offer_extended { border-left-color: #007bff; }
+    .application-card.status-hired { border-left-color: #28a745; }
+    .application-card.status-rejected { border-left-color: #dc3545; }
+    .application-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 10;
+    }
+    .application-card:hover .application-actions {
+        opacity: 1;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <script>
@@ -308,11 +305,6 @@ $(document).ready(function() {
     // Initialize
     loadJobs();
     loadApplications();
-    
-    // Refresh Button
-    $('#refresh-btn').on('click', function() {
-        loadApplications();
-    });
     
     // Load Jobs for Filter
     function loadJobs() {
@@ -327,6 +319,7 @@ $(document).ready(function() {
                 if (response.success) {
                     allJobs = response.jobs || [];
                     const select = $('#jobFilter');
+                    select.empty();
                     select.append('<option value="">All Jobs</option>');
                     allJobs.forEach(job => {
                         select.append(`<option value="${job.id}">${escapeHtml(job.job_title)}</option>`);
@@ -375,37 +368,39 @@ $(document).ready(function() {
             const applicationDate = new Date(app.application_date || app.created_at);
             
             const appCard = `
-                <div class="application-card position-relative status-${statusClass}">
-                    <div class="card-body">
-                        <div class="application-actions">
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewApplicationDetails(${app.id})" title="View Details">
-                                    <i class="bx bx-show"></i>
-                                </button>
-                                ${ {{ $canManageApplications ? 'true' : 'false' }} ? `
-                                <button class="btn btn-sm btn-outline-warning" onclick="updateApplicationStatus(${app.id}, '${app.status}')" title="Update Status">
-                                    <i class="bx bx-edit"></i>
-                                </button>
-                                ` : ''}
+                <div class="col-md-6 col-lg-4">
+                    <div class="application-card position-relative status-${statusClass}">
+                        <div class="card-body">
+                            <div class="application-actions">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewApplicationDetails(${app.id})" title="View Details">
+                                        <i class="bx bx-show"></i>
+                                    </button>
+                                    ${ {{ $canManageApplications ? 'true' : 'false' }} ? `
+                                    <button class="btn btn-sm btn-outline-warning" onclick="updateApplicationStatus(${app.id}, '${app.status}')" title="Update Status">
+                                        <i class="bx bx-edit"></i>
+                                    </button>
+                                    ` : ''}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1">${escapeHtml(app.first_name)} ${escapeHtml(app.last_name)}</h5>
-                                <span class="badge bg-${getStatusColor(app.status)}">${app.status}</span>
+                            
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1">${escapeHtml(app.first_name)} ${escapeHtml(app.last_name)}</h5>
+                                    <span class="badge bg-${getStatusColor(app.status)}">${app.status}</span>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <p class="mb-1"><i class="bx bx-envelope"></i> ${escapeHtml(app.email)}</p>
-                            <p class="mb-1"><i class="bx bx-phone"></i> ${escapeHtml(app.phone)}</p>
-                            <p class="mb-0"><i class="bx bx-briefcase"></i> ${app.job ? escapeHtml(app.job.job_title) : 'N/A'}</p>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center text-muted small">
-                            <span><i class="bx bx-calendar"></i> ${formatDate(applicationDate)}</span>
-                            ${app.documents_count ? `<span><i class="bx bx-file"></i> ${app.documents_count} documents</span>` : ''}
+                            
+                            <div class="mb-3">
+                                <p class="mb-1"><i class="bx bx-envelope"></i> ${escapeHtml(app.email)}</p>
+                                <p class="mb-1"><i class="bx bx-phone"></i> ${escapeHtml(app.phone)}</p>
+                                <p class="mb-0"><i class="bx bx-briefcase"></i> ${app.job ? escapeHtml(app.job.job_title) : 'N/A'}</p>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <span><i class="bx bx-calendar"></i> ${formatDate(applicationDate)}</span>
+                                ${app.documents_count ? `<span><i class="bx bx-file"></i> ${app.documents_count} documents</span>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -610,4 +605,3 @@ $(document).ready(function() {
 });
 </script>
 @endpush
-

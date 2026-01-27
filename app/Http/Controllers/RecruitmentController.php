@@ -176,6 +176,7 @@ class RecruitmentController extends Controller
     {
         $user = Auth::user();
         $canManageApplications = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director']);
+        $canScheduleInterviews = $user->hasAnyRole(['HR Officer', 'System Admin']);
         
         if (!$canManageApplications) {
             abort(403, 'Unauthorized access');
@@ -184,12 +185,16 @@ class RecruitmentController extends Controller
         // Calculate statistics
         $advancedStats = [];
         $advancedStats['upcoming_interviews'] = InterviewSchedule::where('status', 'scheduled')
-            ->where('interview_date', '>=', now()->format('Y-m-d'))
+            ->where('scheduled_at', '>=', now())
             ->count();
+        
+        $interviewers = User::where('is_active', true)->orderBy('name')->get();
         
         return view('modules.hr.recruitment.interviews', compact(
             'advancedStats',
-            'canManageApplications'
+            'canManageApplications',
+            'canScheduleInterviews',
+            'interviewers'
         ));
     }
 

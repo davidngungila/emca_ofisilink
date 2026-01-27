@@ -2,170 +2,120 @@
 
 @section('title', 'Job Vacancies Management - Recruitment')
 
-@section('breadcrumb')
-<div class="row">
-    <div class="col-lg-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h4 class="fw-bold py-3 mb-2">
-                    <i class="bx bx-briefcase"></i> Job Vacancies Management
-                </h4>
-                <p class="text-muted">Create, manage, and approve job vacancies with comprehensive tracking and analytics</p>
-            </div>
-            <div class="btn-group" role="group">
-                @if($canCreateJobs)
-                    <button class="btn btn-primary" id="create-job-btn">
-                        <i class="bx bx-plus"></i> New Job Vacancy
-                    </button>
-                @endif
-                <button class="btn btn-outline-secondary" id="refresh-btn">
-                    <i class="bx bx-refresh"></i> Refresh
-                </button>
-                <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-outline-dark">
-                    <i class="bx bx-arrow-back"></i> Back to Recruitment
-                </a>
+@section('content')
+<div class="container-xxl flex-grow-1 container-p-y">
+    <!-- Professional Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg bg-primary" style="border-radius: 15px; overflow: hidden;">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="mb-3 mb-md-0">
+                            <h3 class="mb-2 text-white fw-bold">
+                                <i class="bx bx-briefcase me-2"></i>Job Vacancies Management
+                            </h3>
+                            <p class="mb-0 text-white-50 fs-6">
+                                Create, manage, and approve job vacancies with comprehensive tracking and analytics
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            @if($canCreateJobs)
+                            <button class="btn btn-light btn-lg shadow-sm" id="create-job-btn">
+                                <i class="bx bx-plus-circle me-2"></i>Create New Job
+                            </button>
+                            @endif
+                            <a href="{{ route('modules.hr.recruitment.applications') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-user-check me-2"></i>Applications
+                            </a>
+                            <a href="{{ route('modules.hr.recruitment.interviews') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-calendar me-2"></i>Interviews
+                            </a>
+                            <a href="{{ route('modules.hr.recruitment.analytics') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-bar-chart me-2"></i>Analytics
+                            </a>
+                            <a href="{{ route('modules.hr.recruitment') }}" class="btn btn-light btn-lg shadow-sm">
+                                <i class="bx bx-arrow-back me-2"></i>Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-@endsection
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.css') }}">
-<style>
-    .job-card {
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        overflow: hidden;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .job-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        border-color: #007bff;
-    }
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: all 0.3s;
-        border-left: 4px solid;
-    }
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-    }
-    .stat-card.primary { border-left-color: #007bff; }
-    .stat-card.success { border-left-color: #28a745; }
-    .stat-card.warning { border-left-color: #ffc107; }
-    .stat-card.danger { border-left-color: #dc3545; }
-    .stat-card.info { border-left-color: #17a2b8; }
-    .job-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-        padding: 20px 0;
-    }
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-    .job-actions {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-    .job-card:hover .job-actions {
-        opacity: 1;
-    }
-    .filter-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-</style>
-@endpush
-
-@section('content')
-<div class="container-fluid">
-    <!-- Dashboard Statistics -->
+    <!-- Advanced Statistics Dashboard -->
     <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card primary">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Total Jobs</h6>
-                        <h3 class="mb-0 text-primary">{{ $advancedStats['total_jobs'] ?? 0 }}</h3>
-                        <small class="text-muted">
-                            <i class="bx bx-briefcase"></i> All vacancies
-                        </small>
-                    </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-primary rounded">
-                            <i class="bx bx-briefcase"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card success">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Active Jobs</h6>
-                        <h3 class="mb-0 text-success">{{ $advancedStats['active_jobs'] ?? 0 }}</h3>
-                        <small class="text-info">
-                            <i class="bx bx-check-circle"></i> Accepting applications
-                        </small>
-                    </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-success rounded">
-                            <i class="bx bx-check-circle"></i>
-                        </span>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 border-primary" style="border-left: 4px solid var(--bs-primary) !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3 bg-primary">
+                            <i class="bx bx-briefcase fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Total Jobs</h6>
+                            <h3 class="mb-0 fw-bold text-primary">{{ $advancedStats['total_jobs'] ?? 0 }}</h3>
+                            <small class="text-success">
+                                <i class="bx bx-trending-up me-1"></i>All Vacancies
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card warning">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Pending Approval</h6>
-                        <h3 class="mb-0 text-warning">{{ $advancedStats['pending_approval'] ?? 0 }}</h3>
-                        <small class="text-warning">
-                            <i class="bx bx-time"></i> Awaiting review
-                        </small>
-                    </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-warning rounded">
-                            <i class="bx bx-time"></i>
-                        </span>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #10b981 !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <i class="bx bx-check-circle fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Active Jobs</h6>
+                            <h3 class="mb-0 fw-bold text-success">{{ $advancedStats['active_jobs'] ?? 0 }}</h3>
+                            <small class="text-success">
+                                <i class="bx bx-info-circle me-1"></i>Accepting Applications
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="stat-card info">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Closed Jobs</h6>
-                        <h3 class="mb-0 text-info">{{ $advancedStats['closed_jobs'] ?? 0 }}</h3>
-                        <small class="text-muted">
-                            <i class="bx bx-lock"></i> No longer accepting
-                        </small>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <i class="bx bx-time fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Pending Approval</h6>
+                            <h3 class="mb-0 fw-bold text-warning">{{ $advancedStats['pending_approval'] ?? 0 }}</h3>
+                            <small class="text-warning">
+                                <i class="bx bx-user-check me-1"></i>Awaiting Review
+                            </small>
+                        </div>
                     </div>
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-info rounded">
-                            <i class="bx bx-lock"></i>
-                        </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #6b7280 !important;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
+                            <i class="bx bx-lock fs-2 text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1 small">Closed Jobs</h6>
+                            <h3 class="mb-0 fw-bold text-secondary">{{ $advancedStats['closed_jobs'] ?? 0 }}</h3>
+                            <small class="text-muted">
+                                <i class="bx bx-check-double me-1"></i>No Longer Accepting
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -173,54 +123,64 @@
     </div>
 
     <!-- Filters Section -->
-    <div class="filter-section">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Search Jobs</label>
-                <input type="text" id="searchInput" class="form-control" placeholder="Search by title...">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Status</label>
-                <select id="statusFilter" class="form-select">
-                    <option value="">All Status</option>
-                    <option value="Active">Active</option>
-                    <option value="Pending Approval">Pending Approval</option>
-                    <option value="Closed">Closed</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Sort By</label>
-                <select id="sortBy" class="form-select">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="deadline">Deadline Soon</option>
-                    <option value="applications">Most Applications</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Date Range</label>
-                <input type="date" id="dateFrom" class="form-control" placeholder="From">
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100" id="applyFilters">
-                    <i class="bx bx-filter"></i> Apply
-                </button>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Search Jobs</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search by title...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Pending Approval">Pending Approval</option>
+                                <option value="Closed">Closed</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Sort By</label>
+                            <select id="sortBy" class="form-select">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="deadline">Deadline Soon</option>
+                                <option value="applications">Most Applications</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date From</label>
+                            <input type="date" id="dateFrom" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" id="applyFilters">
+                                <i class="bx bx-filter me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Jobs Grid -->
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="bx bx-briefcase me-2"></i>Job Vacancies
-            </h5>
-        </div>
-        <div class="card-body">
-            <div id="jobsContainer">
-                <div class="job-grid" id="jobsGrid">
-                    <!-- Jobs will be loaded here -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bx bx-briefcase me-2"></i>Job Vacancies
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="jobsContainer">
+                        <div class="row g-4" id="jobsGrid">
+                            <!-- Jobs will be loaded here -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -327,6 +287,37 @@
 </div>
 @endsection
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.css') }}">
+<style>
+    .job-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    .job-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #007bff;
+    }
+    .job-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 10;
+    }
+    .job-card:hover .job-actions {
+        opacity: 1;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <script>
@@ -344,11 +335,6 @@ $(document).ready(function() {
         $('#jobModalTitle').html('<i class="bx bx-plus"></i> Create New Job Vacancy');
         $('#jobAction').val('create_job');
         $('#jobModal').modal('show');
-    });
-    
-    // Refresh Button
-    $('#refresh-btn').on('click', function() {
-        loadJobs();
     });
     
     // Load Jobs
@@ -391,55 +377,57 @@ $(document).ready(function() {
             const isExpired = deadline < new Date();
             
             const jobCard = `
-                <div class="job-card position-relative">
-                    <div class="card-body">
-                        <div class="job-actions">
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewJobDetails(${job.id})" title="View Details">
-                                    <i class="bx bx-show"></i>
-                                </button>
-                                ${job.status === 'Pending Approval' && {{ $canEditPendingJobs ? 'true' : 'false' }} ? `
-                                <button class="btn btn-sm btn-outline-warning" onclick="editJob(${job.id})" title="Edit">
-                                    <i class="bx bx-edit"></i>
-                                </button>
-                                ` : ''}
-                                ${job.status === 'Pending Approval' && {{ $canApproveJobs ? 'true' : 'false' }} ? `
-                                <button class="btn btn-sm btn-outline-success" onclick="approveJob(${job.id})" title="Approve">
-                                    <i class="bx bx-check"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="rejectJob(${job.id})" title="Reject">
-                                    <i class="bx bx-x"></i>
-                                </button>
-                                ` : ''}
-                                ${job.status === 'Active' ? `
-                                <button class="btn btn-sm btn-outline-warning" onclick="closeJob(${job.id})" title="Close">
-                                    <i class="bx bx-lock"></i>
-                                </button>
-                                ` : ''}
+                <div class="col-md-6 col-lg-4">
+                    <div class="job-card position-relative">
+                        <div class="card-body">
+                            <div class="job-actions">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewJobDetails(${job.id})" title="View Details">
+                                        <i class="bx bx-show"></i>
+                                    </button>
+                                    ${job.status === 'Pending Approval' && {{ $canEditPendingJobs ? 'true' : 'false' }} ? `
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editJob(${job.id})" title="Edit">
+                                        <i class="bx bx-edit"></i>
+                                    </button>
+                                    ` : ''}
+                                    ${job.status === 'Pending Approval' && {{ $canApproveJobs ? 'true' : 'false' }} ? `
+                                    <button class="btn btn-sm btn-outline-success" onclick="approveJob(${job.id})" title="Approve">
+                                        <i class="bx bx-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="rejectJob(${job.id})" title="Reject">
+                                        <i class="bx bx-x"></i>
+                                    </button>
+                                    ` : ''}
+                                    ${job.status === 'Active' ? `
+                                    <button class="btn btn-sm btn-outline-warning" onclick="closeJob(${job.id})" title="Close">
+                                        <i class="bx bx-lock"></i>
+                                    </button>
+                                    ` : ''}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1">${escapeHtml(job.job_title)}</h5>
-                                <span class="status-badge badge bg-${statusClass}">${job.status}</span>
+                            
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-1">${escapeHtml(job.job_title)}</h5>
+                                    <span class="badge bg-${statusClass}">${job.status}</span>
+                                </div>
                             </div>
+                            
+                            <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                ${escapeHtml(job.job_description || 'No description')}
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <span><i class="bx bx-calendar"></i> ${formatDate(deadline)}</span>
+                                <span><i class="bx bx-user"></i> ${job.applications_count || 0} applications</span>
+                            </div>
+                            
+                            ${isExpired && job.status === 'Active' ? `
+                            <div class="alert alert-warning mt-2 mb-0 py-1">
+                                <small><i class="bx bx-error"></i> Deadline has passed</small>
+                            </div>
+                            ` : ''}
                         </div>
-                        
-                        <p class="text-muted small mb-3" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                            ${escapeHtml(job.job_description || 'No description')}
-                        </p>
-                        
-                        <div class="d-flex justify-content-between align-items-center text-muted small">
-                            <span><i class="bx bx-calendar"></i> Deadline: ${formatDate(deadline)}</span>
-                            <span><i class="bx bx-user"></i> ${job.applications_count || 0} applications</span>
-                        </div>
-                        
-                        ${isExpired && job.status === 'Active' ? `
-                        <div class="alert alert-warning mt-2 mb-0 py-1">
-                            <small><i class="bx bx-error"></i> Deadline has passed</small>
-                        </div>
-                        ` : ''}
                     </div>
                 </div>
             `;
@@ -452,7 +440,6 @@ $(document).ready(function() {
         e.preventDefault();
         
         const formData = $(this).serialize();
-        const action = $('#jobAction').val();
         
         $.ajax({
             url: recruitmentUrl,
@@ -490,6 +477,7 @@ $(document).ready(function() {
     }
     
     function escapeHtml(text) {
+        if (!text) return '';
         const map = {
             '&': '&amp;',
             '<': '&lt;',
@@ -497,7 +485,7 @@ $(document).ready(function() {
             '"': '&quot;',
             "'": '&#039;'
         };
-        return text ? text.toString().replace(/[&<>"']/g, m => map[m]) : '';
+        return text.toString().replace(/[&<>"']/g, m => map[m]);
     }
     
     function resetJobForm() {
@@ -641,12 +629,10 @@ $(document).ready(function() {
                     $('#qualifications').val(job.qualifications);
                     $('#applicationDeadline').val(job.application_deadline);
                     
-                    // Set interview mode
                     if (Array.isArray(job.interview_mode)) {
                         $('#interviewMode').val(job.interview_mode);
                     }
                     
-                    // Set attachments
                     $('#attachmentsContainer').empty();
                     if (job.required_attachments && job.required_attachments.length > 0) {
                         job.required_attachments.forEach(att => {
@@ -807,4 +793,3 @@ $(document).ready(function() {
 });
 </script>
 @endpush
-
