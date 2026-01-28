@@ -1478,7 +1478,14 @@ class RecruitmentController extends Controller
      */
     public function publicCareers()
     {
-        return view('public.careers');
+        $orgSettings = \App\Models\OrganizationSetting::getSettings();
+        
+        // Get active jobs count for statistics
+        $activeJobsCount = RecruitmentJob::where('status', 'Active')
+            ->where('application_deadline', '>=', now()->format('Y-m-d'))
+            ->count();
+        
+        return view('public.careers', compact('orgSettings', 'activeJobsCount'));
     }
 
     /**

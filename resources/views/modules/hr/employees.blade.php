@@ -6443,7 +6443,7 @@ $(document).ready(function() {
     });
     
     // Ensure filter panel is shown if filters are active on page load
-    @if($hasFilters)
+    @if(!empty($hasFilters))
         $(document).ready(function() {
             // Force show the panel if filters are active
             const filterPanel = $('#filterPanel');

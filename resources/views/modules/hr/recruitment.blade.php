@@ -99,11 +99,11 @@
                             </p>
                         </div>
                         <div class="d-flex gap-2 flex-wrap align-items-center">
-                            @if($canCreateJobs)
+            @if($canCreateJobs)
                             <button class="btn btn-light btn-lg shadow-sm" id="create-job-btn">
                                 <i class="bx bx-plus-circle me-2"></i>Create New Job
-                            </button>
-                            @endif
+                </button>
+            @endif
                             <a href="{{ route('jobs.list') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-list-ul me-2"></i>Job Management
                             </a>
@@ -118,12 +118,12 @@
                                 <i class="bx bx-bar-chart me-2"></i>Analytics
                             </a>
                             @endif
+        </div>
+    </div>
+                        </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Statistics Dashboard -->
     <div class="row mb-4">
@@ -132,30 +132,30 @@
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg me-3 bg-primary">
                         <i class="bx bx-briefcase fs-2 text-white"></i>
-                    </div>
+            </div>
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-1 small">Total Jobs</h6>
                         <h3 class="mb-0 fw-bold text-primary">{{ $advancedStats['total_jobs'] ?? 0 }}</h3>
                         <small class="text-muted">All vacancies</small>
-                    </div>
-                </div>
-            </div>
         </div>
+                        </div>
+                        </div>
+                    </div>
         
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="stat-card" style="border-left: 4px solid #10b981 !important;">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
                         <i class="bx bx-check-circle fs-2 text-white"></i>
-                    </div>
+                </div>
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-1 small">Active Jobs</h6>
                         <h3 class="mb-0 fw-bold text-success">{{ $advancedStats['active_jobs'] ?? 0 }}</h3>
                         <small class="text-success">Accepting applications</small>
-                    </div>
-                </div>
             </div>
         </div>
+                        </div>
+                        </div>
         
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="stat-card" style="border-left: 4px solid #f59e0b !important;">
@@ -167,17 +167,17 @@
                         <h6 class="text-muted mb-1 small">Pending Approval</h6>
                         <h3 class="mb-0 fw-bold text-warning">{{ $advancedStats['pending_approval'] ?? 0 }}</h3>
                         <small class="text-warning">Awaiting review</small>
-                    </div>
                 </div>
             </div>
         </div>
+                        </div>
         
         <div class="col-lg-3 col-md-6 mb-4">
             <div class="stat-card" style="border-left: 4px solid #6b7280 !important;">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
                         <i class="bx bx-lock fs-2 text-white"></i>
-                    </div>
+                        </div>
                     <div class="flex-grow-1">
                         <h6 class="text-muted mb-1 small">Closed Jobs</h6>
                         <h3 class="mb-0 fw-bold text-secondary">{{ $advancedStats['closed_jobs'] ?? 0 }}</h3>
@@ -194,7 +194,7 @@
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Search Jobs</label>
                 <input type="text" id="searchInput" class="form-control" placeholder="Search by job title...">
-            </div>
+                </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Status</label>
                 <select id="statusFilter" class="form-select">
@@ -204,7 +204,7 @@
                     <option value="Closed">Closed</option>
                     <option value="Rejected">Rejected</option>
                 </select>
-            </div>
+                    </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Sort By</label>
                 <select id="sortBy" class="form-select">
@@ -213,7 +213,7 @@
                     <option value="deadline">Deadline Soon</option>
                     <option value="applications">Most Applications</option>
                 </select>
-            </div>
+                </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold">View</label>
                 <select id="viewType" class="form-select">
@@ -224,10 +224,10 @@
             <div class="col-md-2">
                 <button class="btn btn-primary w-100" id="applyFilters">
                     <i class="bx bx-filter me-1"></i>Apply Filters
-                </button>
+                                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
     <!-- Pending Approval Section (for approvers) -->
     @if($canApproveJobs && $pendingApprovalJobs->isNotEmpty())
@@ -246,7 +246,7 @@
                             <div class="job-card-header bg-warning text-dark">
                                 <h5 class="mb-1 fw-bold">{{ $job->job_title }}</h5>
                                 <span class="job-status-badge bg-dark text-white">Pending Approval</span>
-                            </div>
+                    </div>
                             <div class="job-card-body">
                                 <p class="text-muted mb-3" style="min-height: 60px;">
                                     {{ Str::limit($job->job_description ?? 'No description available', 120) }}
@@ -255,25 +255,25 @@
                                     <div class="job-meta-item">
                                         <i class="bx bx-user text-primary"></i>
                                         <span>{{ $job->creator->name ?? 'N/A' }}</span>
-                                    </div>
+                </div>
                                     <div class="job-meta-item">
                                         <i class="bx bx-calendar text-info"></i>
                                         <span>{{ $job->created_at->format('M d, Y') }}</span>
-                                    </div>
-                                </div>
+            </div>
+        </div>
                                 <div class="job-actions">
                                     <button class="btn btn-sm btn-primary btn-review" data-id="{{ $job->id }}">
                                         <i class="bx bx-show me-1"></i>Review
-                                    </button>
-                                </div>
-                            </div>
+                            </button>
                         </div>
+                    </div>
+                </div>
                         @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     @endif
 
     <!-- My Pending Jobs Section (for creators) -->
@@ -293,7 +293,7 @@
                             <div class="job-card-header bg-info text-white">
                                 <h5 class="mb-1 fw-bold">{{ $job->job_title }}</h5>
                                 <span class="job-status-badge bg-white text-info">Pending Approval</span>
-                            </div>
+                        </div>
                             <div class="job-card-body">
                                 <p class="text-muted mb-3" style="min-height: 60px;">
                                     {{ Str::limit($job->job_description ?? 'No description available', 120) }}
@@ -302,12 +302,12 @@
                                     <div class="job-meta-item">
                                         <i class="bx bx-calendar text-info"></i>
                                         <span>Deadline: {{ $job->application_deadline->format('M d, Y') }}</span>
-                                    </div>
+                    </div>
                                     <div class="job-meta-item">
                                         <i class="bx bx-user text-primary"></i>
                                         <span>{{ $job->applications_count }} applications</span>
-                                    </div>
-                                </div>
+                </div>
+            </div>
                                 <div class="job-actions">
                                     <button class="btn btn-sm btn-outline-primary btn-view-details" data-id="{{ $job->id }}">
                                         <i class="bx bx-show me-1"></i>View
@@ -315,15 +315,15 @@
                                     <button class="btn btn-sm btn-outline-warning btn-edit-job" data-id="{{ $job->id }}">
                                         <i class="bx bx-edit me-1"></i>Edit
                                     </button>
+        </div>
+                </div>
+                                </div>
+                                            @endforeach
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                                </div>
     @endif
 
     <!-- All Jobs Section -->
@@ -334,7 +334,7 @@
                     <h5 class="mb-0">
                         <i class="bx bx-list-ul me-2"></i>All Job Vacancies
                     </h5>
-                </div>
+                        </div>
                 <div class="card-body">
                     <div class="job-grid" id="jobsGrid">
                         @forelse($jobs as $job)
@@ -353,7 +353,7 @@
                                     <span class="job-status-badge bg-white {{ $statusConfig['text'] === 'white' ? 'text-' . $statusConfig['bg'] : 'text-dark' }}">
                                         {{ $job->status }}
                                     </span>
-                                </div>
+                    </div>
                                 <div class="job-card-body">
                                     <p class="text-muted mb-3" style="min-height: 60px;">
                                         {{ Str::limit($job->job_description ?? 'No description available', 120) }}
@@ -362,12 +362,12 @@
                                         <div class="job-meta-item">
                                             <i class="bx bx-calendar text-danger"></i>
                                             <span>Deadline: {{ $job->application_deadline->format('M d, Y') }}</span>
-                                        </div>
+                </div>
                                         <div class="job-meta-item">
                                             <i class="bx bx-user text-primary"></i>
                                             <span>{{ $job->applications_count }} applications</span>
-                                        </div>
-                                    </div>
+            </div>
+        </div>
                                     <div class="job-actions">
                                         <button class="btn btn-sm btn-outline-primary btn-view-details" data-id="{{ $job->id }}">
                                             <i class="bx bx-show me-1"></i>View
@@ -382,9 +382,9 @@
                                             <i class="bx bx-x me-1"></i>Close
                                         </button>
                                         @endif
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+                </div>
                             @endif
                         @empty
                         <div class="col-12">
@@ -397,12 +397,12 @@
                                     <i class="bx bx-plus-circle me-2"></i>Create New Job
                                 </button>
                                 @endif
-                            </div>
                         </div>
-                        @endforelse
                     </div>
+                        @endforelse
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>
@@ -411,34 +411,34 @@
 <div class="modal fade" id="jobModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title text-white" id="jobModalTitle">
                     <i class="bx bx-plus"></i> Create New Job Vacancy
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
             <form id="jobForm">
                 <div class="modal-body">
                     @csrf
                     <input type="hidden" name="action" id="jobAction" value="create_job">
                     <input type="hidden" name="job_id" id="jobId">
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Job Title *</label>
+                            <label class="form-label">Job Title *</label>
                         <input type="text" name="job_title" id="jobTitle" class="form-control" required maxlength="255">
-                    </div>
+                        </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Job Description *</label>
+                            <label class="form-label">Job Description *</label>
                         <textarea name="job_description" id="jobDescription" class="form-control" rows="5" required maxlength="2000"></textarea>
                         <small class="text-muted">Maximum 2000 characters</small>
-                    </div>
+                        </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Qualifications & Requirements *</label>
                         <textarea name="qualifications" id="qualifications" class="form-control" rows="5" required maxlength="2000"></textarea>
                         <small class="text-muted">Maximum 2000 characters</small>
-                    </div>
+                        </div>
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -450,23 +450,23 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Interview Mode *</label>
-                                <div class="border rounded p-3">
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="interview_mode[]" value="Written" id="mode_written">
-                                        <label class="form-check-label" for="mode_written">Written Test</label>
-                                    </div>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="interview_mode[]" value="Oral" id="mode_oral">
-                                        <label class="form-check-label" for="mode_oral">Oral Interview</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="interview_mode[]" value="Practical" id="mode_practical">
-                                        <label class="form-check-label" for="mode_practical">Practical Assessment</label>
-                                    </div>
+                            <div class="border rounded p-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="interview_mode[]" value="Written" id="mode_written">
+                                    <label class="form-check-label" for="mode_written">Written Test</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="interview_mode[]" value="Oral" id="mode_oral">
+                                    <label class="form-check-label" for="mode_oral">Oral Interview</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="interview_mode[]" value="Practical" id="mode_practical">
+                                    <label class="form-check-label" for="mode_practical">Practical Assessment</label>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                                </div>
+                                </div>
                     
                     <div class="mb-3">
                         <label class="form-label">Required Attachments</label>
@@ -476,8 +476,8 @@
                                 <button type="button" class="btn btn-outline-danger" onclick="removeAttachment(this)">
                                     <i class="bx bx-trash"></i>
                                 </button>
-                            </div>
-                        </div>
+                                </div>
+                                </div>
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="addAttachment()">
                             <i class="bx bx-plus"></i> Add Attachment
                         </button>
@@ -618,7 +618,7 @@ $(document).ready(function() {
                             <h5 class="mt-3 text-muted">No Jobs Match Your Filters</h5>
                             <p class="text-muted">Try adjusting your search criteria.</p>
                         </div>
-                    </div>
+                            </div>
                 `);
             }
         } else {
@@ -669,7 +669,7 @@ $(document).ready(function() {
                         'Rejected': 'danger',
                         'Closed': 'secondary'
                     }[d.status] || 'light';
-                    
+
                     const content = `
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <h3 class="mb-0">${d.job_title}</h3>
@@ -799,19 +799,19 @@ $(document).ready(function() {
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                $.ajax({
-                    type: 'POST',
-                    url: recruitmentUrl,
+        $.ajax({
+            type: 'POST',
+            url: recruitmentUrl,
                     data: { action: 'reject_job', job_id: jobId, reason: result.value },
-                    headers: { 'X-CSRF-TOKEN': csrfToken },
-                    dataType: 'json',
-                    success: function(response) {
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            dataType: 'json',
+            success: function(response) {
                         Swal.fire('Rejected!', response.message, 'success').then(() => {
                             location.reload();
                         });
-                    }
-                });
             }
+        });
+    }
         });
     });
 
@@ -864,13 +864,13 @@ $(document).ready(function() {
             confirmButtonText: 'Yes, close it'
         }).then((result) => {
             if (result.isConfirmed) {
-                $.ajax({
-                    type: 'POST',
-                    url: recruitmentUrl,
+        $.ajax({
+            type: 'POST',
+            url: recruitmentUrl,
                     data: { action: 'close_job', job_id: jobId },
-                    headers: { 'X-CSRF-TOKEN': csrfToken },
-                    dataType: 'json',
-                    success: function(response) {
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            dataType: 'json',
+            success: function(response) {
                         Swal.fire('Job Closed', response.message, 'success').then(() => {
                             location.reload();
                         });
@@ -894,17 +894,17 @@ $(document).ready(function() {
         const interviewModes = $('input[name="interview_mode[]"]:checked').length;
         if (interviewModes === 0) {
             Swal.fire('Validation Error', 'Please select at least one interview mode.', 'error');
-            return;
-        }
+                            return;
+                        }
 
         const formData = $(this).serialize();
-        $.ajax({
-            type: 'POST',
-            url: recruitmentUrl,
+                                $.ajax({
+                                    type: 'POST',
+                                    url: recruitmentUrl,
             data: formData,
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-            dataType: 'json',
-            success: function(response) {
+                                    headers: { 'X-CSRF-TOKEN': csrfToken },
+                                    dataType: 'json',
+                                    success: function(response) {
                 $('#jobModal').modal('hide');
                 Swal.fire(
                     response.success ? 'Success!' : 'Error!',
@@ -921,8 +921,8 @@ $(document).ready(function() {
                 Swal.fire('Error!', message, 'error');
             }
         });
+        });
     });
-});
 
 // Attachment management functions
 function addAttachment() {
@@ -933,7 +933,7 @@ function addAttachment() {
             <button type="button" class="btn btn-outline-danger" onclick="removeAttachment(this)">
                 <i class="bx bx-trash"></i>
             </button>
-        </div>
+                                        </div>
     `;
     container.append(newInput);
 }
