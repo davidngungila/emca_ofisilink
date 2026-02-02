@@ -109,12 +109,15 @@
                 @endif
 
                 @if($canCeoApprove)
-                <button class="btn btn-light btn-lg" onclick="openApprovalModal('ceo', 'approve')">
-                    <i class="bx bx-check-double me-1"></i>Final Approval (CEO)
+                <button class="btn btn-warning btn-lg fw-bold" onclick="openApprovalModal('ceo', 'approve')" style="box-shadow: 0 4px 8px rgba(255,193,7,0.3);">
+                    <i class="bx bx-check-double me-1"></i>Final Approval Required (CEO)
                 </button>
                 <button class="btn btn-light btn-lg" onclick="openApprovalModal('ceo', 'reject')">
                     <i class="bx bx-x me-1"></i>Reject
                 </button>
+                <div class="w-100 mt-2">
+                    <small class="text-white-50"><i class="bx bx-info-circle me-1"></i>CEO approval is mandatory for all refund requests before payment can be processed.</small>
+                </div>
                 @endif
 
                 @if($canMarkPaid)
@@ -320,7 +323,8 @@
                         </div>
                         @elseif($refundRequest->status === 'pending_ceo')
                         <div class="status-item pending">
-                            <strong>Pending CEO Approval</strong>
+                            <strong class="text-warning">Pending CEO Approval (MANDATORY)</strong>
+                            <div class="text-muted small mt-1"><i class="bx bx-info-circle me-1"></i>CEO approval is required before payment can be processed.</div>
                         </div>
                         @endif
                         
@@ -337,7 +341,8 @@
                         </div>
                         @elseif($refundRequest->status === 'approved')
                         <div class="status-item pending">
-                            <strong>Approved - Awaiting Payment</strong>
+                            <strong class="text-success"><i class="bx bx-check-circle me-1"></i>CEO Approved - Ready for Payment</strong>
+                            <div class="text-muted small mt-1">CEO approval completed. Payment can now be processed.</div>
                         </div>
                         @endif
                         

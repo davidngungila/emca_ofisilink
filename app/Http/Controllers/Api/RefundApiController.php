@@ -340,16 +340,33 @@ class RefundApiController extends Controller
             ], 403);
         }
 
+        // Ensure request is in the correct status for CEO approval
         if ($refund->status !== 'pending_ceo') {
             return response()->json([
                 'success' => false,
-                'message' => 'This request is not pending CEO approval.'
+                'message' => 'This request is not pending CEO approval. Current status: ' . $refund->status . '. CEO approval is mandatory for all refund requests.'
+            ], 422);
+        }
+        
+        // Additional validation: Ensure HOD and Accountant have approved
+        if (!$refund->hod_approved_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This request has not been approved by HOD yet. CEO approval requires HOD approval first.'
+            ], 422);
+        }
+        
+        if (!$refund->accountant_verified_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This request has not been verified by Accountant yet. CEO approval requires Accountant verification first.'
             ], 422);
         }
 
         if ($request->action === 'approve') {
+            // CEO approval is the final step - only after this can payment be processed
             $refund->update([
-                'status' => 'approved',
+                'status' => 'approved', // Only CEO can set this status
                 'ceo_approved_at' => now(),
                 'ceo_approved_by' => $user->id,
                 'ceo_comments' => $request->comments,

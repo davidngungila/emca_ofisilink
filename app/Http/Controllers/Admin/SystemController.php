@@ -190,8 +190,8 @@ class SystemController extends Controller
                 ], 500);
             }
             
-            // Validate the file path format (should be like backups/filename.sql)
-            if (!preg_match('/^backups\/.+\.sql$/', $output)) {
+            // Validate the file path format (should be like backups/filename.sql or backups/filename.zip)
+            if (!preg_match('/^backups\/.+\.(sql|zip)$/', $output)) {
                 \Log::error('Invalid backup file path format: ' . $output);
                 return response()->json([
                     'success' => false, 

@@ -329,28 +329,30 @@ class RefundController extends Controller
             DB::beginTransaction();
             
             if ($request->action === 'approve') {
+                // IMPORTANT: All refund requests MUST go through CEO approval
+                // Accountant can only verify, not approve. CEO approval is mandatory.
                 $refundRequest->update([
-                    'status' => 'pending_ceo',
+                    'status' => 'pending_ceo', // Always goes to CEO - no exceptions
                     'accountant_verified_at' => now(),
                     'accountant_verified_by' => $user->id,
                     'accountant_comments' => $request->comments,
                 ]);
                 
                 // Log activity
-                ActivityLogService::logAction('refund_accountant_verified', "Accountant verified refund request {$refundRequest->request_no}", $refundRequest);
+                ActivityLogService::logAction('refund_accountant_verified', "Accountant verified refund request {$refundRequest->request_no}. Now pending CEO approval.", $refundRequest);
                 
-                // Notify CEO
+                // Notify CEO - MANDATORY STEP
                 $this->notifyCeo($refundRequest);
                 
                 // Notify staff
                 $this->notificationService->notify(
                     $refundRequest->staff_id,
-                    "Your refund request {$refundRequest->request_no} has been verified by Accountant and is now pending CEO approval.",
+                    "Your refund request {$refundRequest->request_no} has been verified by Accountant and is now pending CEO approval. CEO approval is required before payment can be processed.",
                     route('refunds.show', $refundRequest->id),
-                    'Refund Request Verified'
+                    'Refund Request Verified - Awaiting CEO Approval'
                 );
                 
-                $message = 'Refund request verified successfully. It is now pending CEO approval.';
+                $message = 'Refund request verified successfully. It is now pending CEO approval. CEO approval is mandatory before payment can be processed.';
             } else {
                 $refundRequest->update([
                     'status' => 'rejected',
@@ -402,14 +404,17 @@ class RefundController extends Controller
     }
 
     /**
-     * CEO Approval
+     * CEO Approval - MANDATORY FINAL STEP
+     * All refund requests MUST be approved by CEO before payment can be processed.
+     * This is the final approval step in the refund workflow.
      */
     public function ceoApprove(Request $request, $id)
     {
         $user = Auth::user();
         
+        // Only CEO, Director, or System Admin can approve
         if (!$user->hasAnyRole(['CEO', 'Director', 'System Admin'])) {
-            abort(403, 'Unauthorized. Only CEO/Director can give final approval.');
+            abort(403, 'Unauthorized. Only CEO/Director can give final approval. CEO approval is mandatory for all refund requests.');
         }
         
         $request->validate([
@@ -419,16 +424,27 @@ class RefundController extends Controller
         
         $refundRequest = RefundRequest::findOrFail($id);
         
+        // Ensure request is in the correct status for CEO approval
         if ($refundRequest->status !== 'pending_ceo') {
-            return redirect()->back()->with('error', 'This request is not pending CEO approval.');
+            return redirect()->back()->with('error', 'This request is not pending CEO approval. Current status: ' . $refundRequest->status . '. CEO approval is required before any refund can be processed.');
+        }
+        
+        // Additional validation: Ensure HOD and Accountant have approved
+        if (!$refundRequest->hod_approved_at) {
+            return redirect()->back()->with('error', 'This request has not been approved by HOD yet. CEO approval requires HOD approval first.');
+        }
+        
+        if (!$refundRequest->accountant_verified_at) {
+            return redirect()->back()->with('error', 'This request has not been verified by Accountant yet. CEO approval requires Accountant verification first.');
         }
         
         try {
             DB::beginTransaction();
             
             if ($request->action === 'approve') {
+                // CEO approval is the final step - only after this can payment be processed
                 $refundRequest->update([
-                    'status' => 'approved',
+                    'status' => 'approved', // Only CEO can set this status
                     'ceo_approved_at' => now(),
                     'ceo_approved_by' => $user->id,
                     'ceo_comments' => $request->comments,
@@ -518,8 +534,14 @@ class RefundController extends Controller
         
         $refundRequest = RefundRequest::findOrFail($id);
         
+        // Payment can only be processed after CEO approval
         if ($refundRequest->status !== 'approved') {
-            return redirect()->back()->with('error', 'This request must be approved before payment can be processed.');
+            return redirect()->back()->with('error', 'This request must be approved by CEO before payment can be processed. Current status: ' . $refundRequest->status);
+        }
+        
+        // Additional validation: Ensure CEO has approved
+        if (!$refundRequest->ceo_approved_at || !$refundRequest->ceo_approved_by) {
+            return redirect()->back()->with('error', 'CEO approval is required before payment can be processed. This request has not been approved by CEO yet.');
         }
         
         try {
