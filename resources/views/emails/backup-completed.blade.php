@@ -233,6 +233,50 @@
                 @endif
             </div>
 
+            @if(isset($off_system_storage) && !empty($off_system_storage['locations']))
+            <div class="info-section" style="background-color: #e7f3ff; border-color: #0066cc;">
+                <h3 style="color: #0066cc;">🌐 Off-System Storage</h3>
+                <div class="message" style="font-size: 14px; color: #0066cc; margin-bottom: 15px;">
+                    This backup has been automatically stored to the following off-system locations:
+                </div>
+                @foreach($off_system_storage['locations'] as $location)
+                <div class="info-item">
+                    <strong>✅ {{ $location }}:</strong>
+                    <span>
+                        @if(isset($off_system_storage['details'][strtolower($location)]))
+                            @php
+                                $details = $off_system_storage['details'][strtolower($location)];
+                            @endphp
+                            @if($location === 'S3')
+                                Bucket: {{ $details['bucket'] ?? 'N/A' }}, Region: {{ $details['region'] ?? 'N/A' }}
+                                @if(isset($details['url']))
+                                    <br><a href="{{ $details['url'] }}" style="color: #0066cc;">View in S3</a>
+                                @endif
+                            @elseif($location === 'Google Drive')
+                                @php
+                                    $gdDetails = $off_system_storage['details']['google_drive'] ?? $details;
+                                @endphp
+                                File: {{ $gdDetails['file_name'] ?? 'N/A' }}
+                                @if(isset($gdDetails['web_view_link']))
+                                    <br><a href="{{ $gdDetails['web_view_link'] }}" style="color: #0066cc;" target="_blank">View in Google Drive</a>
+                                @endif
+                            @elseif($location === 'FTP' || $location === 'SFTP')
+                                Host: {{ $details['host'] ?? 'N/A' }}, Path: {{ $details['path'] ?? 'N/A' }}
+                            @else
+                                Stored successfully
+                            @endif
+                        @else
+                            Stored successfully
+                        @endif
+                    </span>
+                </div>
+                @endforeach
+                <div class="message" style="font-size: 12px; color: #666; margin-top: 15px; font-style: italic;">
+                    Stored at: {{ $off_system_storage['stored_at'] ?? 'N/A' }}
+                </div>
+            </div>
+            @endif
+
             @if(isset($password))
             <div class="password-box">
                 <h3>⚠️ Important: Password Protection</h3>

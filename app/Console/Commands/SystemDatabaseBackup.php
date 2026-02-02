@@ -231,10 +231,20 @@ class SystemDatabaseBackup extends Command
             }
         }
 
+        // Store backup off-system (cloud storage)
+        $offSystemStorageInfo = null;
+        if ($backupSuccess) {
+            $finalFile = isset($fullZipPath) && file_exists($fullZipPath) ? $fullZipPath : (isset($fullSqlPath) && file_exists($fullSqlPath) ? $fullSqlPath : null);
+            if ($finalFile) {
+                $offSystemStorageInfo = $this->storeBackupOffSystem($finalFile, $baseName);
+            }
+        }
+
         // Always send notifications (success or failure)
         // Use ZIP path if available, otherwise SQL path
         $notificationPath = isset($zipPath) && isset($fullZipPath) && file_exists($fullZipPath) ? $zipPath : ($sqlPath ?? null);
-        $this->sendNotifications($notifier, $now, $backupSuccess, $notificationPath, $errorMessage);
+        $finalFilePath = isset($fullZipPath) && file_exists($fullZipPath) ? $fullZipPath : (isset($fullSqlPath) && file_exists($fullSqlPath) ? $fullSqlPath : null);
+        $this->sendNotifications($notifier, $now, $backupSuccess, $notificationPath, $errorMessage, $finalFilePath, $offSystemStorageInfo);
 
         // Check final file (ZIP or SQL)
         $finalFile = isset($fullZipPath) && file_exists($fullZipPath) ? $fullZipPath : (isset($fullSqlPath) && file_exists($fullSqlPath) ? $fullSqlPath : null);
@@ -507,7 +517,7 @@ class SystemDatabaseBackup extends Command
     /**
      * Send notifications (SMS and Email) - always called
      */
-    protected function sendNotifications(NotificationService $notifier, $now, bool $success, ?string $sqlPath, ?string $errorMessage): void
+    protected function sendNotifications(NotificationService $notifier, $now, bool $success, ?string $sqlPath, ?string $errorMessage, ?string $fullFilePath = null, ?array $offSystemStorageInfo = null): void
     {
         try {
             $admins = \App\Models\User::whereHas('roles', function($query) {
@@ -520,7 +530,8 @@ class SystemDatabaseBackup extends Command
                 $passwordNote = $isZip ? 'Password-protected ZIP (Password: Ofisilink)' : 'SQL file (Database Password: Ofisilink)';
                 $message = 'Backup for OfisiLink System completed at ' . $now->toDateTimeString() . '. ' . $passwordNote . '. Download: ' . url($downloadUrl);
                 $subject = 'OfisiLink System Backup Completed - ' . $now->format('Y-m-d H:i:s');
-                $fullPath = storage_path('app/backups/' . basename($sqlPath));
+                // Use the provided full file path, or fallback to constructing it
+                $fullPath = $fullFilePath ?? storage_path('app/backups/' . basename($sqlPath));
             } else {
                 $message = 'Backup for OfisiLink System FAILED at ' . $now->toDateTimeString() . '. Error: ' . ($errorMessage ?? 'Unknown error');
                 $subject = 'OfisiLink System Backup FAILED - ' . $now->format('Y-m-d H:i:s');
@@ -565,19 +576,27 @@ class SystemDatabaseBackup extends Command
                     'password' => 'Ofisilink',
                     'is_zip' => $isZip,
                     'file_size' => $this->formatBytes(filesize($fullPath)),
+                    'off_system_storage' => $offSystemStorageInfo,
                 ])->render();
                 
-                // Send to all recipients
+                // Send to all recipients with ZIP file attached
                 foreach ($emailRecipients as $recipient) {
                     try {
+                        // Attach the backup file (ZIP or SQL) to the email
+                        $attachmentPath = $fullPath && file_exists($fullPath) ? $fullPath : null;
+                        $attachmentName = basename($sqlPath);
+                        
                         $emailService->send(
                             $recipient,
                             $subject,
                             $emailBody,
-                            $fullPath,
-                            basename($sqlPath)
+                            $attachmentPath, // Attach the ZIP/SQL file
+                            $attachmentName
                         );
-                        \Log::info('Backup success email sent to: ' . $recipient);
+                        \Log::info('Backup success email with attachment sent to: ' . $recipient, [
+                            'attachment' => $attachmentPath,
+                            'file_size' => $attachmentPath ? filesize($attachmentPath) : 0
+                        ]);
                     } catch (\Throwable $emailError) {
                         \Log::error('Backup email failed for ' . $recipient . ': ' . $emailError->getMessage());
                     }
@@ -876,6 +895,455 @@ class SystemDatabaseBackup extends Command
         $pow = min($pow, count($units) - 1);
         $bytes /= pow(1024, $pow);
         return round($bytes, $precision) . ' ' . $units[$pow];
+    }
+
+    /**
+     * Store backup file off-system (cloud storage)
+     * Supports: S3, FTP, SFTP, Google Drive (via API)
+     * 
+     * @param string $filePath Full path to backup file
+     * @param string $baseName Base name of the backup file
+     * @return array|null Storage information or null if failed
+     */
+    protected function storeBackupOffSystem(string $filePath, string $baseName): ?array
+    {
+        $storageInfo = [];
+        $storedLocations = [];
+
+        // 1. Try AWS S3 storage
+        if ($this->storeToS3($filePath, $baseName, $storageInfo)) {
+            $storedLocations[] = 'S3';
+        }
+
+        // 2. Try FTP storage
+        if ($this->storeToFTP($filePath, $baseName, $storageInfo)) {
+            $storedLocations[] = 'FTP';
+        }
+
+        // 3. Try SFTP storage
+        if ($this->storeToSFTP($filePath, $baseName, $storageInfo)) {
+            $storedLocations[] = 'SFTP';
+        }
+
+        // 4. Try Google Drive (if configured)
+        if ($this->storeToGoogleDrive($filePath, $baseName, $storageInfo)) {
+            $storedLocations[] = 'Google Drive';
+        }
+
+        if (empty($storedLocations)) {
+            \Log::warning('Backup file not stored off-system. All storage methods failed or not configured.', [
+                'file' => $filePath
+            ]);
+            return null;
+        }
+
+        \Log::info('Backup stored off-system successfully', [
+            'locations' => $storedLocations,
+            'file' => $baseName
+        ]);
+
+        return [
+            'locations' => $storedLocations,
+            'details' => $storageInfo,
+            'stored_at' => now()->toDateTimeString()
+        ];
+    }
+
+    /**
+     * Store backup to AWS S3
+     */
+    protected function storeToS3(string $filePath, string $baseName, array &$storageInfo): bool
+    {
+        try {
+            // Check if S3 is configured
+            if (!env('AWS_ACCESS_KEY_ID') || !env('AWS_SECRET_ACCESS_KEY') || !env('AWS_BUCKET')) {
+                return false;
+            }
+
+            $s3Disk = Storage::disk('s3');
+            $remotePath = 'backups/' . $baseName . (str_ends_with($filePath, '.zip') ? '.zip' : '.sql');
+
+            // Read file content
+            $fileContent = file_get_contents($filePath);
+            if ($fileContent === false) {
+                throw new \Exception('Failed to read file for S3 upload');
+            }
+
+            // Upload file to S3
+            $uploaded = $s3Disk->put($remotePath, $fileContent);
+            
+            if (!$uploaded) {
+                throw new \Exception('S3 upload returned false');
+            }
+
+            // Get file URL
+            $fileUrl = null;
+            try {
+                $fileUrl = $s3Disk->url($remotePath);
+            } catch (\Throwable $e) {
+                // URL generation might fail, but upload was successful
+                \Log::debug('Could not generate S3 URL: ' . $e->getMessage());
+            }
+
+            $storageInfo['s3'] = [
+                'bucket' => env('AWS_BUCKET'),
+                'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+                'path' => $remotePath,
+                'url' => $fileUrl,
+                'key' => $remotePath
+            ];
+
+            \Log::info('Backup stored to S3 successfully', [
+                'path' => $remotePath,
+                'bucket' => env('AWS_BUCKET')
+            ]);
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Failed to store backup to S3: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Store backup to FTP server
+     */
+    protected function storeToFTP(string $filePath, string $baseName, array &$storageInfo): bool
+    {
+        try {
+            // Check if FTP extension is available
+            if (!function_exists('ftp_connect')) {
+                \Log::debug('FTP extension not available. FTP storage skipped.');
+                return false;
+            }
+
+            // Check if FTP is configured
+            $ftpHost = env('BACKUP_FTP_HOST');
+            $ftpUser = env('BACKUP_FTP_USERNAME');
+            $ftpPass = env('BACKUP_FTP_PASSWORD');
+            $ftpPort = env('BACKUP_FTP_PORT', 21);
+            $ftpPath = env('BACKUP_FTP_PATH', '/backups');
+
+            if (!$ftpHost || !$ftpUser || !$ftpPass) {
+                return false;
+            }
+
+            // Connect to FTP
+            $connection = ftp_connect($ftpHost, $ftpPort);
+            if (!$connection) {
+                throw new \Exception('Failed to connect to FTP server');
+            }
+
+            if (!ftp_login($connection, $ftpUser, $ftpPass)) {
+                ftp_close($connection);
+                throw new \Exception('Failed to login to FTP server');
+            }
+
+            // Enable passive mode
+            ftp_pasv($connection, true);
+
+            // Create remote directory if it doesn't exist
+            $remotePath = rtrim($ftpPath, '/') . '/' . $baseName . (str_ends_with($filePath, '.zip') ? '.zip' : '.sql');
+
+            // Upload file
+            if (!ftp_put($connection, $remotePath, $filePath, FTP_BINARY)) {
+                ftp_close($connection);
+                throw new \Exception('Failed to upload file to FTP');
+            }
+
+            ftp_close($connection);
+
+            $storageInfo['ftp'] = [
+                'host' => $ftpHost,
+                'path' => $remotePath
+            ];
+
+            \Log::info('Backup stored to FTP', ['path' => $remotePath]);
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Failed to store backup to FTP: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Store backup to SFTP server
+     */
+    protected function storeToSFTP(string $filePath, string $baseName, array &$storageInfo): bool
+    {
+        try {
+            // Check if SSH2 extension is available
+            if (!extension_loaded('ssh2')) {
+                \Log::debug('SSH2 extension not available. SFTP storage skipped.');
+                return false;
+            }
+
+            // Check if SFTP is configured
+            $sftpHost = env('BACKUP_SFTP_HOST');
+            $sftpUser = env('BACKUP_SFTP_USERNAME');
+            $sftpPass = env('BACKUP_SFTP_PASSWORD');
+            $sftpPort = env('BACKUP_SFTP_PORT', 22);
+            $sftpPath = env('BACKUP_SFTP_PATH', '/backups');
+            $sftpKey = env('BACKUP_SFTP_KEY'); // Optional: SSH key path
+
+            if (!$sftpHost || !$sftpUser) {
+                return false;
+            }
+
+            // Connect to SFTP
+            if ($sftpKey && file_exists($sftpKey)) {
+                // Use SSH key authentication
+                $connection = ssh2_connect($sftpHost, $sftpPort);
+                if (!$connection) {
+                    throw new \Exception('Failed to connect to SFTP server');
+                }
+                if (!ssh2_auth_pubkey_file($connection, $sftpUser, $sftpKey . '.pub', $sftpKey, $sftpPass)) {
+                    throw new \Exception('Failed to authenticate with SSH key');
+                }
+            } else {
+                // Use password authentication
+                $connection = ssh2_connect($sftpHost, $sftpPort);
+                if (!$connection) {
+                    throw new \Exception('Failed to connect to SFTP server');
+                }
+                if (!ssh2_auth_password($connection, $sftpUser, $sftpPass)) {
+                    throw new \Exception('Failed to authenticate with password');
+                }
+            }
+
+            $sftp = ssh2_sftp($connection);
+            if (!$sftp) {
+                throw new \Exception('Failed to initialize SFTP');
+            }
+
+            // Create remote directory if it doesn't exist
+            $remoteDir = rtrim($sftpPath, '/');
+            $remotePath = $remoteDir . '/' . $baseName . (str_ends_with($filePath, '.zip') ? '.zip' : '.sql');
+
+            // Upload file
+            $stream = fopen("ssh2.sftp://{$sftp}{$remotePath}", 'w');
+            if (!$stream) {
+                throw new \Exception('Failed to open remote file for writing');
+            }
+
+            $localStream = fopen($filePath, 'r');
+            if (!$localStream) {
+                fclose($stream);
+                throw new \Exception('Failed to open local file for reading');
+            }
+
+            stream_copy_to_stream($localStream, $stream);
+            fclose($stream);
+            fclose($localStream);
+
+            $storageInfo['sftp'] = [
+                'host' => $sftpHost,
+                'path' => $remotePath
+            ];
+
+            \Log::info('Backup stored to SFTP', ['path' => $remotePath]);
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Failed to store backup to SFTP: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Store backup to Google Drive (via API)
+     * Uses Google Drive API v3 with OAuth2 authentication
+     */
+    protected function storeToGoogleDrive(string $filePath, string $baseName, array &$storageInfo): bool
+    {
+        try {
+            // Check if Google Drive is configured
+            $googleClientId = env('GOOGLE_DRIVE_CLIENT_ID');
+            $googleClientSecret = env('GOOGLE_DRIVE_CLIENT_SECRET');
+            $googleRefreshToken = env('GOOGLE_DRIVE_REFRESH_TOKEN');
+            $googleFolderId = env('GOOGLE_DRIVE_FOLDER_ID', 'root');
+
+            if (!$googleClientId || !$googleClientSecret || !$googleRefreshToken) {
+                return false;
+            }
+
+            // Get access token using refresh token
+            $accessToken = $this->getGoogleDriveAccessToken($googleClientId, $googleClientSecret, $googleRefreshToken);
+            if (!$accessToken) {
+                throw new \Exception('Failed to obtain Google Drive access token');
+            }
+
+            // Upload file to Google Drive
+            $fileName = $baseName . (str_ends_with($filePath, '.zip') ? '.zip' : '.sql');
+            $fileId = $this->uploadToGoogleDrive($accessToken, $filePath, $fileName, $googleFolderId);
+
+            if (!$fileId) {
+                throw new \Exception('Failed to upload file to Google Drive');
+            }
+
+            // Get file info
+            $fileInfo = $this->getGoogleDriveFileInfo($accessToken, $fileId);
+            
+            $storageInfo['google_drive'] = [
+                'file_id' => $fileId,
+                'file_name' => $fileName,
+                'folder_id' => $googleFolderId,
+                'web_view_link' => $fileInfo['webViewLink'] ?? null,
+                'web_content_link' => $fileInfo['webContentLink'] ?? null,
+            ];
+
+            \Log::info('Backup stored to Google Drive', [
+                'file_id' => $fileId,
+                'file_name' => $fileName
+            ]);
+            return true;
+        } catch (\Throwable $e) {
+            \Log::error('Failed to store backup to Google Drive: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get Google Drive access token using refresh token
+     */
+    protected function getGoogleDriveAccessToken(string $clientId, string $clientSecret, string $refreshToken): ?string
+    {
+        try {
+            $url = 'https://oauth2.googleapis.com/token';
+            
+            $data = [
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'refresh_token' => $refreshToken,
+                'grant_type' => 'refresh_token'
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode !== 200) {
+                \Log::error('Google Drive token refresh failed', [
+                    'http_code' => $httpCode,
+                    'response' => $response
+                ]);
+                return null;
+            }
+
+            $tokenData = json_decode($response, true);
+            return $tokenData['access_token'] ?? null;
+        } catch (\Throwable $e) {
+            \Log::error('Error getting Google Drive access token: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Upload file to Google Drive
+     */
+    protected function uploadToGoogleDrive(string $accessToken, string $filePath, string $fileName, string $folderId): ?string
+    {
+        try {
+            // First, get file metadata
+            $mimeType = mime_content_type($filePath);
+            if (!$mimeType) {
+                $mimeType = str_ends_with($filePath, '.zip') ? 'application/zip' : 'application/sql';
+            }
+
+            // Create file metadata
+            $metadata = [
+                'name' => $fileName,
+                'parents' => [$folderId]
+            ];
+
+            // Step 1: Create file metadata
+            $url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+            
+            $boundary = uniqid();
+            $delimiter = '-------------' . $boundary;
+
+            // Read file content
+            $fileContent = file_get_contents($filePath);
+            if ($fileContent === false) {
+                throw new \Exception('Failed to read file: ' . $filePath);
+            }
+
+            // Build multipart request body
+            $body = '';
+            $body .= '--' . $delimiter . "\r\n";
+            $body .= 'Content-Type: application/json; charset=UTF-8' . "\r\n\r\n";
+            $body .= json_encode($metadata) . "\r\n";
+            $body .= '--' . $delimiter . "\r\n";
+            $body .= 'Content-Type: ' . $mimeType . "\r\n\r\n";
+            $body .= $fileContent . "\r\n";
+            $body .= '--' . $delimiter . '--';
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $accessToken,
+                'Content-Type: multipart/related; boundary=' . $delimiter,
+                'Content-Length: ' . strlen($body)
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            if ($error) {
+                throw new \Exception('cURL error: ' . $error);
+            }
+
+            if ($httpCode !== 200) {
+                \Log::error('Google Drive upload failed', [
+                    'http_code' => $httpCode,
+                    'response' => $response
+                ]);
+                return null;
+            }
+
+            $fileData = json_decode($response, true);
+            return $fileData['id'] ?? null;
+        } catch (\Throwable $e) {
+            \Log::error('Error uploading to Google Drive: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get Google Drive file information
+     */
+    protected function getGoogleDriveFileInfo(string $accessToken, string $fileId): array
+    {
+        try {
+            $url = 'https://www.googleapis.com/drive/v3/files/' . $fileId . '?fields=id,name,webViewLink,webContentLink,size,createdTime';
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $accessToken
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200) {
+                return json_decode($response, true) ?? [];
+            }
+
+            return [];
+        } catch (\Throwable $e) {
+            \Log::error('Error getting Google Drive file info: ' . $e->getMessage());
+            return [];
+        }
     }
 }
 
