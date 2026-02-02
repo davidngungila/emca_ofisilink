@@ -12,8 +12,36 @@ class Kernel extends ConsoleKernel
         // Send reminders daily at 08:00
         $schedule->command('assessments:send-reminders')->dailyAt('08:00');
         
-        // Automatic database backup - respects settings
-        // Check every hour if backup should run
+        // Automatic database backup - runs daily at 2:00 AM by default
+        // Backup runs in background and automatically emails ZIP file to admins when complete
+        $schedule->call(function () {
+            $enabled = \App\Models\SystemSetting::getValue('backup_auto_enabled', true);
+            if (!$enabled) {
+                \Illuminate\Support\Facades\Log::debug('Automatic backup is disabled');
+                return;
+            }
+            
+            // Run backup in background - email will be sent automatically when complete
+            $command = 'php ' . base_path('artisan') . ' system:backup-db';
+            
+            if (PHP_OS_FAMILY === 'Windows') {
+                // Windows: Start in background
+                $command = "start /B {$command} > NUL 2>&1";
+                pclose(popen($command, 'r'));
+            } else {
+                // Linux/Unix: Start in background with nohup
+                $command = "nohup {$command} >> " . storage_path('logs/backup.log') . " 2>&1 &";
+                shell_exec($command);
+            }
+            
+            \Illuminate\Support\Facades\Log::info('Automatic backup started in background - email will be sent when complete');
+        })->dailyAt('02:00')->when(function () {
+            // Only run if enabled
+            return \App\Models\SystemSetting::getValue('backup_auto_enabled', true);
+        })->name('automatic-backup')->withoutOverlapping();
+        
+        // Additional backup schedule based on user settings (if different from default)
+        // Check every hour if custom backup should run
         $schedule->call(function () {
             $enabled = \App\Models\SystemSetting::getValue('backup_auto_enabled', true);
             if (!$enabled) {
@@ -21,7 +49,12 @@ class Kernel extends ConsoleKernel
             }
             
             $frequency = \App\Models\SystemSetting::getValue('backup_schedule', 'daily');
-            $scheduleTime = \App\Models\SystemSetting::getValue('backup_schedule_time', '23:59');
+            $scheduleTime = \App\Models\SystemSetting::getValue('backup_schedule_time', '02:00');
+            
+            // Skip if using default daily at 02:00 (already handled above)
+            if ($frequency === 'daily' && $scheduleTime === '02:00') {
+                return;
+            }
             
             // Parse time
             [$hour, $minute] = explode(':', $scheduleTime);
@@ -45,8 +78,20 @@ class Kernel extends ConsoleKernel
             }
             
             if ($shouldRun) {
-                \Illuminate\Support\Facades\Artisan::call('system:backup-db', ['--sleep-30' => true]);
-                \Illuminate\Support\Facades\Log::info('Automatic backup executed', [
+                // Run backup in background - email will be sent automatically when complete
+                $command = 'php ' . base_path('artisan') . ' system:backup-db';
+                
+                if (PHP_OS_FAMILY === 'Windows') {
+                    // Windows: Start in background
+                    $command = "start /B {$command} > NUL 2>&1";
+                    pclose(popen($command, 'r'));
+                } else {
+                    // Linux/Unix: Start in background with nohup
+                    $command = "nohup {$command} >> " . storage_path('logs/backup.log') . " 2>&1 &";
+                    shell_exec($command);
+                }
+                
+                \Illuminate\Support\Facades\Log::info('Custom scheduled backup started in background - email will be sent when complete', [
                     'frequency' => $frequency,
                     'scheduled_time' => $scheduleTime
                 ]);
@@ -54,7 +99,7 @@ class Kernel extends ConsoleKernel
         })->hourly()->when(function () {
             // Only run if enabled
             return \App\Models\SystemSetting::getValue('backup_auto_enabled', true);
-        });
+        })->name('custom-backup-schedule')->withoutOverlapping();
         
         // Cleanup old backups daily at 02:00
         $schedule->command('system:cleanup-backups')->dailyAt('02:00');

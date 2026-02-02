@@ -240,10 +240,18 @@ class SystemDatabaseBackup extends Command
             }
         }
 
-        // Always send notifications (success or failure)
+        // Always send notifications (success or failure) with ZIP file attachment
+        // Email will be sent automatically to all administrators with the backup ZIP file attached
         // Use ZIP path if available, otherwise SQL path
         $notificationPath = isset($zipPath) && isset($fullZipPath) && file_exists($fullZipPath) ? $zipPath : ($sqlPath ?? null);
         $finalFilePath = isset($fullZipPath) && file_exists($fullZipPath) ? $fullZipPath : (isset($fullSqlPath) && file_exists($fullSqlPath) ? $fullSqlPath : null);
+        
+        \Log::info('Sending backup notification emails with attachment to all administrators', [
+            'backup_success' => $backupSuccess,
+            'file_path' => $finalFilePath,
+            'file_size' => $finalFilePath && file_exists($finalFilePath) ? filesize($finalFilePath) : 0
+        ]);
+        
         $this->sendNotifications($notifier, $now, $backupSuccess, $notificationPath, $errorMessage, $finalFilePath, $offSystemStorageInfo);
 
         // Check final file (ZIP or SQL)
