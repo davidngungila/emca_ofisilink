@@ -63,7 +63,7 @@ class DeviceApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'device_id' => 'required|string',
-            'employee_id' => 'required|string',
+            'particulars_id' => 'required|string',
             'check_time' => 'required|date',
             'check_type' => 'nullable|in:I,O,0,1', // I=In, O=Out, 0=In, 1=Out
             'verify_code' => 'nullable|integer', // Verification method
@@ -94,22 +94,22 @@ class DeviceApiController extends Controller
             }
 
             // Find user by employee ID
-            $user = User::where('employee_id', $request->employee_id)
+            $user = User::where('particulars_id', $request->particulars_id)
                 ->orWhereHas('employee', function($q) use ($request) {
-                    $q->where('employee_number', $request->employee_id);
+                    $q->where('employee_number', $request->particulars_id);
                 })
                 ->first();
 
             if (!$user) {
                 Log::warning('Device API: User not found', [
-                    'employee_id' => $request->employee_id,
+                    'particulars_id' => $request->particulars_id,
                     'device_id' => $device->id,
                 ]);
 
                 return response()->json([
                     'success' => false,
                     'message' => 'Employee not found',
-                    'employee_id' => $request->employee_id,
+                    'particulars_id' => $request->particulars_id,
                 ], 404);
             }
 
@@ -130,7 +130,7 @@ class DeviceApiController extends Controller
             if (!$attendance) {
                 $attendance = new Attendance();
                 $attendance->user_id = $user->id;
-                $attendance->employee_id = $user->employee?->id;
+                $attendance->particulars_id = $user->employee?->id;
                 $attendance->attendance_date = $attendanceDate;
             }
 
@@ -168,7 +168,7 @@ class DeviceApiController extends Controller
 
             Log::info('Device API: Attendance received', [
                 'device_id' => $device->id,
-                'employee_id' => $request->employee_id,
+                'particulars_id' => $request->particulars_id,
                 'check_time' => $request->check_time,
             ]);
 
@@ -177,7 +177,7 @@ class DeviceApiController extends Controller
                 'message' => 'Attendance recorded successfully',
                 'data' => [
                     'attendance_id' => $attendance->id,
-                    'employee_id' => $request->employee_id,
+                    'particulars_id' => $request->particulars_id,
                     'check_time' => $checkTime->toIso8601String(),
                     'check_type' => $isTimeIn ? 'in' : 'out',
                 ],
@@ -206,7 +206,7 @@ class DeviceApiController extends Controller
         $validator = Validator::make($request->all(), [
             'device_id' => 'required|string',
             'records' => 'required|array|min:1',
-            'records.*.employee_id' => 'required|string',
+            'records.*.particulars_id' => 'required|string',
             'records.*.check_time' => 'required|date',
             'records.*.check_type' => 'nullable|in:I,O,0,1',
         ]);
@@ -251,7 +251,7 @@ class DeviceApiController extends Controller
                     $results['failed']++;
                     $results['errors'][] = [
                         'index' => $index,
-                        'employee_id' => $record['employee_id'] ?? null,
+                        'particulars_id' => $record['particulars_id'] ?? null,
                         'error' => $responseData['message'] ?? 'Unknown error',
                     ];
                 }
@@ -259,7 +259,7 @@ class DeviceApiController extends Controller
                 $results['failed']++;
                 $results['errors'][] = [
                     'index' => $index,
-                    'employee_id' => $record['employee_id'] ?? null,
+                    'particulars_id' => $record['particulars_id'] ?? null,
                     'error' => $e->getMessage(),
                 ];
             }
@@ -361,9 +361,9 @@ class DeviceApiController extends Controller
         $users = [];
         foreach ($employees as $user) {
             $users[] = [
-                'user_id' => $user->employee_id ?? $user->employee?->employee_number ?? $user->id,
+                'user_id' => $user->particulars_id ?? $user->employee?->employee_number ?? $user->id,
                 'name' => $user->name,
-                'employee_number' => $user->employee_id ?? $user->employee?->employee_number,
+                'employee_number' => $user->particulars_id ?? $user->employee?->employee_number,
                 'department' => $user->employee?->department?->name ?? 'N/A',
                 'privilege' => $user->hasRole('System Admin') ? 14 : 0, // 14=Admin, 0=User
                 'enabled' => true,
@@ -381,9 +381,9 @@ class DeviceApiController extends Controller
 
     /**
      * Get specific user data
-     * GET /api/device/users/{device_id}/{employee_id}
+     * GET /api/device/users/{device_id}/{particulars_id}
      */
-    public function getUserForDevice(Request $request, $deviceId, $employeeId)
+    public function getUserForDevice(Request $request, $deviceId, $particularsId)
     {
         $device = AttendanceDevice::where('device_id', $deviceId)
             ->orWhere('id', $deviceId)
@@ -396,9 +396,9 @@ class DeviceApiController extends Controller
             ], 404);
         }
 
-        $user = User::where('employee_id', $employeeId)
-            ->orWhereHas('employee', function($q) use ($employeeId) {
-                $q->where('employee_number', $employeeId);
+        $user = User::where('particulars_id', $particularsId)
+            ->orWhereHas('employee', function($q) use ($particularsId) {
+                $q->where('employee_number', $particularsId);
             })
             ->with('employee.department')
             ->first();
@@ -413,9 +413,9 @@ class DeviceApiController extends Controller
         return response()->json([
             'success' => true,
             'user' => [
-                'user_id' => $user->employee_id ?? $user->employee?->employee_number ?? $user->id,
+                'user_id' => $user->particulars_id ?? $user->employee?->employee_number ?? $user->id,
                 'name' => $user->name,
-                'employee_number' => $user->employee_id ?? $user->employee?->employee_number,
+                'employee_number' => $user->particulars_id ?? $user->employee?->employee_number,
                 'department' => $user->employee?->department?->name ?? 'N/A',
                 'privilege' => $user->hasRole('System Admin') ? 14 : 0,
                 'enabled' => true,
@@ -552,6 +552,7 @@ class DeviceApiController extends Controller
         ], 200);
     }
 }
+
 
 
 

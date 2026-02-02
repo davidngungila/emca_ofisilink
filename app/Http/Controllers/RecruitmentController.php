@@ -9,6 +9,8 @@ use App\Models\ApplicationEvaluation;
 use App\Models\ApplicationHistory;
 use App\Models\InterviewSchedule;
 use App\Models\User;
+use App\Models\InstitutionalPosition;
+use App\Models\SalaryStructure;
 use App\Models\ActivityLog;
 use App\Services\NotificationService;
 use App\Services\ActivityLogService;
@@ -104,6 +106,9 @@ class RecruitmentController extends Controller
             $advancedStats['upcoming_interviews'] = InterviewSchedule::upcoming()->count();
         }
 
+        $institutionalPositions = InstitutionalPosition::where('status', 'active')->orderBy('position_title')->get();
+        $salaryStructures = SalaryStructure::where('is_active', true)->orderBy('name')->get();
+
         return view('modules.hr.recruitment', compact(
             'jobs',
             'pendingApprovalJobs',
@@ -115,7 +120,9 @@ class RecruitmentController extends Controller
             'canManageApplications',
             'canShortlist',
             'canEditPendingJobs',
-            'isSystemAdmin'
+            'isSystemAdmin',
+            'institutionalPositions',
+            'salaryStructures'
         ));
     }
 
@@ -214,6 +221,37 @@ class RecruitmentController extends Controller
     }
 
     /**
+     * Display Manpower Planning Page
+     */
+    public function manpowerPlanningPage()
+    {
+        $user = Auth::user();
+        $canManagePlanning = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director']);
+        
+        if (!$canManagePlanning) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Calculate statistics
+        $stats = [
+            'total_positions' => InstitutionalPosition::count(),
+            'total_shortage' => InstitutionalPosition::sum('shortage'),
+            'critical_shortages' => InstitutionalPosition::whereRaw('shortage > 0')->count(),
+            'filled_positions' => InstitutionalPosition::whereRaw('current_count >= required_count')->count(),
+        ];
+        
+        $departments = \App\Models\Department::select('id', 'name')->orderBy('name')->get();
+        $salaryStructures = \App\Models\SalaryStructure::where('is_active', true)->select('id', 'name')->orderBy('name')->get();
+        
+        return view('modules.hr.recruitment.manpower-planning', compact(
+            'canManagePlanning',
+            'stats',
+            'departments',
+            'salaryStructures'
+        ));
+    }
+
+    /**
      * Handle AJAX requests
      */
     public function handleRequest(Request $request)
@@ -259,6 +297,10 @@ class RecruitmentController extends Controller
                     return $this->getInterviewSchedules($request, $user);
                 case 'update_interview_status':
                     return $this->updateInterviewStatus($request, $user);
+                case 'store_evaluation':
+                    return $this->storeEvaluation($request, $user);
+                case 'get_evaluation':
+                    return $this->getEvaluation($request, $user);
                 case 'get_application_history':
                     return $this->getApplicationHistory($request, $user);
                 case 'export_jobs_pdf':
@@ -271,6 +313,22 @@ class RecruitmentController extends Controller
                     return $this->submitApplication($request, $user);
                 case 'get_all_jobs':
                     return $this->getAllJobs($request, $user);
+                case 'get_institutional_positions':
+                    return $this->getInstitutionalPositions($request, $user);
+                case 'create_institutional_position':
+                    return $this->createInstitutionalPosition($request, $user);
+                case 'update_institutional_position':
+                    return $this->updateInstitutionalPosition($request, $user);
+                case 'get_position_shortages':
+                    return $this->getPositionShortages($request, $user);
+                case 'approve_payroll':
+                    return $this->approvePayroll($request, $user);
+                case 'reject_payroll':
+                    return $this->rejectPayroll($request, $user);
+                case 'reject_payroll':
+                    return $this->rejectPayroll($request, $user);
+                case 'get_salary_structure_details':
+                    return $this->getSalaryStructureDetails($request, $user);
                 default:
                     return response()->json([
                         'success' => false,
@@ -300,6 +358,8 @@ class RecruitmentController extends Controller
 
         $validator = Validator::make($request->all(), [
             'job_title' => 'required|string|max:255',
+            'institutional_position_id' => 'nullable|exists:institutional_positions,id',
+            'salary_structure_id' => 'nullable|exists:salary_structures,id',
             'job_description' => 'required|string|max:2000',
             'qualifications' => 'required|string|max:2000',
             'application_deadline' => 'required|date|after:today',
@@ -317,12 +377,15 @@ class RecruitmentController extends Controller
 
         $job = RecruitmentJob::create([
             'job_title' => $request->job_title,
+            'institutional_position_id' => $request->institutional_position_id,
+            'salary_structure_id' => $request->salary_structure_id,
             'job_description' => $request->job_description,
             'qualifications' => $request->qualifications,
             'application_deadline' => $request->application_deadline,
             'required_attachments' => $request->required_attachments ?? [],
             'interview_mode' => $request->interview_mode,
             'status' => 'Pending Approval',
+            'payroll_approval_status' => 'pending',
             'created_by' => $user->id,
         ]);
 
@@ -1344,35 +1407,130 @@ class RecruitmentController extends Controller
         $dateFrom = $request->date_from ?? now()->subMonths(6)->format('Y-m-d');
         $dateTo = $request->date_to ?? now()->format('Y-m-d');
 
+        // Basic Counts
+        $totalJobs = RecruitmentJob::count();
+        $totalApps = JobApplication::count();
+        $hiredApps = JobApplication::where('status', 'Hired')->count();
+        
+        // Time to Hire Calculation (Approximate based on created_at vs today for hired candidates)
+        // In a real scenario, we would use a 'hired_at' timestamp.
+        // Assuming updated_at is the hire date for Hired status
+        $avgDaysToHire = JobApplication::where('status', 'Hired')
+            ->select(DB::raw('AVG(DATEDIFF(updated_at, created_at)) as avg_days'))
+            ->value('avg_days');
+
         $analytics = [
+            'total_jobs' => $totalJobs,
+            'total_applications' => $totalApps,
+            'hire_rate' => $totalApps > 0 ? round(($hiredApps / $totalApps) * 100, 1) : 0,
+            'avg_time_to_hire' => round($avgDaysToHire ?? 0),
+            
             'jobs_by_status' => RecruitmentJob::selectRaw('status, COUNT(*) as count')
                 ->groupBy('status')
                 ->get(),
+                
             'applications_by_status' => JobApplication::selectRaw('status, COUNT(*) as count')
                 ->groupBy('status')
                 ->get(),
-            'applications_over_time' => JobApplication::selectRaw('DATE(application_date) as date, COUNT(*) as count')
-                ->whereBetween('application_date', [$dateFrom, $dateTo])
+                
+            'applications_over_time' => JobApplication::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->whereBetween('created_at', [$dateFrom, $dateTo])
                 ->groupBy('date')
                 ->orderBy('date')
                 ->get(),
+                
             'top_jobs' => RecruitmentJob::withCount('applications')
-                ->where('status', 'Active')
                 ->orderBy('applications_count', 'desc')
-                ->limit(10)
+                ->limit(5)
                 ->get(),
-            'hiring_rate' => [
-                'total' => JobApplication::count(),
-                'hired' => JobApplication::where('status', 'Hired')->count(),
-                'rate' => JobApplication::count() > 0 
-                    ? round((JobApplication::where('status', 'Hired')->count() / JobApplication::count()) * 100, 2)
-                    : 0,
-            ],
+            
+            'interview_stats' => InterviewSchedule::selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->get(),
+                
+            'insights' => []
         ];
+        
+        // Generate Insights
+        if ($analytics['hire_rate'] < 5) {
+            $analytics['insights'][] = [
+                'title' => 'Low Hire Rate detected',
+                'description' => 'Only ' . $analytics['hire_rate'] . '% of applicants are hired. Consider refining job descriptions or screening criteria.',
+                'type' => 'warning'
+            ];
+        }
+        if ($analytics['avg_time_to_hire'] > 30) {
+            $analytics['insights'][] = [
+                'title' => 'Long Time-to-Hire',
+                'description' => 'Average hiring time is ' . $analytics['avg_time_to_hire'] . ' days. Look for bottlenecks in the interview scheduling process.',
+                'type' => 'info'
+            ];
+        } else {
+             $analytics['insights'][] = [
+                'title' => 'Efficient Hiring Process',
+                'description' => 'Great job! Your average time to hire is ' . $analytics['avg_time_to_hire'] . ' days, which is efficient.',
+                'type' => 'success'
+            ];
+        }
 
         return response()->json([
             'success' => true,
             'analytics' => $analytics
+        ]);
+    }
+
+    /**
+     * Store or update application evaluation
+     */
+    private function storeEvaluation(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director'])) {
+            return response()->json(['success' => false, 'message' => 'Authorization Failed.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'application_id' => 'required|exists:job_applications,id',
+            'written_score' => 'nullable|numeric|min:0|max:100',
+            'practical_score' => 'nullable|numeric|min:0|max:100',
+            'oral_score' => 'nullable|numeric|min:0|max:100',
+            'comments' => 'nullable|string|max:2000',
+            'recommendation' => 'nullable|string|in:Hire,Reject,Hold',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $evaluation = ApplicationEvaluation::updateOrCreate(
+            ['application_id' => $request->application_id],
+            [
+                'interviewer_id' => $user->id, // Or from request if admin is entering for someone else
+                'written_score' => $request->written_score,
+                'practical_score' => $request->practical_score,
+                'oral_score' => $request->oral_score,
+                'comments' => $request->comments,
+                'recommendation' => $request->recommendation ?? null,
+            ]
+        );
+
+        // Optional: Auto-update status based on recommendation
+        if ($request->recommendation === 'Reject') {
+             JobApplication::where('id', $request->application_id)->update(['status' => 'Rejected']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Evaluation saved successfully.',
+            'evaluation' => $evaluation
+        ]);
+    }
+
+    private function getEvaluation(Request $request, $user)
+    {
+        $evaluation = ApplicationEvaluation::where('application_id', $request->application_id)->first();
+        return response()->json([
+            'success' => true,
+            'evaluation' => $evaluation
         ]);
     }
 
@@ -1690,5 +1848,286 @@ class RecruitmentController extends Controller
                 'message' => 'An error occurred while submitting your application. Please try again.'
             ], 500);
         }
+    }
+
+    /**
+     * Get institutional positions
+     */
+    private function getInstitutionalPositions(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed.'
+            ], 403);
+        }
+
+        $query = \App\Models\InstitutionalPosition::with(['department', 'salaryStructure']);
+
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Update current counts before returning
+        $positions = $query->get();
+        foreach ($positions as $position) {
+            $position->updateCurrentCount();
+        }
+
+        return response()->json([
+            'success' => true,
+            'positions' => $positions
+        ]);
+    }
+
+    /**
+     * Create institutional position
+     */
+    private function createInstitutionalPosition(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'position_title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'department_id' => 'nullable|exists:departments,id',
+            'salary_structure_id' => 'nullable|exists:salary_structures,id',
+            'required_count' => 'required|integer|min:1',
+            'qualifications' => 'nullable|array',
+            'responsibilities' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $position = \App\Models\InstitutionalPosition::create([
+            'position_title' => $request->position_title,
+            'description' => $request->description,
+            'department_id' => $request->department_id,
+            'salary_structure_id' => $request->salary_structure_id,
+            'required_count' => $request->required_count,
+            'current_count' => 0,
+            'shortage' => $request->required_count,
+            'qualifications' => $request->qualifications ?? [],
+            'responsibilities' => $request->responsibilities ?? [],
+            'status' => 'active',
+            'created_by' => $user->id,
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Institutional position created successfully.',
+            'position' => $position
+        ]);
+    }
+
+    /**
+     * Update institutional position
+     */
+    private function updateInstitutionalPosition(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed.'
+            ], 403);
+        }
+
+        $position = \App\Models\InstitutionalPosition::find($request->position_id);
+        if (!$position) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Position not found.'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'position_title' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'department_id' => 'nullable|exists:departments,id',
+            'salary_structure_id' => 'nullable|exists:salary_structures,id',
+            'required_count' => 'sometimes|required|integer|min:1',
+            'qualifications' => 'nullable|array',
+            'responsibilities' => 'nullable|array',
+            'status' => 'sometimes|in:active,inactive,frozen',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $position->update($request->only([
+            'position_title', 'description', 'department_id', 'salary_structure_id',
+            'required_count', 'qualifications', 'responsibilities', 'status'
+        ]));
+
+        $position->updateCurrentCount();
+        $position->updated_by = $user->id;
+        $position->save();
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Institutional position updated successfully.',
+            'position' => $position
+        ]);
+    }
+
+    /**
+     * Get position shortages
+     */
+    private function getPositionShortages(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed.'
+            ], 403);
+        }
+
+        $positions = \App\Models\InstitutionalPosition::with(['department', 'salaryStructure'])
+            ->withShortage()
+            ->active()
+            ->get();
+
+        // Update counts
+        foreach ($positions as $position) {
+            $position->updateCurrentCount();
+        }
+
+        return response()->json([
+            'success' => true,
+            'positions' => $positions,
+            'total_shortages' => $positions->sum('shortage')
+        ]);
+    }
+
+    /**
+     * Approve payroll for recruitment job
+     */
+    private function approvePayroll(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['CEO', 'Director', 'System Admin', 'HR Officer'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed: You cannot approve payroll.'
+            ], 403);
+        }
+
+        $job = RecruitmentJob::find($request->job_id);
+        if (!$job) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Job not found.'
+            ], 404);
+        }
+
+        $job->update([
+            'payroll_approval_status' => 'approved',
+            'payroll_approved_by' => $user->id,
+            'payroll_approved_at' => now(),
+            'payroll_approval_notes' => $request->notes ?? null,
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payroll approved for this job.'
+        ]);
+    }
+
+    /**
+     * Reject payroll for recruitment job
+     */
+    private function rejectPayroll(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['CEO', 'Director', 'System Admin', 'HR Officer'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed: You cannot reject payroll.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'notes' => 'required|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $job = RecruitmentJob::find($request->job_id);
+        if (!$job) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Job not found.'
+            ], 404);
+        }
+
+        $job->update([
+            'payroll_approval_status' => 'rejected',
+            'payroll_approved_by' => $user->id,
+            'payroll_approved_at' => now(),
+            'payroll_approval_notes' => $request->notes,
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payroll rejected for this job.'
+        ]);
+    }
+
+    /**
+     * Get salary structure details
+     */
+    private function getSalaryStructureDetails(Request $request, $user)
+    {
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization Failed.'
+            ], 403);
+        }
+
+        $structure = SalaryStructure::find($request->salary_structure_id);
+        
+        if (!$structure) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Salary structure not found.'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'qualifications' => $structure->qualifications, // Assuming qualifications is an array or string
+            'salary_range' => number_format($structure->min_salary, 2) . ' - ' . number_format($structure->max_salary, 2),
+            'currency' => 'TZS' // Or get from settings
+        ]);
     }
 }

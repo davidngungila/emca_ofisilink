@@ -1487,7 +1487,7 @@ class PayrollController extends Controller
         }
     }
 
-    public function calculateEmployeeDeductions(Request $request)
+    public function calculateParticularsDeductions(Request $request)
     {
         $request->validate([
             'employee_id' => 'required|exists:users,id',
@@ -1630,7 +1630,7 @@ class PayrollController extends Controller
                     'fixed_deductions_total' => $otherFixedDeductionsTotal,
                     'has_student_loan' => $heslbData->has_student_loan ?? 0,
                     'heslb_number' => $heslbData->heslb_number ?? '',
-                    'bank_accounts' => $this->getEmployeeBankAccounts($request->employee_id),
+                    'bank_accounts' => $this->getParticularsBankAccounts($request->employee_id),
                     'uses_stored_statutory' => array_filter($statutoryDeductions, fn($v) => $v > 0) // Track which are stored
                 ]
             ]);
@@ -1646,7 +1646,7 @@ class PayrollController extends Controller
     /**
      * Get employee bank accounts
      */
-    private function getEmployeeBankAccounts($employeeId)
+    private function getParticularsBankAccounts($employeeId)
     {
         try {
             if (Schema::hasTable('bank_accounts')) {
@@ -1977,7 +1977,7 @@ class PayrollController extends Controller
     /**
      * Get all deductions for an employee
      */
-    public function getEmployeeDeductions(Request $request, $employeeId)
+    public function getParticularsDeductions(Request $request, $employeeId)
     {
         try {
             $deductions = EmployeeSalaryDeduction::where('employee_id', $employeeId)
@@ -2958,3 +2958,4 @@ class PayrollController extends Controller
         }
     }
 }
+

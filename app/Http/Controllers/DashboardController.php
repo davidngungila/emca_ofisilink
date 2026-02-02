@@ -95,7 +95,7 @@ class DashboardController extends Controller
             // Additional comprehensive stats
             'pending_permissions' => PermissionRequest::whereIn('status', ['pending_hr', 'pending_hod', 'pending_hr_final'])->count(),
             'pending_sick_sheets' => SickSheet::whereIn('status', ['pending_hr', 'pending_hod'])->count(),
-            'pending_assessments' => Assessment::where('status', 'pending_hod')->count(),
+            'pending_performance_management' => Assessment::where('status', 'pending_hod')->count(),
             'total_incidents' => Incident::count(),
             'open_incidents' => Incident::where('status', 'open')->count(),
             'total_tasks' => \App\Models\MainTask::count(),
@@ -186,7 +186,7 @@ class DashboardController extends Controller
             'sick_sheets' => SickSheet::with('employee')->whereIn('status', ['pending_hr', 'pending_hod'])->latest()->limit(5)->get(),
             'petty_cash' => PettyCashVoucher::with('user')->whereIn('status', ['pending_accountant', 'pending_hod', 'pending_ceo'])->latest()->limit(5)->get(),
             'imprest_requests' => ImprestRequest::with('accountant')->whereIn('status', ['pending_hod', 'pending_ceo'])->latest()->limit(5)->get(),
-            'assessments' => Assessment::with('employee')->where('status', 'pending_hod')->latest()->limit(5)->get(),
+            'performance_management' => Assessment::with('employee')->where('status', 'pending_hod')->latest()->limit(5)->get(),
             'meeting_minutes' => DB::table('meeting_minutes')
                 ->join('meetings', 'meeting_minutes.meeting_id', '=', 'meetings.id')
                 ->join('users', 'meeting_minutes.approver_id', '=', 'users.id')
@@ -288,7 +288,7 @@ class DashboardController extends Controller
             'imprest_requests' => ImprestRequest::with('accountant')->where('status', 'pending_ceo')->latest()->limit(5)->get(),
             'permission_requests' => PermissionRequest::with('user')->whereIn('status', ['pending_hr', 'pending_hod', 'pending_hr_final'])->latest()->limit(5)->get(),
             'sick_sheets' => SickSheet::with('employee')->whereIn('status', ['pending_hr', 'pending_hod'])->latest()->limit(5)->get(),
-            'assessments' => Assessment::with('employee')->where('status', 'pending_hod')->latest()->limit(5)->get(),
+            'performance_management' => Assessment::with('employee')->where('status', 'pending_hod')->latest()->limit(5)->get(),
             'progress_reports' => AssessmentProgressReport::with('activity.assessment.employee')->where('status', 'pending_approval')->latest()->limit(5)->get(),
         ];
 
@@ -321,7 +321,7 @@ class DashboardController extends Controller
             'pending_sick_sheets' => SickSheet::whereHas('employee', function($q) use ($departmentId) {
                 $q->where('primary_department_id', $departmentId);
             })->where('status', 'pending_hod')->count(),
-            'pending_assessments' => Assessment::whereHas('employee', function($q) use ($departmentId) {
+            'pending_performance_management' => Assessment::whereHas('employee', function($q) use ($departmentId) {
                 $q->where('primary_department_id', $departmentId);
             })->where('status', 'pending_hod')->count(),
         ];
@@ -376,7 +376,7 @@ class DashboardController extends Controller
                 ->latest()
                 ->limit(10)
                 ->get(),
-            'assessments' => Assessment::with('employee')
+            'performance_management' => Assessment::with('employee')
                 ->whereHas('employee', function($q) use ($departmentId) {
                     $q->where('primary_department_id', $departmentId);
                 })
@@ -526,7 +526,7 @@ class DashboardController extends Controller
         $recentActivities = [
             'permission_requests' => PermissionRequest::latest()->limit(10)->get(),
             'sick_sheets' => SickSheet::latest()->limit(10)->get(),
-            'assessments' => Assessment::latest()->limit(10)->get(),
+            'performance_management' => Assessment::latest()->limit(10)->get(),
         ];
 
         $hrFiles = FileFolder::where('name', 'like', '%hr%')
@@ -580,7 +580,7 @@ class DashboardController extends Controller
             'imprest_assignments' => ImprestAssignment::where('staff_id', $userId)->with('imprestRequest')->latest()->limit(5)->get(),
             'permission_requests' => PermissionRequest::where('user_id', $userId)->latest()->limit(5)->get(),
             'sick_sheets' => SickSheet::where('employee_id', $userId)->latest()->limit(5)->get(),
-            'assessments' => Assessment::where('employee_id', $userId)->latest()->limit(5)->get(),
+            'performance_management' => Assessment::where('employee_id', $userId)->latest()->limit(5)->get(),
         ];
 
         // Available files (public and department)

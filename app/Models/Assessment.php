@@ -12,8 +12,14 @@ class Assessment extends Model
     protected $fillable = [
         'employee_id',
         'branch_id',
+        'performance_criteria_id',
         'main_responsibility',
         'description',
+        'targets',
+        'task_activity_id',
+        'target_start_date',
+        'target_end_date',
+        'target_type',
         'contribution_percentage',
         'status',
         'hod_approved_at',
@@ -24,6 +30,9 @@ class Assessment extends Model
     protected $casts = [
         'contribution_percentage' => 'decimal:2',
         'hod_approved_at' => 'datetime',
+        'targets' => 'array',
+        'target_start_date' => 'date',
+        'target_end_date' => 'date',
     ];
 
     public function employee()
@@ -53,6 +62,30 @@ class Assessment extends Model
             'id',            // Local key on assessments
             'id'             // Local key on assessment_activities
         );
+    }
+
+    /**
+     * Get the linked task activity
+     */
+    public function taskActivity()
+    {
+        return $this->belongsTo(TaskActivity::class, 'task_activity_id');
+    }
+
+    /**
+     * Get the performance criteria
+     */
+    public function performanceCriteria()
+    {
+        return $this->belongsTo(PerformanceCriteria::class);
+    }
+
+    /**
+     * Get performance issues for this assessment
+     */
+    public function issues()
+    {
+        return $this->hasMany(PerformanceIssue::class, 'assessment_id');
     }
 }
 

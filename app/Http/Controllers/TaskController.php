@@ -1457,6 +1457,14 @@ class TaskController extends Controller
                             'actual_end_date' => now()->toDateString(),
                         ]);
 
+                        // Sync task completion to performance management
+                        try {
+                            $syncService = new \App\Services\TaskPerformanceSyncService();
+                            $syncService->syncTaskToPerformance($activity, $user->id);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to sync task to performance: ' . $e->getMessage());
+                        }
+
                         // Check if all activities are completed to auto-complete main task
                         $allCompleted = $mainTask->activities()->where('status', '!=', 'Completed')->count() === 0;
                         if ($allCompleted) {
@@ -1465,6 +1473,14 @@ class TaskController extends Controller
                         }
                     } else {
                         $activity->update(['status' => 'In Progress']);
+                        
+                        // Sync task progress to performance management
+                        try {
+                            $syncService = new \App\Services\TaskPerformanceSyncService();
+                            $syncService->syncTaskToPerformance($activity, $user->id);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to sync task to performance: ' . $e->getMessage());
+                        }
                         
                         // Update main task from planning to in_progress
                         if ($mainTask->status === 'planning') {
@@ -2618,5 +2634,24 @@ class TaskController extends Controller
             ]);
             abort(500, 'Error serving file');
         }
+    }
+
+    /**
+     * Get user tasks for performance module sync
+     */
+    public function getUserTasks(Request $request) {
+        $user = Auth::user();
+        
+        $taskActivities = TaskActivity::whereHas('assignedUsers', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })
+        ->with('mainTask:id,name')
+        ->orderBy('end_date', 'desc')
+        ->get(['id', 'name', 'main_task_id', 'status', 'end_date']);
+
+        return response()->json([
+            'success' => true,
+            'tasks' => $taskActivities
+        ]);
     }
 }

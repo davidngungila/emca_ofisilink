@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Employee Management')
+@section('title', 'Personal Particulars')
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -18,12 +18,12 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <h4 class="card-title text-white mb-1">Employee Management System</h4>
+                                    <h4 class="card-title text-white mb-1">Personal Particulars System</h4>
                                     <p class="card-text text-white-50 mb-0">
                                         @if($canViewAll)
-                                            Comprehensive employee database management with advanced analytics and reporting
+                                            Comprehensive particulars management with advanced analytics and reporting
                                         @else
-                                            Personal employee profile and information management
+                                            Personal particulars profile and information management
                                         @endif
                                     </p>
                                 </div>
@@ -37,11 +37,11 @@
                                         <i class="bx bx-dots-vertical-rounded me-1"></i>Quick Actions
                                     </button>
                                     <ul class="dropdown-menu" style="z-index: 1062; position: absolute;">
-                                        <li><a class="dropdown-item" href="{{ route('modules.hr.employees.register') }}">
-                                            <i class="bx bx-user-plus me-2"></i>Register New Employee
+                                        <li><a class="dropdown-item" href="{{ route('modules.hr.personal-particulars.register') }}">
+                                            <i class="bx bx-user-plus me-2"></i>Register New Particulars
                                         </a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="exportEmployees()">
+                                        <li><a class="dropdown-item" href="#" onclick="exportParticulars()">
                                             <i class="bx bx-download me-2"></i>Export All
                                         </a></li>
                                         <li><a class="dropdown-item" href="#" onclick="bulkActions()">
@@ -104,7 +104,7 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-2">
-                                <label class="form-label">Search Employee</label>
+                                <label class="form-label">Search Particulars</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bx bx-search"></i></span>
                                     <input type="text" class="form-control" id="advancedSearch" placeholder="Name, ID, email..." value="{{ request('search') }}" onkeypress="if(event.key === 'Enter') applyFilters()">
@@ -199,7 +199,7 @@
                             <a href="{{ route('admin.branches.show', $selectedBranch->id) }}" class="btn btn-light btn-sm">
                                 <i class="bx bx-show me-1"></i>View Branch Details
                             </a>
-                            <a href="{{ route('modules.hr.employees') }}" class="btn btn-light btn-sm">
+                            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-light btn-sm">
                                 <i class="bx bx-x me-1"></i>Clear Filter
                             </a>
                         </div>
@@ -238,7 +238,7 @@
                                 <div class="card-body">
                                     <h6 class="card-title"><i class="bx bx-stats me-2"></i>Branch Statistics</h6>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span>Total Employees:</span>
+                                        <span>Total Particulars:</span>
                                         <strong class="text-primary">{{ $selectedBranch->users->count() }}</strong>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
@@ -266,21 +266,21 @@
     <!-- Main Content Area -->
     <div class="row">
         @if($canViewAll)
-            @include('modules.hr.employees-manager')
+            @include('modules.hr.personal-particulars-manager')
         @else
-            @include('modules.hr.employees-staff')
+            @include('modules.hr.personal-particulars-staff')
         @endif
     </div>
 </div>
 
-<!-- Employee Details Modal -->
-<div class="modal fade" id="employeeDetailsModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+<!-- particulars Details Modal -->
+<div class="modal fade" id="particularsDetailsModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content" style="z-index: 1061;">
             <div class="modal-header bg-primary text-white">
                 <div class="d-flex align-items-center justify-content-between w-100">
-                    <h5 class="modal-title mb-0" id="employeeDetailsModalTitle">
-                        <i class="bx bx-user me-2"></i>Employee Details
+                    <h5 class="modal-title mb-0" id="particularsDetailsModalTitle">
+                        <i class="bx bx-user me-2"></i>Personal Particulars Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -315,12 +315,12 @@
                     </div>
                 </div>
                 <!-- Content will be loaded via AJAX -->
-                <div id="employeeDetailsContent" class="p-4">
+                <div id="particularsDetailsContent" class="p-4">
                     <div class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-3 text-muted">Loading employee details...</p>
+                        <p class="mt-3 text-muted">Loading particulars details...</p>
                     </div>
                 </div>
             </div>
@@ -328,28 +328,28 @@
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     <i class="bx bx-x me-1"></i>Close
                 </button>
-                <button type="button" class="btn btn-primary" id="editEmployeeBtn" style="display: none;">
-                    <i class="bx bx-edit me-2"></i>Edit Employee
+                <button type="button" class="btn btn-primary" id="editparticularsBtn" style="display: none;">
+                    <i class="bx bx-edit me-2"></i>Edit Particulars
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Edit Employee Modal with Tabs -->
-<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="z-index: 1070;">
+<!-- Edit particulars Modal with Tabs -->
+<div class="modal fade" id="editparticularsModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="z-index: 1070;">
     <div class="modal-dialog modal-fullscreen" role="document">
         <div class="modal-content" style="z-index: 1071; display: flex; flex-direction: column; height: 100vh;">
             <div class="modal-header bg-primary text-white" style="flex-shrink: 0;">
                 <div class="d-flex align-items-center w-100">
-                    <h5 class="modal-title mb-0" id="editEmployeeModalTitle">
-                        <i class="bx bx-edit me-2"></i>Edit Employee Information
+                    <h5 class="modal-title mb-0" id="editparticularsModalTitle">
+                        <i class="bx bx-edit me-2"></i>Edit Personal Particulars Information
                 </h5>
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             </div>
-            <form id="editEmployeeForm" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
-                <input type="hidden" id="edit_employee_user_id" name="user_id">
+            <form id="editparticularsForm" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <input type="hidden" id="edit_particulars_user_id" name="user_id">
                 <input type="hidden" id="edit_current_section" name="section" value="personal">
                 
                 <!-- Profile Completion Progress -->
@@ -503,18 +503,18 @@
     </div>
 </div>
 
-<!-- Add Employee Modal with Tabs -->
+<!-- Add particulars Modal with Tabs -->
 @if($canEditAll)
-<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade" id="addparticularsModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="addEmployeeModalTitle">
-                    <i class="bx bx-user-plus me-2"></i>Add New Employee
+                <h5 class="modal-title" id="addparticularsModalTitle">
+                    <i class="bx bx-user-plus me-2"></i>Add Personal Particulars
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addEmployeeForm">
+            <form id="addparticularsForm">
                 <input type="hidden" id="add_user_id" name="user_id" value="">
                 <input type="hidden" id="current_stage" name="stage" value="personal">
                 <div class="modal-body" style="max-height: calc(100vh - 300px); overflow-y: auto;">
@@ -582,7 +582,7 @@
                     </div>
                     
                     <!-- Tab Navigation -->
-                    <ul class="nav nav-tabs nav-fill mb-4" id="employeeTabs" role="tablist" style="overflow-x: auto; flex-wrap: nowrap;">
+                    <ul class="nav nav-tabs nav-fill mb-4" id="particularsTabs" role="tablist" style="overflow-x: auto; flex-wrap: nowrap;">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="personal-tab-btn" data-bs-toggle="tab" data-bs-target="#personal-tab-pane" type="button" role="tab" onclick="switchTab('personal')">
                                 <i class="bx bx-user me-1"></i>Personal
@@ -631,7 +631,7 @@
                     </ul>
                     
                     <!-- Tab Content -->
-                    <div class="tab-content" id="employeeTabContent">
+                    <div class="tab-content" id="particularsTabContent">
                         <!-- Personal Information Tab -->
                         <div class="tab-pane fade show active" id="personal-tab-pane" role="tabpanel">
                                     <div class="row">
@@ -808,7 +808,7 @@
                     <button type="button" class="btn btn-outline-secondary" id="saveDraftBtn" onclick="saveDraft()">
                         <i class="bx bx-save me-2"></i>Save Draft
                     </button>
-                    <button type="button" class="btn btn-outline-info" id="saveCurrentBtn" onclick="saveEmployeeStage(stages[currentStageIndex], false)">
+                    <button type="button" class="btn btn-outline-info" id="saveCurrentBtn" onclick="saveParticularstage(stages[currentStageIndex], false)">
                         <i class="bx bx-save me-2"></i>Save Current Stage
                     </button>
                     <button type="button" class="btn btn-outline-primary" id="prevStageBtn" onclick="previousStage()" style="display: none;">
@@ -817,7 +817,7 @@
                     <button type="button" class="btn btn-primary" id="nextStageBtn" onclick="nextStage()">
                         Save & Next <i class="bx bx-chevron-right ms-2"></i>
                     </button>
-                    <button type="button" class="btn btn-success" id="completeBtn" onclick="saveEmployeeStage(stages[currentStageIndex], false)" style="display: none;">
+                    <button type="button" class="btn btn-success" id="completeBtn" onclick="saveParticularstage(stages[currentStageIndex], false)" style="display: none;">
                         <i class="bx bx-check me-2"></i>Complete & Save
                     </button>
                 </div>
@@ -831,34 +831,34 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Edit employee form submission
-    $('#editEmployeeForm').submit(function(e) {
+    // Edit particulars form submission
+    $('#editparticularsForm').submit(function(e) {
         e.preventDefault();
         
         const formData = new FormData(this);
-        const employeeId = $('#editEmployeeModal').data('employee-id');
+        const particularsId = $('#editparticularsModal').data('particulars-id');
         
         Swal.fire({
-            title: 'Update Employee?',
-            text: 'Are you sure you want to update this employee\'s information?',
+            title: 'Update particulars?',
+            text: 'Are you sure you want to update this particulars\'s information?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Yes, Update',
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                updateEmployee(employeeId, formData);
+                updateparticulars(particularsId, formData);
             }
         });
     });
     
-    // Add employee form submission
+    // Add particulars form submission
     @if($canEditAll)
-    $('#addEmployeeForm').submit(function(e) {
+    $('#addparticularsForm').submit(function(e) {
         e.preventDefault();
-        console.log('Form submit prevented, calling saveEmployeeStage');
+        console.log('Form submit prevented, calling saveParticularstage');
         const stage = $('#current_stage').val() || stages[currentStageIndex];
-        saveEmployeeStage(stage, false);
+        saveParticularstage(stage, false);
     });
     
     // Initialize tabs
@@ -868,7 +868,7 @@ $(document).ready(function() {
     
     // Make sure functions and variables are accessible globally
     window.nextStage = nextStage;
-    window.saveEmployeeStage = saveEmployeeStage;
+    window.saveParticularstage = saveParticularstage;
     window.validateStage = validateStage;
     window.currentStageIndex = currentStageIndex;
     window.stages = stages;
@@ -888,7 +888,7 @@ $(document).ready(function() {
                 }).then((result) => {
                     if (result.isConfirmed) {
                         // Auto-save current stage first
-                        saveEmployeeStage(stages[currentStageIndex], true);
+                        saveParticularstage(stages[currentStageIndex], true);
                     }
                 });
                 return false;
@@ -1035,8 +1035,8 @@ $(document).ready(function() {
         }
         
         // Save and move to next
-        console.log('Calling saveEmployeeStage with moveNext=true');
-        saveEmployeeStage(currentStage, true);
+        console.log('Calling saveParticularstage with moveNext=true');
+        saveParticularstage(currentStage, true);
     }
     
     function previousStage() {
@@ -1084,14 +1084,14 @@ $(document).ready(function() {
     
     function saveDraft() {
         const currentStage = stages[currentStageIndex];
-        saveEmployeeStage(currentStage, false, true);
+        saveParticularstage(currentStage, false, true);
     }
     
-    function saveEmployeeStage(stage, moveNext = false, isDraft = false) {
-        console.log('saveEmployeeStage called:', { stage, moveNext, isDraft });
+    function saveParticularstage(stage, moveNext = false, isDraft = false) {
+        console.log('saveParticularstage called:', { stage, moveNext, isDraft });
         
         if (!stage) {
-            console.error('No stage provided to saveEmployeeStage');
+            console.error('No stage provided to saveParticularstage');
             Swal.fire('Error', 'Unable to determine stage.', 'error');
             return false;
         }
@@ -1113,9 +1113,9 @@ $(document).ready(function() {
         }
         
         // Check if form exists
-        const form = $('#addEmployeeForm');
+        const form = $('#addparticularsForm');
         if (!form.length) {
-            console.error('Form #addEmployeeForm not found');
+            console.error('Form #addparticularsForm not found');
             Swal.fire('Error', 'Form not found. Please refresh the page.', 'error');
             return false;
         }
@@ -1187,7 +1187,7 @@ $(document).ready(function() {
         }, 10000); // 10 second warning
         
         $.ajax({
-            url: `/employees`,
+            url: `/Particulars`,
             type: 'POST',
             data: formData,
             processData: false,
@@ -1295,7 +1295,7 @@ $(document).ready(function() {
                                     tab.show();
                                 
                                 // Scroll to top of modal body
-                                $('#addEmployeeModal .modal-body').scrollTop(0);
+                                $('#addparticularsModal .modal-body').scrollTop(0);
                                 } else {
                                     console.error('Next tab button not found for stage:', nextStage);
                                 }
@@ -1304,7 +1304,7 @@ $(document).ready(function() {
                             Swal.fire({
                                 icon: 'success',
                                 title: '✓ All Stages Saved!',
-                                text: 'All employee information has been saved successfully.',
+                                text: 'All particulars information has been saved successfully.',
                                 toast: true,
                                 position: 'top-end',
                                 showConfirmButton: false,
@@ -1328,12 +1328,12 @@ $(document).ready(function() {
                                 Swal.fire({
                                     icon: 'success',
                                     title: '🎉 Registration Complete!',
-                                    html: '<p class="mb-3">All employee information has been saved successfully.</p><p class="text-muted">The employee can now access the system.</p>',
+                                    html: '<p class="mb-3">All particulars information has been saved successfully.</p><p class="text-muted">The particulars can now access the system.</p>',
                                 confirmButtonText: 'OK',
                                     confirmButtonColor: '#198754',
                                     width: '500px'
                             }).then(() => {
-                                $('#addEmployeeModal').modal('hide');
+                                $('#addparticularsModal').modal('hide');
                                 location.reload();
                             });
                             }, 1000);
@@ -1541,7 +1541,7 @@ $(document).ready(function() {
         }
     });
     
-    $('#addEmployeeModal').on('show.bs.modal', function() {
+    $('#addparticularsModal').on('show.bs.modal', function() {
         currentStageIndex = 0;
         window.currentStageIndex = 0;
         savedStages.clear();
@@ -1623,7 +1623,7 @@ $(document).ready(function() {
         }
     }
     
-    // Functions for adding new items in add employee form
+    // Functions for adding new items in add particulars form
     function addFamilyMemberNew() {
         const idx = Date.now();
         const html = renderFamilyMemberAdd({}, idx);
@@ -1777,7 +1777,7 @@ $(document).ready(function() {
                             <input type="email" class="form-control" name="referees[${idx}][email]" placeholder="Email" value="${referee.email || ''}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <input type="text" class="form-control" name="referees[${idx}][relationship]" placeholder="How they know the employee" value="${referee.relationship || ''}">
+                            <input type="text" class="form-control" name="referees[${idx}][relationship]" placeholder="How they know the particulars" value="${referee.relationship || ''}">
                         </div>
                     </div>
                     <div class="mb-2">
@@ -1931,18 +1931,18 @@ $(document).ready(function() {
         $(`.bank-account-item-add[data-index="${index}"] .is-primary-input-add`).val('1');
     }
     
-    // Global function to open add employee modal
-    window.openAddEmployeeModal = function() {
-        $('#addEmployeeModal').data('action', 'create');
-        $('#addEmployeeModalTitle').html('<i class="bx bx-user-plus me-2"></i>Add New Employee');
-        $('#addEmployeeForm')[0].reset();
+    // Global function to open add particulars modal
+    window.openAddparticularsModal = function() {
+        $('#addparticularsModal').data('action', 'create');
+        $('#addparticularsModalTitle').html('<i class="bx bx-user-plus me-2"></i>Add New particulars');
+        $('#addparticularsForm')[0].reset();
         $('#add_user_id').val('');
         currentStageIndex = 0;
         switchTab('personal');
         $('#personal-tab-btn').tab('show');
         updateProgress();
         updateButtons();
-        $('#addEmployeeModal').modal('show');
+        $('#addparticularsModal').modal('show');
     };
     
     // Upload photo form submission
@@ -1978,18 +1978,18 @@ $(document).ready(function() {
         formData.append('photo', file);
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
         
-        const employeeId = $('#uploadPhotoModal').data('employee-id');
+        const particularsId = $('#uploadPhotoModal').data('particulars-id');
         
-        if (!employeeId) {
+        if (!particularsId) {
             if (typeof Swal !== 'undefined') {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Employee ID is missing. Please refresh and try again.',
+                text: 'particulars ID is missing. Please refresh and try again.',
                 confirmButtonText: 'OK'
             });
             } else {
-                alert('Error: Employee ID is missing. Please refresh and try again.');
+                alert('Error: particulars ID is missing. Please refresh and try again.');
             }
             return;
         }
@@ -2006,13 +2006,13 @@ $(document).ready(function() {
             showLoaderOnConfirm: false
         }).then((result) => {
             if (result.isConfirmed) {
-                uploadPhoto(employeeId, formData);
+                uploadPhoto(particularsId, formData);
             }
         });
         } else {
             // Fallback if Swal is not available
             if (confirm('Are you sure you want to upload this photo?')) {
-                uploadPhoto(employeeId, formData);
+                uploadPhoto(particularsId, formData);
             }
         }
     });
@@ -2030,22 +2030,22 @@ $(document).ready(function() {
     });
 });
 
-function viewEmployeeDetails(employeeId) {
-    if (!employeeId) {
-        Swal.fire('Error', 'Invalid employee ID.', 'error');
+function viewparticularsDetails(particularsId) {
+    if (!particularsId) {
+        Swal.fire('Error', 'Invalid particulars ID.', 'error');
         return;
     }
     
-    console.log('Loading employee details for ID:', employeeId);
+    console.log('Loading particulars details for ID:', particularsId);
     
     // Show loading state
-    $('#employeeDetailsContent').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading employee details...</p></div>');
-    $('#employeeDetailsModal').modal('show');
+    $('#particularsDetailsContent').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading particulars details...</p></div>');
+    $('#particularsDetailsModal').modal('show');
     
     // Load only essential data for viewing (faster) - use cache
     const startTime = Date.now();
     $.ajax({
-        url: '{{ route("employees.show", ":id") }}'.replace(':id', employeeId),
+        url: '{{ route("personal-particulars.show", ":id") }}'.replace(':id', particularsId),
         type: 'GET',
         data: {}, // Load basic info for viewing (no load_all flag)
         headers: {
@@ -2056,42 +2056,42 @@ function viewEmployeeDetails(employeeId) {
         timeout: 15000, // Increase to 15 seconds
         cache: false, // Disable cache for debugging
         success: function(response) {
-            console.log('Employee data received:', response);
+            console.log('particulars data received:', response);
             const loadTime = ((Date.now() - startTime) / 1000).toFixed(2);
             
             // Log performance info if available
             if (response._performance) {
-                console.log(`Employee data loaded in ${loadTime}s (Query: ${response._performance.query_time_ms}ms, Cached: ${response._performance.cached ? 'Yes' : 'No'})`);
+                console.log(`particulars data loaded in ${loadTime}s (Query: ${response._performance.query_time_ms}ms, Cached: ${response._performance.cached ? 'Yes' : 'No'})`);
             } else {
-                console.log(`Employee data loaded in ${loadTime}s`);
+                console.log(`particulars data loaded in ${loadTime}s`);
             }
             
-            if (response.success && response.employee) {
+            if (response.success && response.particulars) {
                 try {
                     // Update completion percentage
                     const completion = response.completion_percentage || 0;
                     updateViewCompletionPercentage(completion);
                     
-                    displayEmployeeDetails(response.employee, response.canEdit, completion);
+                    displayparticularsDetails(response.particulars, response.canEdit, completion);
                 } catch (e) {
-                    console.error('Error displaying employee details:', e);
-                    $('#employeeDetailsContent').html(`
+                    console.error('Error displaying particulars details:', e);
+                    $('#particularsDetailsContent').html(`
                         <div class="alert alert-danger">
                             <h6><i class="bx bx-error-circle me-2"></i>Display Error</h6>
-                            <p class="mb-2">Error rendering employee details. Please check the console.</p>
+                            <p class="mb-2">Error rendering particulars details. Please check the console.</p>
                             <small class="text-muted">${e.message || 'Unknown error'}</small>
                             <hr>
-                            <button class="btn btn-sm btn-primary" onclick="viewEmployeeDetails(${employeeId})">
+                            <button class="btn btn-sm btn-primary" onclick="viewparticularsDetails(${particularsId})">
                                 <i class="bx bx-refresh me-1"></i>Try Again
                             </button>
                         </div>
                     `);
                 }
             } else {
-                const errorMsg = response.message || 'Failed to load employee details.';
+                const errorMsg = response.message || 'Failed to load particulars details.';
                 console.error('Response error:', response);
                 Swal.fire('Error', errorMsg, 'error');
-                $('#employeeDetailsContent').html(`
+                $('#particularsDetailsContent').html(`
                     <div class="alert alert-danger">
                         <h6><i class="bx bx-error-circle me-2"></i>Error</h6>
                         <p>${errorMsg}</p>
@@ -2101,17 +2101,17 @@ function viewEmployeeDetails(employeeId) {
         },
         error: function(xhr, status, error) {
             const loadTime = ((Date.now() - startTime) / 1000).toFixed(2);
-            console.error(`Error loading employee data after ${loadTime}s:`, error);
+            console.error(`Error loading particulars data after ${loadTime}s:`, error);
             console.error('XHR Status:', xhr.status);
             console.error('Response:', xhr.responseText);
             
-            let errorMessage = 'An error occurred while loading employee details.';
+            let errorMessage = 'An error occurred while loading particulars details.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
             } else if (xhr.status === 404) {
-                errorMessage = 'Employee not found.';
+                errorMessage = 'particulars not found.';
             } else if (xhr.status === 403) {
-                errorMessage = 'You do not have permission to view this employee.';
+                errorMessage = 'You do not have permission to view this particulars.';
             } else if (status === 'timeout' || xhr.status === 0) {
                 errorMessage = 'Request timed out. The server may be busy. Please try again.';
             } else if (xhr.status === 500) {
@@ -2119,13 +2119,13 @@ function viewEmployeeDetails(employeeId) {
             }
             
             // Clear loading state and show error
-            $('#employeeDetailsContent').html(`
+            $('#particularsDetailsContent').html(`
                 <div class="alert alert-danger">
-                    <h6><i class="bx bx-error-circle me-2"></i>Error Loading Employee Details</h6>
+                    <h6><i class="bx bx-error-circle me-2"></i>Error Loading particulars Details</h6>
                     <p class="mb-2">${errorMessage}</p>
                     <small class="text-muted">Status: ${xhr.status || 'Unknown'} | Error: ${error || 'Unknown'}</small>
                     <hr>
-                    <button class="btn btn-sm btn-primary" onclick="viewEmployeeDetails(${employeeId})">
+                    <button class="btn btn-sm btn-primary" onclick="viewparticularsDetails(${particularsId})">
                         <i class="bx bx-refresh me-1"></i>Try Again
                     </button>
                 </div>
@@ -2190,30 +2190,30 @@ function updateEditCompletionPercentage(percentage) {
     }
 }
 
-function displayEmployeeDetails(employee, canEdit, completionPercentage = 0) {
-    if (!employee) {
-        $('#employeeDetailsContent').html('<div class="alert alert-danger">No employee data available.</div>');
+function displayparticularsDetails(particulars, canEdit, completionPercentage = 0) {
+    if (!particulars) {
+        $('#particularsDetailsContent').html('<div class="alert alert-danger">No particulars data available.</div>');
         return;
     }
     
-    const firstName = employee.name ? employee.name.charAt(0) : 'U';
-    const employeeId = employee.id || 0;
+    const firstName = particulars.name ? particulars.name.charAt(0) : 'U';
+    const particularsId = particulars.id || 0;
     const currentUserId = {{ Auth::id() }};
-    const canChangePhoto = canEdit || employeeId == currentUserId;
+    const canChangePhoto = canEdit || particularsId == currentUserId;
     
     const html = `
         <div class="row">
             <div class="col-md-4">
                 <div class="text-center mb-4 ">
                     <div class="avatar avatar-xxl mb-3">
-                        ${employee.photo ? 
-                            `<img src="/storage/photos/${employee.photo}" alt="Employee Photo" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">` :
+                        ${particulars.photo ? 
+                            `<img src="/storage/photos/${particulars.photo}" alt="particulars Photo" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">` :
                             `<span class="avatar-initial rounded-circle bg-label-primary d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px; font-size: 3rem;">${firstName}</span>`
                         }
                     </div>
-                    <h5 class="mb-1">${employee.name || 'N/A'}</h5>
-                    <p class="text-muted mb-0">${employee.employee_id || 'N/A'}</p>
-                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="openUploadPhotoModal(${employeeId})">
+                    <h5 class="mb-1">${particulars.name || 'N/A'}</h5>
+                    <p class="text-muted mb-0">${particulars.particulars_id || 'N/A'}</p>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="openUploadPhotoModal(${particularsId})">
                         <i class="bx bx-camera me-1"></i>${canChangePhoto ? 'Change Photo' : 'Upload Photo'}
                     </button>
                 </div>
@@ -2226,13 +2226,13 @@ function displayEmployeeDetails(employee, canEdit, completionPercentage = 0) {
                                 <h6 class="card-title mb-0">Personal Information</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>Email:</strong> ${employee.email}</p>
-                                <p><strong>Phone:</strong> ${employee.phone || 'N/A'}</p>
-                                <p><strong>Department:</strong> ${employee.primary_department ? employee.primary_department.name : 'N/A'}</p>
-                                <p><strong>Hire Date:</strong> ${employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : 'N/A'}</p>
+                                <p><strong>Email:</strong> ${particulars.email}</p>
+                                <p><strong>Phone:</strong> ${particulars.phone || 'N/A'}</p>
+                                <p><strong>Department:</strong> ${particulars.primary_department ? particulars.primary_department.name : 'N/A'}</p>
+                                <p><strong>Hire Date:</strong> ${particulars.hire_date ? new Date(particulars.hire_date).toLocaleDateString() : 'N/A'}</p>
                                 <p><strong>Status:</strong> 
-                                    <span class="badge ${employee.is_active ? 'bg-label-success' : 'bg-label-danger'}">
-                                        ${employee.is_active ? 'Active' : 'Inactive'}
+                                    <span class="badge ${particulars.is_active ? 'bg-label-success' : 'bg-label-danger'}">
+                                        ${particulars.is_active ? 'Active' : 'Inactive'}
                                     </span>
                                 </p>
                             </div>
@@ -2244,10 +2244,10 @@ function displayEmployeeDetails(employee, canEdit, completionPercentage = 0) {
                                 <h6 class="card-title mb-0">Employment Information</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>Position:</strong> ${employee.employee ? employee.employee.position || 'N/A' : 'N/A'}</p>
-                                <p><strong>Employment Type:</strong> ${employee.employee ? employee.employee.employment_type || 'N/A' : 'N/A'}</p>
-                                <p><strong>Salary:</strong> ${employee.employee ? 'TZS ' + parseFloat(employee.employee.salary).toLocaleString() : 'N/A'}</p>
-                                <p><strong>Roles:</strong> ${employee.roles ? employee.roles.map(role => role.display_name).join(', ') : 'N/A'}</p>
+                                <p><strong>Position:</strong> ${particulars.particulars ? particulars.particulars.position || 'N/A' : 'N/A'}</p>
+                                <p><strong>Employment Type:</strong> ${particulars.particulars ? particulars.particulars.employment_type || 'N/A' : 'N/A'}</p>
+                                <p><strong>Salary:</strong> ${particulars.particulars ? 'TZS ' + parseFloat(particulars.particulars.salary).toLocaleString() : 'N/A'}</p>
+                                <p><strong>Roles:</strong> ${particulars.roles ? particulars.roles.map(role => role.display_name).join(', ') : 'N/A'}</p>
                             </div>
                         </div>
                     </div>
@@ -2260,8 +2260,8 @@ function displayEmployeeDetails(employee, canEdit, completionPercentage = 0) {
                                 <h6 class="card-title mb-0">Banking Information</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>Bank:</strong> ${employee.employee ? employee.employee.bank_name || 'N/A' : 'N/A'}</p>
-                                <p><strong>Account Number:</strong> ${employee.employee ? employee.employee.bank_account_number || 'N/A' : 'N/A'}</p>
+                                <p><strong>Bank:</strong> ${particulars.particulars ? particulars.particulars.bank_name || 'N/A' : 'N/A'}</p>
+                                <p><strong>Account Number:</strong> ${particulars.particulars ? particulars.particulars.bank_account_number || 'N/A' : 'N/A'}</p>
                             </div>
                         </div>
                     </div>
@@ -2271,11 +2271,11 @@ function displayEmployeeDetails(employee, canEdit, completionPercentage = 0) {
                                 <h6 class="card-title mb-0">Tax & Statutory</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>TIN:</strong> ${employee.employee ? employee.employee.tin_number || 'N/A' : 'N/A'}</p>
-                                <p><strong>NSSF:</strong> ${employee.employee ? employee.employee.nssf_number || 'N/A' : 'N/A'}</p>
-                                <p><strong>NHIF:</strong> ${employee.employee ? employee.employee.nhif_number || 'N/A' : 'N/A'}</p>
-                                <p><strong>HESLB:</strong> ${employee.employee ? employee.employee.heslb_number || 'N/A' : 'N/A'}</p>
-                                <p><strong>Student Loan:</strong> ${employee.employee && employee.employee.has_student_loan ? 'Yes' : 'No'}</p>
+                                <p><strong>TIN:</strong> ${particulars.particulars ? particulars.particulars.tin_number || 'N/A' : 'N/A'}</p>
+                                <p><strong>NSSF:</strong> ${particulars.particulars ? particulars.particulars.nssf_number || 'N/A' : 'N/A'}</p>
+                                <p><strong>NHIF:</strong> ${particulars.particulars ? particulars.particulars.nhif_number || 'N/A' : 'N/A'}</p>
+                                <p><strong>HESLB:</strong> ${particulars.particulars ? particulars.particulars.heslb_number || 'N/A' : 'N/A'}</p>
+                                <p><strong>Student Loan:</strong> ${particulars.particulars && particulars.particulars.has_student_loan ? 'Yes' : 'No'}</p>
                             </div>
                         </div>
                     </div>
@@ -2287,44 +2287,44 @@ function displayEmployeeDetails(employee, canEdit, completionPercentage = 0) {
     // Add action buttons at the top
     const actionButtons = `
         <div class="mb-3 d-flex justify-content-end gap-2 flex-wrap">
-            <a href="{{ route('employees.show', ':id') }}".replace(':id', ${employeeId}) class="btn btn-outline-primary" target="_blank">
+            <a href="{{ route('personal-particulars.show', ':id') }}".replace(':id', ${particularsId}) class="btn btn-outline-primary" target="_blank">
                 <i class="bx bx-show me-1"></i>View Full Details Page
             </a>
-            <a href="{{ route('modules.hr.employees.registration-pdf', ':id') }}".replace(':id', ${employeeId}) class="btn btn-outline-danger" target="_blank">
+            <a href="{{ route('modules.hr.personal-particulars.registration-pdf', ':id') }}".replace(':id', ${particularsId}) class="btn btn-outline-danger" target="_blank">
                 <i class="bx bx-file-blank me-1"></i>Generate PDF
             </a>
-            <button class="btn btn-outline-success" onclick="sendEmployeeSMS(${employeeId})">
+            <button class="btn btn-outline-success" onclick="sendParticularsMS(${particularsId})">
                 <i class="bx bx-message me-1"></i>Send SMS
             </button>
         </div>
     `;
     
-    $('#employeeDetailsContent').html(actionButtons + html);
-    $('#editEmployeeBtn').toggle(canEdit);
-    $('#editEmployeeBtn').off('click').on('click', function() {
-        openEditEmployeeModal(employee.id);
+    $('#particularsDetailsContent').html(actionButtons + html);
+    $('#editparticularsBtn').toggle(canEdit);
+    $('#editparticularsBtn').off('click').on('click', function() {
+        openEditparticularsModal(particulars.id);
     });
 }
 
-let currentEditEmployee = null;
-let editEmployeeData = {};
+let currentEditparticulars = null;
+let editparticularsData = {};
 
-function openEditEmployeeModal(employeeId) {
-    if (!employeeId) {
-        Swal.fire('Error', 'Invalid employee ID.', 'error');
+function openEditparticularsModal(particularsId) {
+    if (!particularsId) {
+        Swal.fire('Error', 'Invalid particulars ID.', 'error');
         return;
     }
     
-    $('#editEmployeeModal').data('employee-id', employeeId);
-    $('#edit_employee_user_id').val(employeeId);
+    $('#editparticularsModal').data('particulars-id', particularsId);
+    $('#edit_particulars_user_id').val(particularsId);
     
     // Show loading state
-    $('#editTabContent').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading employee data...</p></div>');
-    $('#editEmployeeModal').modal('show');
+    $('#editTabContent').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading particulars data...</p></div>');
+    $('#editparticularsModal').modal('show');
     
-    // Load employee data with all relationships for editing
+    // Load particulars data with all relationships for editing
     $.ajax({
-        url: '{{ route("employees.show", ":id") }}'.replace(':id', employeeId),
+        url: '{{ route("personal-particulars.show", ":id") }}'.replace(':id', particularsId),
         type: 'GET',
         data: { load_all: 'true' },
         headers: {
@@ -2333,32 +2333,32 @@ function openEditEmployeeModal(employeeId) {
         },
         timeout: 30000, // 30 second timeout
         success: function(response) {
-            console.log('Employee data loaded:', response);
+            console.log('particulars data loaded:', response);
             
-            if (response.success && response.employee) {
-                currentEditEmployee = employeeId;
+            if (response.success && response.particulars) {
+                currentEditparticulars = particularsId;
                 
-                // Ensure employee data structure is consistent
-                editEmployeeData = normalizeEmployeeData(response.employee);
+                // Ensure particulars data structure is consistent
+                editparticularsData = normalizeparticularsData(response.particulars);
                 
                 // Update completion percentage
                 const completion = response.completion_percentage || 0;
                 updateEditCompletionPercentage(completion);
                 
-                console.log('Normalized employee data:', editEmployeeData);
+                console.log('Normalized particulars data:', editparticularsData);
                 console.log('Profile completion:', completion + '%');
                 
                 // Load personal info tab by default
                 switchEditTab('personal');
-                loadEditTabContent('personal', editEmployeeData);
+                loadEditTabContent('personal', editparticularsData);
             } else {
-                const errorMsg = response.message || 'Failed to load employee data.';
-                console.error('Failed to load employee:', errorMsg);
+                const errorMsg = response.message || 'Failed to load particulars data.';
+                console.error('Failed to load particulars:', errorMsg);
                 $('#editTabContent').html(`
                     <div class="alert alert-danger">
-                        <h6>Error Loading Employee Data</h6>
+                        <h6>Error Loading particulars Data</h6>
                         <p>${errorMsg}</p>
-                        <button class="btn btn-sm btn-primary" onclick="openEditEmployeeModal(${employeeId})">
+                        <button class="btn btn-sm btn-primary" onclick="openEditparticularsModal(${particularsId})">
                             <i class="bx bx-refresh me-1"></i>Try Again
                         </button>
                     </div>
@@ -2367,26 +2367,26 @@ function openEditEmployeeModal(employeeId) {
         },
         error: function(xhr, status, error) {
             console.error('AJAX Error:', {xhr, status, error});
-            let errorMessage = 'An error occurred while loading employee data.';
+            let errorMessage = 'An error occurred while loading particulars data.';
             
             if (status === 'timeout') {
                 errorMessage = 'Request timed out. Please try again.';
             } else if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMessage = xhr.responseJSON.message;
             } else if (xhr.status === 404) {
-                errorMessage = 'Employee not found.';
+                errorMessage = 'particulars not found.';
             } else if (xhr.status === 403) {
-                errorMessage = 'You do not have permission to view this employee.';
+                errorMessage = 'You do not have permission to view this particulars.';
             } else if (xhr.status === 500) {
                 errorMessage = 'Server error. Please contact administrator.';
             }
             
             $('#editTabContent').html(`
                 <div class="alert alert-danger">
-                    <h6>Error Loading Employee Data</h6>
+                    <h6>Error Loading particulars Data</h6>
                     <p>${errorMessage}</p>
                     <p class="small text-muted">Status: ${xhr.status || 'Unknown'} | Error: ${error || 'Unknown'}</p>
-                    <button class="btn btn-sm btn-primary" onclick="openEditEmployeeModal(${employeeId})">
+                    <button class="btn btn-sm btn-primary" onclick="openEditparticularsModal(${particularsId})">
                         <i class="bx bx-refresh me-1"></i>Try Again
                     </button>
                 </div>
@@ -2395,17 +2395,17 @@ function openEditEmployeeModal(employeeId) {
     });
 }
 
-// Normalize employee data structure to ensure consistency
-function normalizeEmployeeData(employee) {
-    if (!employee) {
-        employee = {};
+// Normalize particulars data structure to ensure consistency
+function normalizeparticularsData(particulars) {
+    if (!particulars) {
+        particulars = {};
     }
     
-    // Ensure employee.employee exists and preserve emergency contact data
-    if (!employee.employee) {
-        employee.employee = {
+    // Ensure particulars.particulars exists and preserve emergency contact data
+    if (!particulars.particulars) {
+        particulars.particulars = {
             id: null,
-            user_id: employee.id || null,
+            user_id: particulars.id || null,
             position: '',
             employment_type: 'permanent',
             salary: 0,
@@ -2421,86 +2421,86 @@ function normalizeEmployeeData(employee) {
         };
     } else {
         // Ensure emergency contact fields exist even if null
-        employee.employee.emergency_contact_name = employee.employee.emergency_contact_name || '';
-        employee.employee.emergency_contact_phone = employee.employee.emergency_contact_phone || '';
-        employee.employee.emergency_contact_relationship = employee.employee.emergency_contact_relationship || '';
-        employee.employee.emergency_contact_address = employee.employee.emergency_contact_address || '';
+        particulars.particulars.emergency_contact_name = particulars.particulars.emergency_contact_name || '';
+        particulars.particulars.emergency_contact_phone = particulars.particulars.emergency_contact_phone || '';
+        particulars.particulars.emergency_contact_relationship = particulars.particulars.emergency_contact_relationship || '';
+        particulars.particulars.emergency_contact_address = particulars.particulars.emergency_contact_address || '';
     }
     
     // Ensure arrays exist - handle both camelCase and snake_case
-    if (!employee.family) employee.family = [];
+    if (!particulars.family) particulars.family = [];
     // Handle both nextOfKin (camelCase from backend) and next_of_kin (snake_case)
-    if (!employee.nextOfKin && !employee.next_of_kin) {
-        employee.nextOfKin = [];
-        employee.next_of_kin = [];
-    } else if (employee.nextOfKin && !employee.next_of_kin) {
-        employee.next_of_kin = employee.nextOfKin;
-    } else if (employee.next_of_kin && !employee.nextOfKin) {
-        employee.nextOfKin = employee.next_of_kin;
+    if (!particulars.nextOfKin && !particulars.next_of_kin) {
+        particulars.nextOfKin = [];
+        particulars.next_of_kin = [];
+    } else if (particulars.nextOfKin && !particulars.next_of_kin) {
+        particulars.next_of_kin = particulars.nextOfKin;
+    } else if (particulars.next_of_kin && !particulars.nextOfKin) {
+        particulars.nextOfKin = particulars.next_of_kin;
     }
-    if (!employee.referees) employee.referees = [];
-    if (!employee.educations) employee.educations = [];
+    if (!particulars.referees) particulars.referees = [];
+    if (!particulars.educations) particulars.educations = [];
     // Handle both bankAccounts (camelCase from backend) and bank_accounts (snake_case)
-    if (!employee.bankAccounts && !employee.bank_accounts) {
-        employee.bankAccounts = [];
-        employee.bank_accounts = [];
-    } else if (employee.bankAccounts && !employee.bank_accounts) {
-        employee.bank_accounts = employee.bankAccounts;
-    } else if (employee.bank_accounts && !employee.bankAccounts) {
-        employee.bankAccounts = employee.bank_accounts;
+    if (!particulars.bankAccounts && !particulars.bank_accounts) {
+        particulars.bankAccounts = [];
+        particulars.bank_accounts = [];
+    } else if (particulars.bankAccounts && !particulars.bank_accounts) {
+        particulars.bank_accounts = particulars.bankAccounts;
+    } else if (particulars.bank_accounts && !particulars.bankAccounts) {
+        particulars.bankAccounts = particulars.bank_accounts;
     }
     // Handle salary deductions
-    if (!employee.salaryDeductions && !employee.deductions && !employee.salary_deductions) {
-        employee.salaryDeductions = [];
-        employee.deductions = [];
-        employee.salary_deductions = [];
-    } else if (employee.salaryDeductions && !employee.deductions) {
-        employee.deductions = employee.salaryDeductions;
-        employee.salary_deductions = employee.salaryDeductions;
-    } else if (employee.deductions && !employee.salaryDeductions) {
-        employee.salaryDeductions = employee.deductions;
-        employee.salary_deductions = employee.deductions;
+    if (!particulars.salaryDeductions && !particulars.deductions && !particulars.salary_deductions) {
+        particulars.salaryDeductions = [];
+        particulars.deductions = [];
+        particulars.salary_deductions = [];
+    } else if (particulars.salaryDeductions && !particulars.deductions) {
+        particulars.deductions = particulars.salaryDeductions;
+        particulars.salary_deductions = particulars.salaryDeductions;
+    } else if (particulars.deductions && !particulars.salaryDeductions) {
+        particulars.salaryDeductions = particulars.deductions;
+        particulars.salary_deductions = particulars.deductions;
     }
-    if (!employee.roles) employee.roles = [];
+    if (!particulars.roles) particulars.roles = [];
     // Handle documents array
-    if (!employee.documents && !employee.employee_documents) {
-        employee.documents = [];
-        employee.employee_documents = [];
-    } else if (employee.documents && !employee.employee_documents) {
-        employee.employee_documents = employee.documents;
-    } else if (employee.employee_documents && !employee.documents) {
-        employee.documents = employee.employee_documents;
+    if (!particulars.documents && !particulars.particulars_documents) {
+        particulars.documents = [];
+        particulars.particulars_documents = [];
+    } else if (particulars.documents && !particulars.particulars_documents) {
+        particulars.particulars_documents = particulars.documents;
+    } else if (particulars.particulars_documents && !particulars.documents) {
+        particulars.documents = particulars.particulars_documents;
     }
     
     // Ensure primaryDepartment exists
-    if (!employee.primaryDepartment) {
-        employee.primaryDepartment = { id: null, name: '' };
+    if (!particulars.primaryDepartment) {
+        particulars.primaryDepartment = { id: null, name: '' };
     }
     
     // Ensure basic fields exist
-    employee.name = employee.name || '';
-    employee.email = employee.email || '';
-    employee.phone = employee.phone || '';
-    employee.employee_id = employee.employee_id || '';
-    employee.hire_date = employee.hire_date || '';
-    employee.is_active = employee.is_active !== undefined ? employee.is_active : true;
-    employee.primary_department_id = employee.primary_department_id || employee.primaryDepartment?.id || null;
+    particulars.name = particulars.name || '';
+    particulars.email = particulars.email || '';
+    particulars.phone = particulars.phone || '';
+    particulars.particulars_id = particulars.particulars_id || '';
+    particulars.hire_date = particulars.hire_date || '';
+    particulars.is_active = particulars.is_active !== undefined ? particulars.is_active : true;
+    particulars.primary_department_id = particulars.primary_department_id || particulars.primaryDepartment?.id || null;
     
     // Preserve photo field and ensure photo_url is set
-    employee.photo = employee.photo || '';
-    if (employee.photo && !employee.photo_url) {
+    particulars.photo = particulars.photo || '';
+    if (particulars.photo && !particulars.photo_url) {
         // Build photo URL - try multiple possible paths
         // First try absolute URL with asset helper pattern
         const baseUrl = window.location.origin;
-        employee.photo_url = `${baseUrl}/storage/photos/${employee.photo}`;
+        particulars.photo_url = `${baseUrl}/storage/photos/${particulars.photo}`;
         // Also keep relative path for fallback
-        employee.photo_path = `/storage/photos/${employee.photo}`;
-    } else if (employee.photo_url) {
+        particulars.photo_path = `/storage/photos/${particulars.photo}`;
+    } else if (particulars.photo_url) {
         // If photo_url exists, also create relative path
-        employee.photo_path = employee.photo_url.replace(window.location.origin, '');
+        particulars.photo_path = particulars.photo_url.replace(window.location.origin, '');
     }
     
-    return employee;
+    return particulars;
 }
 
 function switchEditTab(section) {
@@ -2511,53 +2511,53 @@ function switchEditTab(section) {
     $(`#edit-${section}-tab`).addClass('active');
     
     // Load tab content
-    loadEditTabContent(section, editEmployeeData);
+    loadEditTabContent(section, editparticularsData);
 }
 
-function loadEditTabContent(section, employee) {
+function loadEditTabContent(section, particulars) {
     let html = '';
     
     if (section === 'personal') {
-        html = renderPersonalTab(employee);
+        html = renderPersonalTab(particulars);
     } else if (section === 'employment') {
-        html = renderEmploymentTab(employee);
+        html = renderEmploymentTab(particulars);
     } else if (section === 'emergency') {
-        html = renderEmergencyTab(employee);
+        html = renderEmergencyTab(particulars);
     } else if (section === 'family') {
-        html = renderFamilyTab(employee);
+        html = renderFamilyTab(particulars);
     } else if (section === 'next-of-kin') {
-        html = renderNextOfKinTab(employee);
+        html = renderNextOfKinTab(particulars);
     } else if (section === 'referees') {
-        html = renderRefereesTab(employee);
+        html = renderRefereesTab(particulars);
     } else if (section === 'education') {
-        html = renderEducationTab(employee);
+        html = renderEducationTab(particulars);
     } else if (section === 'bank') {
-        html = renderBankTab(employee);
+        html = renderBankTab(particulars);
     } else if (section === 'statutory') {
-        html = renderStatutoryTab(employee);
+        html = renderStatutoryTab(particulars);
     } else if (section === 'images') {
-        html = renderImagesTab(employee);
+        html = renderImagesTab(particulars);
     } else if (section === 'documents') {
-        html = renderDocumentsTab(employee);
+        html = renderDocumentsTab(particulars);
     }
     
     $('#editTabContent').html(html);
 }
 
-function renderPersonalTab(employee) {
-    if (!employee) {
-        employee = {};
+function renderPersonalTab(particulars) {
+    if (!particulars) {
+        particulars = {};
     }
     const departments = @json($departments ?? []);
     let deptOptions = '<option value="">Select Department</option>';
     if (departments && Array.isArray(departments)) {
         departments.forEach(dept => {
-            const selected = employee.primary_department_id == dept.id ? 'selected' : '';
+            const selected = particulars.primary_department_id == dept.id ? 'selected' : '';
             deptOptions += `<option value="${dept.id}" ${selected}>${dept.name || ''}</option>`;
         });
     }
     
-    const hireDate = employee.hire_date ? (employee.hire_date.includes('T') ? employee.hire_date.split('T')[0] : employee.hire_date) : '';
+    const hireDate = particulars.hire_date ? (particulars.hire_date.includes('T') ? particulars.hire_date.split('T')[0] : particulars.hire_date) : '';
     
     return `
         <div class="tab-pane fade show active" id="edit-personal" role="tabpanel">
@@ -2565,13 +2565,13 @@ function renderPersonalTab(employee) {
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="name" value="${employee.name || ''}" required>
+                        <input type="text" class="form-control" name="name" value="${particulars.name || ''}" required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" name="email" value="${employee.email || ''}" required>
+                        <input type="email" class="form-control" name="email" value="${particulars.email || ''}" required>
                     </div>
                 </div>
             </div>
@@ -2579,7 +2579,7 @@ function renderPersonalTab(employee) {
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" name="phone" value="${employee.phone || ''}">
+                        <input type="text" class="form-control" name="phone" value="${particulars.phone || ''}">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -2592,9 +2592,9 @@ function renderPersonalTab(employee) {
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label class="form-label">Employee ID</label>
-                        <input type="text" class="form-control" value="${employee.employee_id || 'Auto-generated on save'}" readonly disabled>
-                        <small class="text-muted">Employee ID is auto-generated and cannot be edited</small>
+                        <label class="form-label">particulars ID</label>
+                        <input type="text" class="form-control" value="${particulars.particulars_id || 'Auto-generated on save'}" readonly disabled>
+                        <small class="text-muted">particulars ID is auto-generated and cannot be edited</small>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -2606,8 +2606,8 @@ function renderPersonalTab(employee) {
             </div>
             <div class="mb-3">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="is_active" value="1" ${employee.is_active ? 'checked' : ''}>
-                    <label class="form-check-label">Active Employee</label>
+                    <input class="form-check-input" type="checkbox" name="is_active" value="1" ${particulars.is_active ? 'checked' : ''}>
+                    <label class="form-check-label">Active particulars</label>
                 </div>
             </div>
             <div class="row">
@@ -2628,22 +2628,22 @@ function renderPersonalTab(employee) {
     `;
 }
 
-function renderEmploymentTab(employee) {
-    if (!employee) {
-        employee = { employee: {}, roles: [] };
+function renderEmploymentTab(particulars) {
+    if (!particulars) {
+        particulars = { particulars: {}, roles: [] };
     }
-    if (!employee.employee) {
-        employee.employee = {};
+    if (!particulars.particulars) {
+        particulars.particulars = {};
     }
-    if (!employee.roles) {
-        employee.roles = [];
+    if (!particulars.roles) {
+        particulars.roles = [];
     }
     
     const roles = @json($roles ?? []);
     let rolesHtml = '';
     if (roles && Array.isArray(roles)) {
         roles.forEach(role => {
-            const checked = employee.roles && employee.roles.some(r => r.id == role.id) ? 'checked' : '';
+            const checked = particulars.roles && particulars.roles.some(r => r.id == role.id) ? 'checked' : '';
             rolesHtml += `
                 <div class="col-md-6 mb-2">
                     <div class="form-check">
@@ -2655,8 +2655,8 @@ function renderEmploymentTab(employee) {
         });
     }
     
-    const empType = employee.employee.employment_type || '';
-    const salary = employee.employee.salary || '';
+    const empType = particulars.particulars.employment_type || '';
+    const salary = particulars.particulars.salary || '';
     
     return `
         <div class="tab-pane fade show active" id="edit-employment" role="tabpanel">
@@ -2669,7 +2669,7 @@ function renderEmploymentTab(employee) {
                             ${positionOptions}
                             <option value="__custom__">-- Enter Custom Position --</option>
                         </select>
-                        <input type="text" class="form-control mt-2 d-none" id="edit-position-custom" name="position_custom" placeholder="Enter custom position" value="${employee.employee.position || ''}">
+                        <input type="text" class="form-control mt-2 d-none" id="edit-position-custom" name="position_custom" placeholder="Enter custom position" value="${particulars.particulars.position || ''}">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -2695,17 +2695,17 @@ function renderEmploymentTab(employee) {
     `;
 }
 
-function renderEmergencyTab(employee) {
-    if (!employee) employee = {};
-    if (!employee.employee) employee.employee = {};
+function renderEmergencyTab(particulars) {
+    if (!particulars) particulars = {};
+    if (!particulars.particulars) particulars.particulars = {};
     
     // Log for debugging
-    console.log('Rendering emergency tab, employee.employee:', employee.employee);
+    console.log('Rendering emergency tab, particulars.particulars:', particulars.particulars);
     
-    const contactName = employee.employee.emergency_contact_name || '';
-    const relationship = employee.employee.emergency_contact_relationship || '';
-    const contactPhone = employee.employee.emergency_contact_phone || '';
-    const contactAddress = employee.employee.emergency_contact_address || '';
+    const contactName = particulars.particulars.emergency_contact_name || '';
+    const relationship = particulars.particulars.emergency_contact_relationship || '';
+    const contactPhone = particulars.particulars.emergency_contact_phone || '';
+    const contactAddress = particulars.particulars.emergency_contact_address || '';
     
     console.log('Emergency contact data:', {
         name: contactName,
@@ -2746,8 +2746,8 @@ function renderEmergencyTab(employee) {
     `;
 }
 
-function renderFamilyTab(employee) {
-    const family = employee.family || [];
+function renderFamilyTab(particulars) {
+    const family = particulars.family || [];
     let familyHtml = '<div id="familyList">';
     if (family.length > 0) {
         family.forEach((member, index) => {
@@ -2826,9 +2826,9 @@ function removeFamilyMember(index) {
     $(`.family-member[data-index="${index}"]`).remove();
 }
 
-function renderNextOfKinTab(employee) {
+function renderNextOfKinTab(particulars) {
     // Handle both camelCase and snake_case
-    const nextOfKin = employee.nextOfKin || employee.next_of_kin || [];
+    const nextOfKin = particulars.nextOfKin || particulars.next_of_kin || [];
     console.log('Rendering next of kin tab, count:', nextOfKin.length, 'data:', nextOfKin);
     let kinHtml = '<div id="nextOfKinList">';
     if (nextOfKin && nextOfKin.length > 0) {
@@ -2889,9 +2889,9 @@ function removeNextOfKin(index) {
     $(`.next-of-kin-item[data-index="${index}"]`).remove();
 }
 
-function renderRefereesTab(employee) {
+function renderRefereesTab(particulars) {
     // Handle both camelCase and snake_case
-    const referees = employee.referees || [];
+    const referees = particulars.referees || [];
     console.log('Rendering referees tab, referees count:', referees.length, 'referees:', referees);
     let refHtml = '<div id="refereesList">';
     if (referees && referees.length > 0) {
@@ -2937,7 +2937,7 @@ function renderRefereeItem(referee = {}, index = null) {
                         <input type="email" class="form-control" name="referees[${idx}][email]" placeholder="Email" value="${(referee.email || '').replace(/"/g, '&quot;')}">
                     </div>
                     <div class="col-md-6 mb-2">
-                        <input type="text" class="form-control" name="referees[${idx}][relationship]" placeholder="How they know the employee" value="${(referee.relationship || '').replace(/"/g, '&quot;')}">
+                        <input type="text" class="form-control" name="referees[${idx}][relationship]" placeholder="How they know the particulars" value="${(referee.relationship || '').replace(/"/g, '&quot;')}">
                     </div>
                 </div>
                 <div class="mb-2">
@@ -2965,9 +2965,9 @@ function removeReferee(index) {
     }
 }
 
-function renderEducationTab(employee) {
+function renderEducationTab(particulars) {
     // Handle both camelCase and snake_case
-    const educations = employee.educations || [];
+    const educations = particulars.educations || [];
     console.log('Rendering education tab, educations count:', educations.length, 'educations:', educations);
     let eduHtml = '<div id="educationsList">';
     if (educations && educations.length > 0) {
@@ -3049,9 +3049,9 @@ function removeEducation(index) {
     }
 }
 
-function renderBankTab(employee) {
+function renderBankTab(particulars) {
     // Handle both camelCase and snake_case
-    const accounts = employee.bankAccounts || employee.bank_accounts || [];
+    const accounts = particulars.bankAccounts || particulars.bank_accounts || [];
     console.log('Rendering bank tab, accounts count:', accounts.length, 'accounts:', accounts);
     let bankHtml = '<div id="bankAccountsList">';
     if (accounts && accounts.length > 0) {
@@ -3123,12 +3123,12 @@ function setPrimaryAccount(index) {
     $(`.bank-account-item[data-index="${index}"] .is-primary-input`).val('1');
 }
 
-function renderStatutoryTab(employee) {
-    if (!employee) employee = {};
-    if (!employee.employee) employee.employee = {};
+function renderStatutoryTab(particulars) {
+    if (!particulars) particulars = {};
+    if (!particulars.particulars) particulars.particulars = {};
     
     // Load deductions if available - handle multiple possible property names
-    const deductions = employee.salaryDeductions || employee.deductions || employee.salary_deductions || [];
+    const deductions = particulars.salaryDeductions || particulars.deductions || particulars.salary_deductions || [];
     console.log('Rendering statutory tab, deductions count:', deductions.length, 'deductions:', deductions);
     let deductionsHtml = '<div id="deductionsList">';
     if (deductions && deductions.length > 0) {
@@ -3146,26 +3146,26 @@ function renderStatutoryTab(employee) {
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">TIN Number</label>
-                    <input type="text" class="form-control" name="tin_number" value="${employee.employee?.tin_number || ''}">
+                    <input type="text" class="form-control" name="tin_number" value="${particulars.particulars?.tin_number || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">NSSF Number</label>
-                    <input type="text" class="form-control" name="nssf_number" value="${employee.employee?.nssf_number || ''}">
+                    <input type="text" class="form-control" name="nssf_number" value="${particulars.particulars?.nssf_number || ''}">
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">NHIF Number</label>
-                    <input type="text" class="form-control" name="nhif_number" value="${employee.employee?.nhif_number || ''}">
+                    <input type="text" class="form-control" name="nhif_number" value="${particulars.particulars?.nhif_number || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">HESLB Number</label>
-                    <input type="text" class="form-control" name="heslb_number" value="${employee.employee?.heslb_number || ''}">
+                    <input type="text" class="form-control" name="heslb_number" value="${particulars.particulars?.heslb_number || ''}">
                 </div>
             </div>
             <div class="mb-3">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="has_student_loan" value="1" ${employee.employee?.has_student_loan ? 'checked' : ''}>
+                    <input class="form-check-input" type="checkbox" name="has_student_loan" value="1" ${particulars.particulars?.has_student_loan ? 'checked' : ''}>
                     <label class="form-check-label">Has Student Loan (HESLB)</label>
                 </div>
             </div>
@@ -3298,28 +3298,28 @@ function validateAllDeductions() {
     return isValid;
 }
 
-function renderImagesTab(employee) {
-    if (!employee) employee = {};
-    const employeeId = employee.id || currentEditEmployee || 0;
-    const firstName = employee.name ? employee.name.charAt(0) : 'U';
+function renderImagesTab(particulars) {
+    if (!particulars) particulars = {};
+    const particularsId = particulars.id || currentEditparticulars || 0;
+    const firstName = particulars.name ? particulars.name.charAt(0) : 'U';
     
     // Build photo URL - try multiple possible sources
     let photoUrl = '';
     let photoUrlFallback = '';
-    if (employee.photo && employee.photo.trim() !== '') {
+    if (particulars.photo && particulars.photo.trim() !== '') {
         // Try photo_url first (absolute URL from backend)
-        if (employee.photo_url) {
-            photoUrl = employee.photo_url;
+        if (particulars.photo_url) {
+            photoUrl = particulars.photo_url;
             // Extract filename from URL if it's a full URL
-            const filename = employee.photo;
+            const filename = particulars.photo;
             photoUrlFallback = `/storage/photos/${filename}`;
-        } else if (employee.photo_path) {
+        } else if (particulars.photo_path) {
             // Use relative path if available
-            photoUrl = employee.photo_path;
-            photoUrlFallback = `/storage/photos/${employee.photo}`;
+            photoUrl = particulars.photo_path;
+            photoUrlFallback = `/storage/photos/${particulars.photo}`;
         } else {
             // Build from photo field - use route helper pattern
-            const filename = employee.photo;
+            const filename = particulars.photo;
             photoUrl = `/storage/photos/${filename}`;
             // Also try absolute URL as fallback
             const baseUrl = window.location.origin;
@@ -3328,10 +3328,10 @@ function renderImagesTab(employee) {
     }
     
     // Check if photo exists (not empty string)
-    const hasPhoto = !!(employee.photo && employee.photo.trim() !== '' && employee.photo !== 'null');
+    const hasPhoto = !!(particulars.photo && particulars.photo.trim() !== '' && particulars.photo !== 'null');
     
-    console.log('Rendering images tab, employee:', employee);
-    console.log('Photo exists:', hasPhoto, 'photo field:', employee.photo, 'photoUrl:', photoUrl, 'fallback:', photoUrlFallback);
+    console.log('Rendering images tab, particulars:', particulars);
+    console.log('Photo exists:', hasPhoto, 'photo field:', particulars.photo, 'photoUrl:', photoUrl, 'fallback:', photoUrlFallback);
     
     return `
         <div class="tab-pane fade show active" id="edit-images" role="tabpanel">
@@ -3362,7 +3362,7 @@ function renderImagesTab(employee) {
                     }
                 </div>
                 <p class="text-muted mb-3">${hasPhoto ? 'Current profile picture' : 'No profile picture uploaded'}</p>
-                <button type="button" class="btn btn-primary" onclick="openUploadPhotoModal(${employeeId})">
+                <button type="button" class="btn btn-primary" onclick="openUploadPhotoModal(${particularsId})">
                     <i class="bx bx-camera me-2"></i>${hasPhoto ? 'Change' : 'Upload'} Profile Picture
                 </button>
             </div>
@@ -3370,12 +3370,12 @@ function renderImagesTab(employee) {
     `;
 }
 
-function renderDocumentsTab(employee) {
-    if (!employee) employee = {};
-    const employeeId = employee.id || currentEditEmployee || 0;
-    const documents = employee.documents || employee.employee_documents || [];
+function renderDocumentsTab(particulars) {
+    if (!particulars) particulars = {};
+    const particularsId = particulars.id || currentEditparticulars || 0;
+    const documents = particulars.documents || particulars.particulars_documents || [];
     
-    console.log('Rendering documents tab, employee:', employee, 'documents:', documents);
+    console.log('Rendering documents tab, particulars:', particulars, 'documents:', documents);
     
     // Document types for dropdown
     const documentTypes = [
@@ -3451,8 +3451,8 @@ function renderDocumentsTab(employee) {
                 <div class="card-body text-center p-4">
                     <i class="bx bx-plus-circle text-primary mb-2" style="font-size: 3rem;"></i>
                     <h6 class="mb-2">Add More Documents</h6>
-                    <p class="text-muted small mb-3">Upload additional documents for this employee</p>
-                    <button type="button" class="btn btn-primary" onclick="openUploadDocumentModal(${employeeId})">
+                    <p class="text-muted small mb-3">Upload additional documents for this particulars</p>
+                    <button type="button" class="btn btn-primary" onclick="openUploadDocumentModal(${particularsId})">
                         <i class="bx bx-upload me-2"></i>Upload More Documents
                     </button>
                     </div>
@@ -3465,8 +3465,8 @@ function renderDocumentsTab(employee) {
                     <i class="bx bx-folder-open text-muted" style="font-size: 5rem; opacity: 0.5;"></i>
                 </div>
                 <h5 class="text-muted mb-2">No Documents Found</h5>
-                <p class="text-muted mb-4">Upload documents to organize and manage employee files</p>
-                <button type="button" class="btn btn-primary" onclick="openUploadDocumentModal(${employeeId})">
+                <p class="text-muted mb-4">Upload documents to organize and manage particulars files</p>
+                <button type="button" class="btn btn-primary" onclick="openUploadDocumentModal(${particularsId})">
                     <i class="bx bx-upload me-2"></i>Upload First Document
                 </button>
             </div>
@@ -3505,7 +3505,7 @@ function renderDocumentsTab(employee) {
                             </select>
                         </div>
                         <div class="col-md-2 text-end">
-                            <button type="button" class="btn btn-primary" onclick="openUploadDocumentModal(${employeeId})">
+                            <button type="button" class="btn btn-primary" onclick="openUploadDocumentModal(${particularsId})">
                                 <i class="bx bx-upload me-1"></i>${documents && documents.length > 0 ? 'Add More' : 'Upload'}
                             </button>
                         </div>
@@ -3524,7 +3524,7 @@ function renderDocumentsTab(employee) {
                     <div class="modal-content">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title fw-bold">
-                                <i class="bx bx-cloud-upload me-2"></i>Upload Employee Documents
+                                <i class="bx bx-cloud-upload me-2"></i>Upload particulars Documents
                             </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
@@ -3886,8 +3886,8 @@ function updateFileCountBadges() {
     $('#uploadFileCount').text(count).toggle(count > 0);
 }
 
-function openUploadDocumentModal(employeeId) {
-    $('#uploadDocumentModal').data('employee-id', employeeId);
+function openUploadDocumentModal(particularsId) {
+    $('#uploadDocumentModal').data('particulars-id', particularsId);
     $('#uploadDocumentForm')[0].reset();
     selectedDocumentFiles = [];
     $('#selectedFilesPreview').empty();
@@ -3896,14 +3896,14 @@ function openUploadDocumentModal(employeeId) {
 }
 
 function viewDocumentDetails(documentId) {
-    const employeeId = $('#edit_employee_user_id').val();
+    const particularsId = $('#edit_particulars_user_id').val();
     
-    if (!documentId || !employeeId) {
+    if (!documentId || !particularsId) {
     if (typeof Swal !== 'undefined') {
         Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Document ID or Employee ID not found.',
+                text: 'Document ID or particulars ID not found.',
                 toast: true,
                 position: 'top-end',
                 timer: 3000
@@ -3914,7 +3914,7 @@ function viewDocumentDetails(documentId) {
     
     // Fetch document details
     $.ajax({
-        url: `/employees/${employeeId}/documents/${documentId}`,
+        url: `/Particulars/${particularsId}/documents/${documentId}`,
         type: 'GET',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -4166,8 +4166,8 @@ function downloadDocument(documentId) {
         return;
     }
     
-    const employeeId = $('#edit_employee_user_id').val();
-    window.open(`/employees/${employeeId}/documents/${documentId}/download`, '_blank');
+    const particularsId = $('#edit_particulars_user_id').val();
+    window.open(`/Particulars/${particularsId}/documents/${documentId}/download`, '_blank');
 }
 
 function deleteDocument(documentId, documentName) {
@@ -4185,7 +4185,7 @@ function deleteDocument(documentId, documentName) {
         return;
     }
     
-    const employeeId = $('#edit_employee_user_id').val();
+    const particularsId = $('#edit_particulars_user_id').val();
     
     if (typeof Swal !== 'undefined') {
         Swal.fire({
@@ -4199,7 +4199,7 @@ function deleteDocument(documentId, documentName) {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `/employees/${employeeId}/documents/${documentId}`,
+                    url: `/Particulars/${particularsId}/documents/${documentId}`,
                     type: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -4216,7 +4216,7 @@ function deleteDocument(documentId, documentName) {
                                 timer: 3000
                             }).then(() => {
                                 // Reload documents tab
-                                loadEditTabContent('documents', editEmployeeData);
+                                loadEditTabContent('documents', editparticularsData);
                             });
                         }
                     },
@@ -4255,7 +4255,7 @@ $(document).on('submit', '#uploadDocumentForm', function(e) {
         return;
     }
     
-    const employeeId = $('#uploadDocumentModal').data('employee-id');
+    const particularsId = $('#uploadDocumentModal').data('particulars-id');
     const formData = new FormData();
     
     // Append all files
@@ -4277,7 +4277,7 @@ $(document).on('submit', '#uploadDocumentForm', function(e) {
     submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Uploading...');
     
     $.ajax({
-        url: `/employees/${employeeId}/documents`,
+        url: `/Particulars/${particularsId}/documents`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -4315,7 +4315,7 @@ $(document).on('submit', '#uploadDocumentForm', function(e) {
                 
                 // Reload documents tab
                 if (typeof loadEditTabContent === 'function') {
-                    loadEditTabContent('documents', editEmployeeData);
+                    loadEditTabContent('documents', editparticularsData);
                 } else {
                     location.reload();
                 }
@@ -4342,15 +4342,15 @@ $(document).on('submit', '#uploadDocumentForm', function(e) {
 
 function saveCurrentSection() {
     const section = $('#edit_current_section').val();
-    const employeeId = $('#edit_employee_user_id').val();
+    const particularsId = $('#edit_particulars_user_id').val();
     
-    console.log('Saving section:', section, 'for employee:', employeeId);
+    console.log('Saving section:', section, 'for particulars:', particularsId);
     
-    if (!employeeId) {
+    if (!particularsId) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Employee ID is missing.',
+            text: 'particulars ID is missing.',
             confirmButtonText: 'OK'
         });
         return;
@@ -4378,7 +4378,7 @@ function saveCurrentSection() {
     saveBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
     
     // Also disable other buttons during save
-    $('#saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', true);
+    $('#saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', true);
     
     // Show status text
     $('#saveStatusText').html('<span class="text-info"><i class="bx bx-loader-alt bx-spin me-1"></i>Saving...</span>');
@@ -4498,13 +4498,13 @@ function saveCurrentSection() {
         if (saveBtn.prop('disabled')) {
             // Request is taking too long
             saveBtn.prop('disabled', false).html(originalText);
-            $('#saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', false);
+            $('#saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', false);
             $('#saveStatusText').html('<span class="text-warning"><i class="bx bx-time-five me-1"></i>Request taking longer than expected...</span>');
         }
     }, 30000); // 30 seconds warning
     
     $.ajax({
-        url: `/employees/${employeeId}`,
+        url: `/Particulars/${particularsId}`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -4515,7 +4515,7 @@ function saveCurrentSection() {
             'X-Requested-With': 'XMLHttpRequest'
         },
         beforeSend: function() {
-            console.log('Saving section:', section, 'for employee:', employeeId);
+            console.log('Saving section:', section, 'for particulars:', particularsId);
         },
         success: function(response) {
             clearTimeout(timeoutId);
@@ -4531,22 +4531,22 @@ function saveCurrentSection() {
                     confirmButtonText: 'OK'
                 });
             saveBtn.prop('disabled', false).html(originalText);
-                $('#saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', false);
+                $('#saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', false);
                 $('#saveStatusText').html('<span class="text-danger"><i class="bx bx-error-circle me-1"></i>Invalid response</span>');
                 return;
             }
             
             // Re-enable all buttons
             saveBtn.prop('disabled', false).html(originalText);
-            $('#saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', false);
+            $('#saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', false);
             $('#saveStatusText').text('');
             
             if (response.success) {
-                // Update the employee data with fresh data from server - reload all relationships
-                if (response.employee) {
-                    // Reload employee data with all relationships to get fresh data
+                // Update the particulars data with fresh data from server - reload all relationships
+                if (response.particulars) {
+                    // Reload particulars data with all relationships to get fresh data
                     $.ajax({
-                        url: `/employees/${currentEditEmployee}`,
+                        url: `/Particulars/${currentEditparticulars}`,
                         type: 'GET',
                         data: { load_all: 'true' },
                         headers: {
@@ -4554,23 +4554,23 @@ function saveCurrentSection() {
                             'Accept': 'application/json'
                         },
                         success: function(refreshResponse) {
-                            if (refreshResponse.success && refreshResponse.employee) {
-                                editEmployeeData = normalizeEmployeeData(refreshResponse.employee);
+                            if (refreshResponse.success && refreshResponse.particulars) {
+                                editparticularsData = normalizeparticularsData(refreshResponse.particulars);
                     // Reload current tab content to show updated data
-                                loadEditTabContent(section, editEmployeeData);
-                                console.log('Data refreshed after save, section:', section, 'data:', editEmployeeData);
+                                loadEditTabContent(section, editparticularsData);
+                                console.log('Data refreshed after save, section:', section, 'data:', editparticularsData);
                             }
                         },
                         error: function() {
                             // Fallback to using response data
-                            editEmployeeData = normalizeEmployeeData(response.employee);
-                            loadEditTabContent(section, editEmployeeData);
+                            editparticularsData = normalizeparticularsData(response.particulars);
+                            loadEditTabContent(section, editparticularsData);
                         }
                     });
                 } else {
-                    // Fallback if no employee data in response
-                    editEmployeeData = normalizeEmployeeData(response.employee || {});
-                    loadEditTabContent(section, editEmployeeData);
+                    // Fallback if no particulars data in response
+                    editparticularsData = normalizeparticularsData(response.particulars || {});
+                    loadEditTabContent(section, editparticularsData);
                 }
                 
                 // Update completion percentage if provided
@@ -4664,7 +4664,7 @@ function saveCurrentSection() {
             
             // Re-enable all buttons immediately
             saveBtn.prop('disabled', false).html(originalText);
-            $('#saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', false);
+            $('#saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', false);
             
             const response = xhr.responseJSON;
             let errorMessage = 'An error occurred while saving.';
@@ -4743,7 +4743,7 @@ function saveCurrentSection() {
             } else if (xhr.status === 403) {
                 errorMessage = 'You do not have permission to perform this action.';
             } else if (xhr.status === 404) {
-                errorMessage = 'Employee not found. Please refresh the page.';
+                errorMessage = 'particulars not found. Please refresh the page.';
             } else if (xhr.status === 422) {
                 errorMessage = 'Validation error. Please check your input.';
             } else if (xhr.status >= 400 && xhr.status < 500) {
@@ -4772,7 +4772,7 @@ function saveCurrentSection() {
             // Always re-enable buttons when request completes (success or error)
             clearTimeout(timeoutId);
             saveBtn.prop('disabled', false).html(originalText);
-            $('#saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', false);
+            $('#saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', false);
             
             console.log('Save request completed with status:', status);
         }
@@ -4885,7 +4885,7 @@ function collectArrayData(arrayName, container, formData) {
 }
 
 function saveAllSections() {
-    const employeeId = $('#edit_employee_user_id').val();
+    const particularsId = $('#edit_particulars_user_id').val();
     const sections = ['personal', 'employment', 'emergency', 'family', 'next-of-kin', 'referees', 'education', 'bank', 'statutory'];
     
     Swal.fire({
@@ -4898,7 +4898,7 @@ function saveAllSections() {
     }).then((result) => {
         if (result.isConfirmed) {
             // Disable buttons during save all
-            $('#saveCurrentSectionBtn, #saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', true);
+            $('#saveCurrentSectionBtn, #saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', true);
             
             // Save each section sequentially
             let currentIndex = 0;
@@ -4908,7 +4908,7 @@ function saveAllSections() {
             function saveNext() {
                 if (currentIndex >= sections.length) {
                     // Re-enable buttons
-                    $('#saveCurrentSectionBtn, #saveAllSectionsBtn, #editEmployeeModal .btn-outline-secondary').prop('disabled', false);
+                    $('#saveCurrentSectionBtn, #saveAllSectionsBtn, #editparticularsModal .btn-outline-secondary').prop('disabled', false);
                     
                     if (failedCount === 0) {
                         $('#saveStatusText').html('<span class="text-success"><i class="bx bx-check-circle me-1"></i>All sections saved</span>');
@@ -4920,7 +4920,7 @@ function saveAllSections() {
                             timer: 3000,
                             timerProgressBar: true
                         }).then(() => {
-                        $('#editEmployeeModal').modal('hide');
+                        $('#editparticularsModal').modal('hide');
                         location.reload();
                     });
                     } else {
@@ -4987,7 +4987,7 @@ function saveAllSections() {
                     sectionFormData.append('_method', 'PUT');
                     
                     $.ajax({
-                        url: `/employees/${employeeId}`,
+                        url: `/Particulars/${particularsId}`,
                         type: 'POST',
                         data: sectionFormData,
                         processData: false,
@@ -4998,8 +4998,8 @@ function saveAllSections() {
                         success: function(response) {
                             if (response.success) {
                                 savedCount++;
-                                if (response.employee) {
-                                    editEmployeeData = normalizeEmployeeData(response.employee);
+                                if (response.particulars) {
+                                    editparticularsData = normalizeparticularsData(response.particulars);
                                 }
                             } else {
                                 failedCount++;
@@ -5020,25 +5020,25 @@ function saveAllSections() {
     });
 }
 
-function openUploadPhotoModal(employeeId) {
+function openUploadPhotoModal(particularsId) {
     const currentUserId = {{ Auth::id() }};
     const canEdit = {{ Auth::user()->hasAnyRole(['HR Officer', 'System Admin']) ? 'true' : 'false' }};
     
     // Allow if user is HR/Admin or if they're editing their own profile
-    if (!canEdit && employeeId != currentUserId) {
+    if (!canEdit && particularsId != currentUserId) {
         Swal.fire('Error', 'You can only change your own profile picture.', 'error');
         return;
     }
     
-    $('#uploadPhotoModal').data('employee-id', employeeId);
+    $('#uploadPhotoModal').data('particulars-id', particularsId);
     $('#uploadPhotoForm')[0].reset();
     $('#photoPreview').hide();
     $('#uploadPhotoModal').modal('show');
 }
 
-function updateEmployee(employeeId, formData) {
+function updateparticulars(particularsId, formData) {
     $.ajax({
-        url: `/employees/${employeeId}`,
+        url: `/Particulars/${particularsId}`,
         type: 'PUT',
         data: formData,
         processData: false,
@@ -5049,7 +5049,7 @@ function updateEmployee(employeeId, formData) {
         success: function(response) {
             if (response.success) {
                 Swal.fire('Success', response.message, 'success').then(() => {
-                    $('#editEmployeeModal').modal('hide');
+                    $('#editparticularsModal').modal('hide');
                     location.reload();
                 });
             } else {
@@ -5058,12 +5058,12 @@ function updateEmployee(employeeId, formData) {
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
-            Swal.fire('Error', response.message || 'An error occurred while updating employee.', 'error');
+            Swal.fire('Error', response.message || 'An error occurred while updating particulars.', 'error');
         }
     });
 }
 
-function uploadPhoto(employeeId, formData) {
+function uploadPhoto(particularsId, formData) {
     // Check if jQuery is available
     if (typeof $ === 'undefined') {
         console.error('jQuery is not loaded');
@@ -5088,11 +5088,11 @@ function uploadPhoto(employeeId, formData) {
     // Disable cancel button during upload
     $('#uploadPhotoModal').find('.btn-outline-secondary').prop('disabled', true);
     
-    console.log('Uploading photo for employee:', employeeId);
+    console.log('Uploading photo for particulars:', particularsId);
     console.log('FormData entries:', Array.from(formData.entries()));
     
     $.ajax({
-        url: `/employees/${employeeId}/upload-photo`,
+        url: `/Particulars/${particularsId}/upload-photo`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -5145,17 +5145,17 @@ function uploadPhoto(employeeId, formData) {
                     $('#uploadPhotoModal').modal('hide');
                     
                     // Update the photo in the images tab without reloading
-                    if (response.employee && response.employee.photo) {
-                        // Update editEmployeeData
-                        if (typeof editEmployeeData !== 'undefined') {
-                            editEmployeeData.photo = response.employee.photo;
-                                editEmployeeData.photo_url = response.photo_url || response.employee.photo_url;
+                    if (response.particulars && response.particulars.photo) {
+                        // Update editparticularsData
+                        if (typeof editparticularsData !== 'undefined') {
+                            editparticularsData.photo = response.particulars.photo;
+                                editparticularsData.photo_url = response.photo_url || response.particulars.photo_url;
                         }
                         
                         // Reload images tab if it's currently active
                         const currentSection = $('#edit_current_section').val();
                             if (currentSection === 'images' && typeof loadEditTabContent === 'function') {
-                            loadEditTabContent('images', editEmployeeData);
+                            loadEditTabContent('images', editparticularsData);
                         }
                         
                         // Update photo in header/profile if visible
@@ -5267,7 +5267,7 @@ function uploadPhoto(employeeId, formData) {
             } else if (xhr.status === 403) {
                 errorMessage = 'You do not have permission to upload photos.';
             } else if (xhr.status === 404) {
-                errorMessage = 'Employee not found. Please refresh and try again.';
+                errorMessage = 'particulars not found. Please refresh and try again.';
             } else if (xhr.status === 422) {
                 errorMessage = 'Validation error. Please check your file format and size.';
             }
@@ -5301,10 +5301,10 @@ function uploadPhoto(employeeId, formData) {
     });
 }
 
-function toggleEmployeeStatus(employeeId) {
+function toggleParticularstatus(particularsId) {
     Swal.fire({
-        title: 'Change Employee Status?',
-        text: 'Are you sure you want to change this employee\'s status?',
+        title: 'Change particulars Status?',
+        text: 'Are you sure you want to change this particulars\'s status?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Change',
@@ -5312,7 +5312,7 @@ function toggleEmployeeStatus(employeeId) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: `/employees/${employeeId}/toggle-status`,
+                url: `/Particulars/${particularsId}/toggle-status`,
                 type: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -5336,9 +5336,9 @@ function toggleEmployeeStatus(employeeId) {
 }
 
 @if($canEditAll)
-function createEmployee(formData) {
+function createparticulars(formData) {
     $.ajax({
-        url: `/employees`,
+        url: `/Particulars`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -5349,7 +5349,7 @@ function createEmployee(formData) {
         success: function(response) {
             if (response.success) {
                 Swal.fire('Success', response.message, 'success').then(() => {
-                    $('#addEmployeeModal').modal('hide');
+                    $('#addparticularsModal').modal('hide');
                     location.reload();
                 });
             } else {
@@ -5358,7 +5358,7 @@ function createEmployee(formData) {
         },
         error: function(xhr) {
             const response = xhr.responseJSON;
-            let errorMessage = 'An error occurred while creating employee.';
+            let errorMessage = 'An error occurred while creating particulars.';
             if (response && response.errors) {
                 const errorList = Object.values(response.errors).flat().join('\\n');
                 errorMessage = errorList || errorMessage;
@@ -5371,23 +5371,23 @@ function createEmployee(formData) {
     }
 @endif
 
-// Send SMS to employee
-function sendEmployeeSMS(employeeId) {
-    if (!employeeId) {
-        Swal.fire('Error', 'Invalid employee ID.', 'error');
+// Send SMS to particulars
+function sendParticularsMS(particularsId) {
+    if (!particularsId) {
+        Swal.fire('Error', 'Invalid particulars ID.', 'error');
         return;
     }
     
     Swal.fire({
-        title: 'Send SMS to Employee?',
-        text: 'This will send a welcome SMS with login credentials to the employee\'s phone number.',
+        title: 'Send SMS to particulars?',
+        text: 'This will send a welcome SMS with login credentials to the particulars\'s phone number.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Send SMS',
         cancelButtonText: 'Cancel',
         showLoaderOnConfirm: true,
         preConfirm: () => {
-            return fetch('{{ route("employees.send-sms", ":id") }}'.replace(':id', employeeId), {
+            return fetch('{{ route("personal-particulars.send-sms", ":id") }}'.replace(':id', particularsId), {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -5412,7 +5412,7 @@ function sendEmployeeSMS(employeeId) {
             Swal.fire({
                 icon: 'success',
                 title: 'SMS Sent!',
-                text: result.value.message || 'SMS has been sent successfully to the employee.',
+                text: result.value.message || 'SMS has been sent successfully to the particulars.',
                 timer: 3000
             });
         }
@@ -5421,13 +5421,13 @@ function sendEmployeeSMS(employeeId) {
 </script>
 
 <style>
-/* Advanced Employee Card Styles */
-.employee-card {
+/* Advanced particulars Card Styles */
+.particulars-card {
     transition: all 0.3s ease;
     border: 1px solid #e0e0e0;
 }
 
-.employee-card:hover {
+.particulars-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
     border-color: #696cff;
@@ -5441,17 +5441,17 @@ function sendEmployeeSMS(employeeId) {
     transform: translateY(-5px);
 }
 
-.employee-card .avatar img {
+.particulars-card .avatar img {
     border: 3px solid #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.employee-card .progress {
+.particulars-card .progress {
     border-radius: 10px;
     background-color: #f0f0f0;
 }
 
-.employee-card .badge {
+.particulars-card .badge {
     font-size: 0.75rem;
     padding: 0.35rem 0.65rem;
 }
@@ -5510,32 +5510,32 @@ function sendEmployeeSMS(employeeId) {
     z-index: 1055 !important;
 }
 
-#employeeDetailsModal {
+#particularsDetailsModal {
     z-index: 1060 !important;
 }
 
-#editEmployeeModal {
+#editparticularsModal {
     z-index: 1070 !important;
 }
 
-#editEmployeeModal .modal-content {
+#editparticularsModal .modal-content {
     display: flex;
     flex-direction: column;
     height: 100vh;
 }
 
-#editEmployeeModal .modal-body {
+#editparticularsModal .modal-body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-#editEmployeeModal .nav-tabs {
+#editparticularsModal .nav-tabs {
     border-bottom: 2px solid #dee2e6;
     background-color: #f8f9fa;
 }
 
-#editEmployeeModal .nav-tabs .nav-link {
+#editparticularsModal .nav-tabs .nav-link {
     border: none;
     border-bottom: 3px solid transparent;
     color: #6c757d;
@@ -5543,20 +5543,20 @@ function sendEmployeeSMS(employeeId) {
     transition: all 0.3s ease;
 }
 
-#editEmployeeModal .nav-tabs .nav-link:hover {
+#editparticularsModal .nav-tabs .nav-link:hover {
     border-bottom-color: #0d6efd;
     color: #0d6efd;
     background-color: rgba(13, 110, 253, 0.05);
 }
 
-#editEmployeeModal .nav-tabs .nav-link.active {
+#editparticularsModal .nav-tabs .nav-link.active {
     border-bottom-color: #0d6efd;
     color: #0d6efd;
     background-color: transparent;
     font-weight: 600;
 }
 
-#editEmployeeModal .modal-footer {
+#editparticularsModal .modal-footer {
     border-top: 2px solid #dee2e6;
     background-color: #f8f9fa;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
@@ -5566,7 +5566,7 @@ function sendEmployeeSMS(employeeId) {
     z-index: 1075 !important;
 }
 
-#addEmployeeModal {
+#addparticularsModal {
     z-index: 1080 !important;
 }
 
@@ -5585,34 +5585,34 @@ function sendEmployeeSMS(employeeId) {
     z-index: 1052 !important;
 }
 
-.employee-card .dropdown,
-#employeeTable .dropdown {
+.particulars-card .dropdown,
+#particularsTable .dropdown {
     position: relative;
 }
 
-.employee-card .dropdown-menu,
-#employeeTable .dropdown-menu {
+.particulars-card .dropdown-menu,
+#particularsTable .dropdown-menu {
     position: absolute !important;
     z-index: 1052 !important;
     margin-top: 0.125rem !important;
 }
 
-/* Enhanced Add Employee Modal Styling */
-#addEmployeeModal .modal-dialog {
+/* Enhanced Add particulars Modal Styling */
+#addparticularsModal .modal-dialog {
     max-width: 95%;
 }
 
-#addEmployeeModal .modal-header {
+#addparticularsModal .modal-header {
     background: linear-gradient(135deg, #696cff 0%, #5a5fd8 100%);
     border-bottom: 3px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-#addEmployeeModal .modal-body {
+#addparticularsModal .modal-body {
     background: #f8f9fa;
 }
 
-#addEmployeeModal .nav-tabs {
+#addparticularsModal .nav-tabs {
     border-bottom: 2px solid #dee2e6;
     background: white;
     padding: 0.5rem;
@@ -5620,7 +5620,7 @@ function sendEmployeeSMS(employeeId) {
     margin-bottom: 1.5rem;
 }
 
-#addEmployeeModal .nav-tabs .nav-link {
+#addparticularsModal .nav-tabs .nav-link {
     border: none;
     border-radius: 0.375rem;
     margin: 0 0.25rem;
@@ -5628,82 +5628,82 @@ function sendEmployeeSMS(employeeId) {
     color: #6c757d;
 }
 
-#addEmployeeModal .nav-tabs .nav-link:hover {
+#addparticularsModal .nav-tabs .nav-link:hover {
     background: #f8f9fa;
     color: #696cff;
 }
 
-#addEmployeeModal .nav-tabs .nav-link.active {
+#addparticularsModal .nav-tabs .nav-link.active {
     background: linear-gradient(135deg, #696cff 0%, #5a5fd8 100%);
     color: white;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(105, 108, 255, 0.3);
 }
 
-#addEmployeeModal .card {
+#addparticularsModal .card {
     border: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border-radius: 0.75rem;
 }
 
-#addEmployeeModal .progress {
+#addparticularsModal .progress {
     border-radius: 1rem;
     overflow: hidden;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#addEmployeeModal .progress-bar {
+#addparticularsModal .progress-bar {
     transition: width 0.6s ease;
 }
 
-#addEmployeeModal .badge {
+#addparticularsModal .badge {
     font-size: 0.75rem;
     padding: 0.5rem 0.75rem;
     transition: all 0.3s ease;
 }
 
-#addEmployeeModal .badge.bg-primary {
+#addparticularsModal .badge.bg-primary {
     background: linear-gradient(135deg, #696cff 0%, #5a5fd8 100%) !important;
 }
 
-#addEmployeeModal .badge.bg-secondary:hover {
+#addparticularsModal .badge.bg-secondary:hover {
     background: #6c757d !important;
     transform: translateY(-2px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-#addEmployeeModal .form-control:focus,
-#addEmployeeModal .form-select:focus {
+#addparticularsModal .form-control:focus,
+#addparticularsModal .form-select:focus {
     border-color: #696cff;
     box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
 }
 
-#addEmployeeModal .btn-primary {
+#addparticularsModal .btn-primary {
     background: linear-gradient(135deg, #696cff 0%, #5a5fd8 100%);
     border: none;
     box-shadow: 0 2px 8px rgba(105, 108, 255, 0.3);
     transition: all 0.3s ease;
 }
 
-#addEmployeeModal .btn-primary:hover {
+#addparticularsModal .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(105, 108, 255, 0.4);
 }
 
-#addEmployeeModal .btn-outline-primary {
+#addparticularsModal .btn-outline-primary {
     border-color: #696cff;
     color: #696cff;
     transition: all 0.3s ease;
 }
 
-#addEmployeeModal .btn-outline-primary:hover {
+#addparticularsModal .btn-outline-primary:hover {
     background: #696cff;
     color: white;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(105, 108, 255, 0.3);
 }
 
-#addEmployeeModal .modal-footer {
+#addparticularsModal .modal-footer {
     background: white;
     border-top: 2px solid #dee2e6;
     padding: 1.25rem;
@@ -5762,12 +5762,12 @@ function sendEmployeeSMS(employeeId) {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Enhanced Employee Table */
-#employeeTable {
+/* Enhanced particulars Table */
+#particularsTable {
     font-size: 0.9rem;
 }
 
-#employeeTable thead th {
+#particularsTable thead th {
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
@@ -5777,23 +5777,23 @@ function sendEmployeeSMS(employeeId) {
     padding: 1rem 0.75rem;
 }
 
-#employeeTable tbody tr {
+#particularsTable tbody tr {
     transition: all 0.2s ease;
 }
 
-#employeeTable tbody tr:hover {
+#particularsTable tbody tr:hover {
     background-color: #f8f9fa;
     transform: scale(1.01);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Enhanced Employee Cards */
-.employee-card {
+/* Enhanced particulars Cards */
+.particulars-card {
     transition: all 0.3s ease;
     border: 1px solid #e9ecef;
 }
 
-.employee-card:hover {
+.particulars-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
     border-color: #696cff;
@@ -5812,9 +5812,9 @@ function sendEmployeeSMS(employeeId) {
 @push('scripts')
 <script>
 // Quick Actions Functions
-function exportEmployees() {
+function exportParticulars() {
     Swal.fire({
-        title: 'Export Employee Data',
+        title: 'Export particulars Data',
         html: `
             <div class="text-start">
                 <p class="mb-3">Choose export format:</p>
@@ -5849,7 +5849,7 @@ function exportToExcel() {
         }
     });
     
-    window.location.href = '{{ route("modules.hr.employees") }}?export=excel';
+    window.location.href = '{{ route("modules.hr.personal-particulars") }}?export=excel';
     
     setTimeout(() => {
         Swal.fire({
@@ -5875,7 +5875,7 @@ function exportToPDF() {
         }
     });
     
-    window.location.href = '{{ route("modules.hr.employees") }}?export=pdf';
+    window.location.href = '{{ route("modules.hr.personal-particulars") }}?export=pdf';
     
     setTimeout(() => {
         Swal.fire({
@@ -5889,15 +5889,15 @@ function exportToPDF() {
 }
 
 function bulkActions() {
-    const selectedEmployees = $('.employee-checkbox:checked').map(function() {
+    const selectedParticulars = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
-    if (selectedEmployees.length === 0) {
+    if (selectedParticulars.length === 0) {
         Swal.fire({
             icon: 'warning',
             title: 'No Selection',
-            text: 'Please select at least one employee to perform bulk actions.',
+            text: 'Please select at least one particulars to perform bulk actions.',
             confirmButtonText: 'OK'
         });
         return;
@@ -5907,7 +5907,7 @@ function bulkActions() {
         title: 'Bulk Actions',
         html: `
             <div class="text-start">
-                <p class="mb-3"><strong>${selectedEmployees.length}</strong> employee(s) selected</p>
+                <p class="mb-3"><strong>${selectedParticulars.length}</strong> particulars(s) selected</p>
                 <div class="list-group">
                     <button type="button" class="list-group-item list-group-item-action" onclick="bulkActivate()">
                         <i class="bx bx-check-circle me-2 text-success"></i>Activate Selected
@@ -5937,13 +5937,13 @@ function bulkActions() {
 }
 
 function bulkActivate() {
-    const selected = $('.employee-checkbox:checked').map(function() {
+    const selected = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
     Swal.fire({
-        title: 'Activate Employees?',
-        text: `Are you sure you want to activate ${selected.length} employee(s)?`,
+        title: 'Activate Particulars?',
+        text: `Are you sure you want to activate ${selected.length} particulars(s)?`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Yes, Activate',
@@ -5951,11 +5951,11 @@ function bulkActivate() {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: '{{ route("modules.hr.employees.bulk-action") }}',
+                url: '{{ route("modules.hr.personal-particulars.bulk-action") }}',
                 method: 'POST',
                 data: {
                     action: 'activate',
-                    employee_ids: selected,
+                    particulars_ids: selected,
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
@@ -5968,7 +5968,7 @@ function bulkActivate() {
                     }
                 },
                 error: function() {
-                    Swal.fire('Error', 'Failed to activate employees.', 'error');
+                    Swal.fire('Error', 'Failed to activate personal-particulars.', 'error');
                 }
             });
         }
@@ -5976,13 +5976,13 @@ function bulkActivate() {
 }
 
 function bulkDeactivate() {
-    const selected = $('.employee-checkbox:checked').map(function() {
+    const selected = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
     Swal.fire({
-        title: 'Deactivate Employees?',
-        text: `Are you sure you want to deactivate ${selected.length} employee(s)?`,
+        title: 'Deactivate Particulars?',
+        text: `Are you sure you want to deactivate ${selected.length} particulars(s)?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, Deactivate',
@@ -5991,11 +5991,11 @@ function bulkDeactivate() {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: '{{ route("modules.hr.employees.bulk-action") }}',
+                url: '{{ route("modules.hr.personal-particulars.bulk-action") }}',
                 method: 'POST',
                 data: {
                     action: 'deactivate',
-                    employee_ids: selected,
+                    particulars_ids: selected,
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(response) {
@@ -6008,7 +6008,7 @@ function bulkDeactivate() {
                     }
                 },
                 error: function() {
-                    Swal.fire('Error', 'Failed to deactivate employees.', 'error');
+                    Swal.fire('Error', 'Failed to deactivate personal-particulars.', 'error');
                 }
             });
         }
@@ -6016,11 +6016,11 @@ function bulkDeactivate() {
 }
 
 function bulkExport() {
-    const selected = $('.employee-checkbox:checked').map(function() {
+    const selected = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
-    window.location.href = '{{ route("modules.hr.employees") }}?export=excel&ids=' + selected.join(',');
+    window.location.href = '{{ route("modules.hr.personal-particulars") }}?export=excel&ids=' + selected.join(',');
     Swal.fire({
         icon: 'success',
         title: 'Exporting...',
@@ -6031,17 +6031,17 @@ function bulkExport() {
 }
 
 function bulkSendSMS() {
-    const selected = $('.employee-checkbox:checked').map(function() {
+    const selected = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
     if (selected.length === 0) {
-        Swal.fire('Warning', 'Please select at least one employee.', 'warning');
+        Swal.fire('Warning', 'Please select at least one particulars.', 'warning');
         return;
     }
     
     Swal.fire({
-        title: 'Send SMS to Selected Employees',
+        title: 'Send SMS to Selected Particulars',
         html: `
             <div class="mb-3">
                 <div class="form-check mb-3">
@@ -6055,7 +6055,7 @@ function bulkSendSMS() {
                     <textarea id="bulkSMSMessage" class="form-control" rows="4" placeholder="Enter custom message here... (Leave empty if sending credentials)"></textarea>
                     <small class="text-muted">If credentials are enabled, this will be ignored. Otherwise, this message will be sent.</small>
                 </div>
-                <small class="text-muted d-block">${selected.length} employee(s) will receive this message</small>
+                <small class="text-muted d-block">${selected.length} particulars(s) will receive this message</small>
             </div>
         `,
         icon: 'info',
@@ -6090,7 +6090,7 @@ function bulkSendSMS() {
         if (result.isConfirmed) {
             Swal.fire({
                 title: 'Sending SMS...',
-                text: 'Please wait while we send SMS to all selected employees.',
+                text: 'Please wait while we send SMS to all selected personal-particulars.',
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 showConfirmButton: false,
@@ -6100,7 +6100,7 @@ function bulkSendSMS() {
             });
             
             $.ajax({
-                url: '{{ route("modules.hr.employees.bulk-sms") }}',
+                url: '{{ route("modules.hr.personal-particulars.bulk-sms") }}',
                 method: 'POST',
                 data: {
                     employee_ids: selected,
@@ -6116,7 +6116,7 @@ function bulkSendSMS() {
                             response.results.slice(0, 10).forEach(function(r) {
                                 const statusIcon = r.status === 'success' ? '✓' : '✗';
                                 const statusColor = r.status === 'success' ? 'text-success' : 'text-danger';
-                                details += `<li class="${statusColor}">${statusIcon} ${r.employee} - ${r.status === 'success' ? 'Sent' : r.reason || 'Failed'}</li>`;
+                                details += `<li class="${statusColor}">${statusIcon} ${r.particulars} - ${r.status === 'success' ? 'Sent' : r.reason || 'Failed'}</li>`;
                             });
                             if (response.results.length > 10) {
                                 details += `<li class="text-muted">... and ${response.results.length - 10} more</li>`;
@@ -6146,17 +6146,17 @@ function bulkSendSMS() {
 
 function bulkGeneratePasswordsAndSendSMS() {
     Swal.fire({
-        title: 'Generate Passwords & Send SMS to All Employees?',
+        title: 'Generate Passwords & Send SMS to All Particulars?',
         html: `
             <div class="text-start">
                 <p class="mb-3">This will:</p>
                 <ul class="text-start mb-3">
-                    <li>Generate a new password for all employees with phone numbers</li>
+                    <li>Generate a new password for all Particulars with phone numbers</li>
                     <li>Update their passwords in the database</li>
                     <li>Send SMS with login credentials (username and password) to their <strong>phone</strong> field</li>
                 </ul>
                 <div class="alert alert-warning">
-                    <strong>Warning:</strong> This action will reset passwords for all employees and send SMS to all employees with phone numbers. This may take several minutes.
+                    <strong>Warning:</strong> This action will reset passwords for all Particulars and send SMS to all Particulars with phone numbers. This may take several minutes.
                 </div>
             </div>
         `,
@@ -6179,7 +6179,7 @@ function bulkGeneratePasswordsAndSendSMS() {
                 });
                 
                 $.ajax({
-                    url: '{{ route("modules.hr.employees.bulk-generate-passwords-sms") }}',
+                    url: '{{ route("modules.hr.personal-particulars.bulk-generate-passwords-sms") }}',
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}'
@@ -6192,7 +6192,7 @@ function bulkGeneratePasswordsAndSendSMS() {
                                 response.results.forEach(function(r) {
                                     const statusIcon = r.status === 'success' ? '✓' : '✗';
                                     const statusColor = r.status === 'success' ? 'text-success' : 'text-danger';
-                                    details += `<li class="${statusColor}">${statusIcon} ${r.employee} (${r.email}) - ${r.status === 'success' ? 'Sent to ' + r.phone : r.reason || 'Failed'}</li>`;
+                                    details += `<li class="${statusColor}">${statusIcon} ${r.particulars} (${r.email}) - ${r.status === 'success' ? 'Sent to ' + r.phone : r.reason || 'Failed'}</li>`;
                                 });
                                 details += '</ul></div>';
                                 message += details;
@@ -6222,7 +6222,7 @@ function bulkGeneratePasswordsAndSendSMS() {
 
 function generateReport() {
     Swal.fire({
-        title: 'Generate Employee Report',
+        title: 'Generate particulars Report',
         html: `
             <div class="text-start">
                 <div class="mb-3">
@@ -6274,7 +6274,7 @@ function generateReport() {
                 }
             });
             
-            const url = '{{ route("modules.hr.employees.report") }}?type=' + result.value.type + '&format=' + result.value.format;
+            const url = '{{ route("modules.hr.personal-particulars.report") }}?type=' + result.value.type + '&format=' + result.value.format;
             
             // Open in new tab
             const newWindow = window.open(url, '_blank');
@@ -6309,7 +6309,7 @@ function refreshData() {
                 <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mb-0">Please wait while we refresh the employee data.</p>
+                <p class="mb-0">Please wait while we refresh the particulars data.</p>
             </div>
         `,
         icon: null,
@@ -6430,16 +6430,16 @@ function clearAllFilters() {
     window.location.href = url.toString();
 }
 
-// Select All Employees
+// Select All Particulars
 $(document).ready(function() {
-    $('#selectAllEmployees').on('change', function() {
-        $('.employee-checkbox').prop('checked', $(this).prop('checked'));
+    $('#selectAllParticulars').on('change', function() {
+        $('.particulars-checkbox').prop('checked', $(this).prop('checked'));
     });
     
-    $('.employee-checkbox').on('change', function() {
-        const total = $('.employee-checkbox').length;
-        const checked = $('.employee-checkbox:checked').length;
-        $('#selectAllEmployees').prop('checked', total === checked);
+    $('.particulars-checkbox').on('change', function() {
+        const total = $('.particulars-checkbox').length;
+        const checked = $('.particulars-checkbox:checked').length;
+        $('#selectAllParticulars').prop('checked', total === checked);
     });
     
     // Ensure filter panel is shown if filters are active on page load
@@ -6467,3 +6467,6 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+
+
+

@@ -1620,6 +1620,12 @@ class AttendanceController extends Controller
         $canViewAll = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'HOD']);
         
         $format = $request->get('format', 'excel'); // excel, pdf, csv
+        $reportType = $request->get('report_type', 'standard'); // standard, timing
+        
+        // Handle timing report separately
+        if ($reportType === 'timing') {
+            return $this->exportTimingReport($request, $format);
+        }
         
         $query = Attendance::with(['user', 'employee', 'employee.department', 'workSchedule', 'attendanceLocation']);
         
@@ -1892,6 +1898,161 @@ class AttendanceController extends Controller
         } else {
             // Fallback: return HTML view that can be printed as PDF
             return view('modules.hr.attendance-export-pdf', compact('attendances'));
+        }
+    }
+
+    /**
+     * Export timing report (early, late, early leave)
+     */
+    private function exportTimingReport(Request $request, $format = 'pdf')
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'HOD'])) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Get date range from request or use defaults
+        $dateFrom = $request->filled('start_date') 
+            ? Carbon::parse($request->start_date) 
+            : ($request->filled('date_from') 
+                ? Carbon::parse($request->date_from) 
+                : Carbon::today()->startOfMonth());
+        
+        $dateTo = $request->filled('end_date') 
+            ? Carbon::parse($request->end_date) 
+            : ($request->filled('date_to') 
+                ? Carbon::parse($request->date_to) 
+                : Carbon::today());
+
+        $query = Attendance::with(['user', 'user.employee', 'user.primaryDepartment', 'workSchedule'])
+            ->whereBetween('attendance_date', [$dateFrom, $dateTo])
+            ->whereNotNull('time_in');
+
+        if ($request->filled('department_id')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('primary_department_id', $request->department_id);
+            });
+        }
+
+        if ($request->filled('employee_id')) {
+            $query->where('user_id', $request->employee_id);
+        }
+
+        $attendances = $query->orderBy('attendance_date', 'desc')->get();
+
+        // Separate into early, late, and early leave
+        $earlyArrivals = [];
+        $lateArrivals = [];
+        $earlyLeaves = [];
+
+        foreach ($attendances as $attendance) {
+            $user = $attendance->user;
+            $schedule = $attendance->workSchedule;
+            
+            // Get expected times
+            $expectedStartTime = '09:00:00'; // Default
+            $expectedEndTime = '17:00:00'; // Default
+            
+            if ($schedule && $schedule->start_time) {
+                $expectedStartTime = Carbon::parse($schedule->start_time)->format('H:i:s');
+            }
+            if ($schedule && $schedule->end_time) {
+                $expectedEndTime = Carbon::parse($schedule->end_time)->format('H:i:s');
+            }
+
+            // Get actual times
+            $timeIn = $attendance->time_in;
+            if ($timeIn instanceof Carbon) {
+                $actualTimeIn = $timeIn->format('H:i:s');
+            } else {
+                $actualTimeIn = Carbon::parse($timeIn)->format('H:i:s');
+            }
+
+            $timeOut = $attendance->time_out;
+            $actualTimeOut = null;
+            if ($timeOut) {
+                if ($timeOut instanceof Carbon) {
+                    $actualTimeOut = $timeOut->format('H:i:s');
+                } else {
+                    $actualTimeOut = Carbon::parse($timeOut)->format('H:i:s');
+                }
+            }
+
+            // Calculate minutes difference
+            $expectedStart = Carbon::parse($attendance->attendance_date->format('Y-m-d') . ' ' . $expectedStartTime);
+            $actualStart = Carbon::parse($attendance->attendance_date->format('Y-m-d') . ' ' . $actualTimeIn);
+            $minutesDiff = $actualStart->diffInMinutes($expectedStart, false); // false = signed difference
+
+            $record = [
+                'date' => $attendance->attendance_date->format('Y-m-d'),
+                'employee_name' => $user->name ?? 'Unknown',
+                'employee_id' => $user->employee_id ?? 'N/A',
+                'department' => $user->primaryDepartment->name ?? 'N/A',
+                'expected_time_in' => $expectedStartTime,
+                'actual_time_in' => $actualTimeIn,
+                'expected_time_out' => $expectedEndTime,
+                'actual_time_out' => $actualTimeOut ?? 'N/A',
+                'minutes_diff' => $minutesDiff,
+            ];
+
+            // Check for early arrival (arrived before expected time) - prioritize this
+            if ($minutesDiff < 0) {
+                $record['minutes_early'] = abs($minutesDiff);
+                $earlyArrivals[] = $record;
+            } elseif ($attendance->is_late || $minutesDiff > 0) {
+                // Check for late arrival (only if not early)
+                $record['minutes_late'] = $minutesDiff > 0 ? $minutesDiff : 0;
+                $lateArrivals[] = $record;
+            }
+
+            // Check for early leave
+            if ($attendance->is_early_leave && $actualTimeOut) {
+                $expectedEnd = Carbon::parse($attendance->attendance_date->format('Y-m-d') . ' ' . $expectedEndTime);
+                $actualEnd = Carbon::parse($attendance->attendance_date->format('Y-m-d') . ' ' . $actualTimeOut);
+                $leaveMinutesDiff = $expectedEnd->diffInMinutes($actualEnd, false);
+                
+                if ($leaveMinutesDiff > 0) {
+                    $earlyLeaveRecord = $record;
+                    $earlyLeaveRecord['minutes_early'] = $leaveMinutesDiff;
+                    $earlyLeaves[] = $earlyLeaveRecord;
+                }
+            }
+        }
+
+        // Sort by date and time
+        usort($earlyArrivals, function($a, $b) {
+            return strcmp($b['date'], $a['date']) ?: strcmp($a['actual_time_in'], $b['actual_time_in']);
+        });
+        usort($lateArrivals, function($a, $b) {
+            return strcmp($b['date'], $a['date']) ?: ($b['minutes_late'] ?? 0) <=> ($a['minutes_late'] ?? 0);
+        });
+        usort($earlyLeaves, function($a, $b) {
+            return strcmp($b['date'], $a['date']) ?: ($b['minutes_early'] ?? 0) <=> ($a['minutes_early'] ?? 0);
+        });
+
+        $reportData = [
+            'date_from' => $dateFrom->format('Y-m-d'),
+            'date_to' => $dateTo->format('Y-m-d'),
+            'early_arrivals' => $earlyArrivals,
+            'late_arrivals' => $lateArrivals,
+            'early_leaves' => $earlyLeaves,
+            'total_early' => count($earlyArrivals),
+            'total_late' => count($lateArrivals),
+            'total_early_leaves' => count($earlyLeaves),
+        ];
+
+        // Only PDF format is supported for timing reports
+        if ($format !== 'pdf') {
+            $format = 'pdf';
+        }
+
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.hr.pdf.attendance-timing', compact('reportData', 'dateFrom', 'dateTo'));
+            $filename = 'Attendance_Timing_Report_' . $dateFrom->format('Y-m-d') . '_to_' . $dateTo->format('Y-m-d') . '.pdf';
+            return $pdf->download($filename);
+        } else {
+            return view('modules.hr.pdf.attendance-timing', compact('reportData', 'dateFrom', 'dateTo'));
         }
     }
 

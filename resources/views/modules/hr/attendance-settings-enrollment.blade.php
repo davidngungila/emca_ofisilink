@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'User Enrollment to Device')
+@section('title', 'Particulars Enrollment to Device')
 
 @section('breadcrumb')
 <div class="row">
@@ -8,9 +8,9 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h4 class="fw-bold py-3 mb-2">
-                    <i class="bx bx-user-plus"></i> User Enrollment to Device
+                    <i class="bx bx-user-plus"></i> Particulars Enrollment to Device
                 </h4>
-                <p class="text-muted">Register system employees to ZKTeco biometric device. <strong>Employee ID is automatically used as Enroll ID.</strong></p>
+                <p class="text-muted">Register system particulars to ZKTeco biometric device. <strong>Particulars ID is automatically used as Enroll ID.</strong></p>
             </div>
             <div>
                 <div class="btn-group">
@@ -180,52 +180,40 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if employees data is available
     if (typeof employeesData === 'undefined' || !employeesData || employeesData.length === 0) {
         // Load from API
-        loadEmployeesFromAPI();
+        loadParticularsFromAPI();
     } else {
-        loadEmployeesList();
+        loadParticularsList();
     }
 });
 
-function loadEmployeesFromAPI() {
-    const apiUrl = '/attendance-settings/employees/list';
+function loadParticularsFromAPI() {
+    const apiUrl = '/attendance-settings/particulars/list';
     const csrfToken = '{{ csrf_token() }}';
     
-    fetch(apiUrl, {
+    fetch('{{ route('attendance-settings.get-particulars-list') }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
-        }
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            return response.text().then(text => {
-                throw new Error('Expected JSON but got HTML');
-            });
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        if (data.success && data.employees) {
-            employeesData = data.employees;
-            loadEmployeesList();
+        if (data.success && data.particulars) {
+            particularsData = data.particulars;
+            loadParticularsList();
         } else {
-            const tbody = document.getElementById('employeesEnrollmentTableBody');
+            const tbody = document.getElementById('particularsEnrollmentTableBody');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No employees found</p></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No particulars found</p></td></tr>';
             }
         }
     })
     .catch(error => {
-        console.error('Error loading employees:', error);
-        const tbody = document.getElementById('employeesEnrollmentTableBody');
+        console.error('Error loading particulars:', error);
+        const tbody = document.getElementById('particularsEnrollmentTableBody');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">Error loading employees: ' + error.message + '</p></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-danger"><i class="bx bx-error-circle fs-1"></i><p class="mt-2">Error loading particulars: ' + error.message + '</p></td></tr>';
         }
     });
 }
@@ -354,4 +342,5 @@ function updateEmployeesFromDeviceUsers(deviceUsers) {
 }
 </script>
 @endpush
+
 

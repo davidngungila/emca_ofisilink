@@ -478,6 +478,10 @@
                                 <div class="card-body">
                                     <div class="row g-3">
                                         <div class="col-md-6">
+                                            <label class="form-label">NIDA Number</label>
+                                            <input type="text" name="nida_number" class="form-control" placeholder="National ID Number" value="{{ old('nida_number', $employee->employee->nida_number ?? '') }}">
+                                        </div>
+                                        <div class="col-md-6">
                                             <label class="form-label">TIN Number</label>
                                             <input type="text" name="tin_number" class="form-control" placeholder="Tax Identification Number">
                                         </div>
@@ -667,7 +671,7 @@ function saveCurrentStep(showMessage = true, callback = null) {
     }
     
     $.ajax({
-        url: '{{ route("modules.hr.employees.store") }}',
+        url: '{{ route("modules.hr.personal-particulars.store") }}',
         method: 'POST',
         data: formData,
         processData: false,
@@ -710,7 +714,7 @@ function completeRegistration() {
     // Save current step first, then redirect to review
     saveCurrentStep(false, function() {
         if (userId) {
-            window.location.href = `{{ route("modules.hr.employees.review", ":id") }}`.replace(':id', userId);
+            window.location.href = `{{ route("modules.hr.personal-particulars.review", ":id") }}`.replace(':id', userId);
         } else {
             showToast('error', 'Please save the current step first');
         }
@@ -744,7 +748,7 @@ function submitRegistration() {
         confirmButtonColor: '#ffc107',
         showLoaderOnConfirm: true,
         preConfirm: () => {
-            return fetch(`{{ route("modules.hr.employees.finalize", ":id") }}`.replace(':id', userId), {
+            return fetch(`{{ route("modules.hr.personal-particulars.finalize", ":id") }}`.replace(':id', userId), {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -783,7 +787,7 @@ function submitRegistration() {
                 confirmButtonText: 'Go to Employee Directory',
                 confirmButtonColor: '#696cff'
             }).then(() => {
-                window.location.href = '{{ route("modules.hr.employees") }}';
+                window.location.href = '{{ route("modules.hr.personal-particulars") }}';
             });
         }
     });

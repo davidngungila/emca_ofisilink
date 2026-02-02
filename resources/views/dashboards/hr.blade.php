@@ -17,8 +17,8 @@
             </p>
           </div>
           <div class="d-flex gap-2">
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-light btn-lg shadow-sm">
-              <i class="bx bx-group me-2"></i>Employees
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-light btn-lg shadow-sm">
+              <i class="bx bx-group me-2"></i>Personal Particulars
             </a>
             <a href="{{ route('modules.hr.payroll') }}" class="btn btn-light btn-lg shadow-sm">
               <i class="bx bx-credit-card me-2"></i>Payroll
@@ -42,9 +42,9 @@
         <h5 class="card-title mb-3"><i class="bx bx-link-external me-2"></i>Quick Actions</h5>
         <div class="row g-3">
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-primary w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-primary w-100 d-flex flex-column align-items-center py-3 shadow-sm">
               <i class="bx bx-group fs-3 mb-2"></i>
-              <span>Employees</span>
+              <span>Particulars</span>
               <small class="text-white-50">{{ $stats['total_employees'] ?? 0 }} total</small>
             </a>
           </div>
@@ -249,7 +249,7 @@
               @php
                 $allActivities = collect($recentActivities['permission_requests'] ?? [])
                   ->merge($recentActivities['sick_sheets'] ?? [])
-                  ->merge($recentActivities['assessments'] ?? [])
+                  ->merge($recentActivities['performance_management'] ?? [])
                   ->sortByDesc('created_at')
                   ->take(10);
               @endphp
@@ -257,7 +257,7 @@
               <tr>
                 <td>
                   <span class="badge bg-{{ $activity instanceof \App\Models\PermissionRequest ? 'info' : ($activity instanceof \App\Models\SickSheet ? 'danger' : 'success') }}">
-                    {{ $activity instanceof \App\Models\PermissionRequest ? 'Permission' : ($activity instanceof \App\Models\SickSheet ? 'Sick Sheet' : 'Assessment') }}
+                    {{ $activity instanceof \App\Models\PermissionRequest ? 'Permission' : ($activity instanceof \App\Models\SickSheet ? 'Sick Sheet' : 'Performance Management') }}
                   </span>
                 </td>
                 <td>
@@ -308,7 +308,7 @@
               <tr>
                 <td><strong>{{ $stat->primaryDepartment->name ?? 'Unknown' }}</strong></td>
                 <td><span class="badge bg-primary">{{ $stat->count ?? 0 }}</span></td>
-                <td><a href="{{ route('modules.hr.employees') }}?department={{ $stat->primary_department_id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+                <td><a href="{{ route('modules.hr.personal-particulars') }}?department={{ $stat->primary_department_id }}" class="btn btn-sm btn-outline-primary">View</a></td>
               </tr>
               @empty
               <tr>

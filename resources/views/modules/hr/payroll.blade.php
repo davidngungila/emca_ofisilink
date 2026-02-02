@@ -4010,7 +4010,7 @@ function showEmployeeFullDetails(employeeId) {
     }
     
     // Fetch employee details via AJAX - use the correct route
-    const employeeRoute = `/modules/hr/employees/${employeeId}`;
+    const employeeRoute = `/personal-particulars/${employeeId}`;
     fetch(employeeRoute, {
         method: 'GET',
         headers: {

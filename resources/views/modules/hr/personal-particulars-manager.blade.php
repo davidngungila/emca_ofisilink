@@ -15,8 +15,8 @@
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="mb-1">Total Employees</h6>
-                                        <h4 class="mb-0 text-primary">{{ $employees->total() }}</h4>
+                                        <h6 class="mb-1">Total Particulars</h6>
+                                        <h4 class="mb-0 text-primary">{{ $Particulars->total() }}</h4>
                                     </div>
                                     <div class="text-end">
                                         <small class="text-success">
@@ -44,7 +44,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-1">Active Staff</h6>
-                                        <h4 class="mb-0 text-success">{{ $employees->where('is_active', true)->count() }}</h4>
+                                        <h4 class="mb-0 text-success">{{ $Particulars->where('is_active', true)->count() }}</h4>
                                     </div>
                                     <div class="text-end">
                                         <small class="text-success">
@@ -100,7 +100,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-1">Monthly Cost</h6>
-                                        <h4 class="mb-0 text-warning">{{ number_format($employees->sum(function($emp) { return $emp->employee ? $emp->employee->salary : 0; }) / 1000000, 1) }}M</h4>
+                                        <h4 class="mb-0 text-warning">{{ number_format($Particulars->sum(function($emp) { return $emp->particulars ? $emp->particulars->salary : 0; }) / 1000000, 1) }}M</h4>
                                     </div>
                                     <div class="text-end">
                                         <small class="text-warning">
@@ -184,7 +184,7 @@
                     <div class="text-center py-4">
                         <i class="bx bx-history text-muted" style="font-size: 3rem;"></i>
                         <h6 class="mt-3 text-muted">No recent activities</h6>
-                        <p class="text-muted">Activity logs will appear here as employees are managed.</p>
+                        <p class="text-muted">Activity logs will appear here as Particulars are managed.</p>
                     </div>
                 @endif
             </div>
@@ -202,17 +202,17 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     @if($canEditAll)
-                    <a href="{{ route('modules.hr.employees.register') }}" class="btn btn-danger btn-lg quick-action-btn" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); transition: all 0.3s ease;">
-                        <i class="bx bx-user-plus me-2"></i>Add New Employee
+                    <a href="{{ route('modules.hr.personal-particulars.register') }}" class="btn btn-danger btn-lg quick-action-btn" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); transition: all 0.3s ease;">
+                        <i class="bx bx-user-plus me-2"></i>Add New Particulars
                     </a>
                     
-                    <button type="button" class="btn btn-outline-warning btn-lg quick-action-btn" onclick="syncAllEmployees()" style="border-color: #ff9800; color: #ff9800; font-weight: 500; transition: all 0.3s ease;">
+                    <button type="button" class="btn btn-outline-warning btn-lg quick-action-btn" onclick="syncAllParticulars()" style="border-color: #ff9800; color: #ff9800; font-weight: 500; transition: all 0.3s ease;">
                         <i class="bx bx-sync me-2"></i>Sync All Users
                     </button>
                     @endif
                     
-                    <button type="button" class="btn btn-outline-success btn-lg quick-action-btn" onclick="exportEmployees()" style="border-color: #28a745; color: #28a745; font-weight: 500; transition: all 0.3s ease;">
-                        <i class="bx bx-download me-2"></i>Export Employee Data
+                    <button type="button" class="btn btn-outline-success btn-lg quick-action-btn" onclick="exportParticulars()" style="border-color: #28a745; color: #28a745; font-weight: 500; transition: all 0.3s ease;">
+                        <i class="bx bx-download me-2"></i>Export Particulars Data
                     </button>
                     
                     <button type="button" class="btn btn-outline-info btn-lg quick-action-btn" onclick="generateReport()" style="border-color: #17a2b8; color: #17a2b8; font-weight: 500; transition: all 0.3s ease;">
@@ -235,7 +235,7 @@
 </div>
 
 
-<!-- Enhanced Employee Directory -->
+<!-- Enhanced particulars Directory -->
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -243,7 +243,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <h5 class="card-title mb-0">
-                            <i class="bx bx-list-ul me-2"></i>Employee Directory
+                            <i class="bx bx-list-ul me-2"></i>Particulars Directory
                         </h5>
                     </div>
                     <div class="col-md-6">
@@ -261,10 +261,10 @@
                                     <i class="bx bx-sort me-1"></i>Sort By
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" onclick="sortEmployees('name')">Name A-Z</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="sortEmployees('department')">Department</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="sortEmployees('salary')">Salary</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="sortEmployees('hire_date')">Hire Date</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortParticulars('name')">Name A-Z</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortParticulars('department')">Department</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortParticulars('salary')">Salary</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortParticulars('hire_date')">Hire Date</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -274,13 +274,13 @@
             <div class="card-body p-0">
                 <!-- List View -->
                 <div id="listView" class="table-responsive">
-                    <table class="table table-hover table-sm mb-0" id="employeeTable">
+                    <table class="table table-hover table-sm mb-0" id="particularsTable">
                         <thead class="table-light">
                             <tr>
                                 <th width="40" class="text-center">
-                                    <input type="checkbox" id="selectAllEmployees" class="form-check-input">
+                                    <input type="checkbox" id="selectAllParticulars" class="form-check-input">
                                 </th>
-                                <th>Employee</th>
+                                <th>Particulars</th>
                                 <th>Department</th>
                                 <th>Position</th>
                                 <th>Salary</th>
@@ -290,68 +290,68 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($employees as $employee)
+                            @forelse($Particulars as $particulars)
                             <tr>
                                 <td class="text-center">
-                                    <input type="checkbox" class="form-check-input employee-checkbox" value="{{ $employee->id }}">
+                                    <input type="checkbox" class="form-check-input particulars-checkbox" value="{{ $particulars->id }}">
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar avatar-sm me-2">
-                                            @if($employee->photo)
-                                                <img src="{{ Storage::url('photos/' . $employee->photo) }}" alt="Employee Photo" class="rounded-circle">
+                                            @if($particulars->photo)
+                                                <img src="{{ Storage::url('photos/' . $particulars->photo) }}" alt="particulars Photo" class="rounded-circle">
                                             @else
-                                                <span class="avatar-initial rounded-circle bg-label-primary">{{ substr($employee->name, 0, 1) }}</span>
+                                                <span class="avatar-initial rounded-circle bg-label-primary">{{ substr($particulars->name, 0, 1) }}</span>
                                             @endif
                                         </div>
                                         <div>
-                                            <h6 class="mb-0 fs-6">{{ $employee->name }}</h6>
-                                            <small class="text-muted">{{ $employee->employee_id }}</small>
+                                            <h6 class="mb-0 fs-6">{{ $particulars->name }}</h6>
+                                            <small class="text-muted">{{ $particulars->particulars_id }}</small>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-label-info">{{ $employee->primaryDepartment->name ?? 'N/A' }}</span>
+                                    <span class="badge bg-label-info">{{ $particulars->primaryDepartment->name ?? 'N/A' }}</span>
                                 </td>
-                                <td>{{ $employee->employee->position ?? 'N/A' }}</td>
+                                <td>{{ $particulars->particulars->position ?? 'N/A' }}</td>
                                 <td>
-                                    @if($employee->employee && $employee->employee->salary)
-                                        <strong class="text-success">{{ number_format($employee->employee->salary, 0) }} TZS</strong>
+                                    @if($particulars->particulars && $particulars->particulars->salary)
+                                        <strong class="text-success">{{ number_format($particulars->particulars->salary, 0) }} TZS</strong>
                                     @else
                                         <span class="text-muted">N/A</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if(isset($employee->completion_percentage))
+                                    @if(isset($particulars->completion_percentage))
                                     <div class="d-flex align-items-center">
                                         <div class="progress flex-grow-1 me-2" style="height: 20px; width: 80px;">
-                                            <div class="progress-bar {{ $employee->completion_percentage >= 90 ? 'bg-success' : ($employee->completion_percentage >= 70 ? 'bg-primary' : ($employee->completion_percentage >= 50 ? 'bg-warning' : 'bg-danger')) }}" 
-                                                 style="width: {{ $employee->completion_percentage }}%"
+                                            <div class="progress-bar {{ $particulars->completion_percentage >= 90 ? 'bg-success' : ($particulars->completion_percentage >= 70 ? 'bg-primary' : ($particulars->completion_percentage >= 50 ? 'bg-warning' : 'bg-danger')) }}" 
+                                                 style="width: {{ $particulars->completion_percentage }}%"
                                                  role="progressbar"
-                                                 aria-valuenow="{{ $employee->completion_percentage }}"
+                                                 aria-valuenow="{{ $particulars->completion_percentage }}"
                                                  aria-valuemin="0"
                                                  aria-valuemax="100">
-                                                {{ number_format($employee->completion_percentage, 0) }}%
+                                                {{ number_format($particulars->completion_percentage, 0) }}%
                                             </div>
                                         </div>
-                                        <small class="text-muted fw-bold">{{ number_format($employee->completion_percentage, 0) }}%</small>
+                                        <small class="text-muted fw-bold">{{ number_format($particulars->completion_percentage, 0) }}%</small>
                                     </div>
                                     @else
                                     <span class="text-muted">N/A</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge {{ $employee->is_active ? 'bg-label-success' : 'bg-label-danger' }}">
-                                        {{ $employee->is_active ? 'Active' : 'Inactive' }}
+                                    <span class="badge {{ $particulars->is_active ? 'bg-label-success' : 'bg-label-danger' }}">
+                                        {{ $particulars->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex gap-1 justify-content-center">
-                                        <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <a href="{{ route('personal-particulars.show', $particulars->id) }}" class="btn btn-sm btn-outline-primary" title="View Details">
                                             <i class="bx bx-show"></i>
                                         </a>
                                         @if($canEditAll)
-                                        <a href="{{ route('employees.edit', $employee->id) }}" class="btn btn-sm btn-outline-warning" title="Edit Employee">
+                                        <a href="{{ route('personal-particulars.edit', $particulars->id) }}" class="btn btn-sm btn-outline-warning" title="Edit Particulars">
                                             <i class="bx bx-edit"></i>
                                         </a>
                                         <div class="dropdown">
@@ -359,19 +359,19 @@
                                                 <i class="bx bx-dots-vertical-rounded"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item" href="{{ route('modules.hr.employees.registration-pdf', $employee->id) }}" target="_blank">
+                                                <a class="dropdown-item" href="{{ route('modules.hr.personal-particulars.registration-pdf', $particulars->id) }}" target="_blank">
                                                     <i class="bx bx-file-blank me-2"></i> Generate PDF
                                                 </a>
-                                                <a class="dropdown-item" href="javascript:void(0);" onclick="openUploadPhotoModal({{ $employee->id }})">
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="openUploadPhotoModal({{ $particulars->id }})">
                                                     <i class="bx bx-camera me-2"></i> Upload Photo
                                                 </a>
-                                                <a class="dropdown-item" href="javascript:void(0);" onclick="sendEmployeeSMS({{ $employee->id }})">
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="sendParticularsMS({{ $particulars->id }})">
                                                     <i class="bx bx-message me-2"></i> Send SMS
                                                 </a>
                                                 <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item" href="javascript:void(0);" onclick="toggleEmployeeStatus({{ $employee->id }})">
-                                                    <i class="bx bx-{{ $employee->is_active ? 'user-x' : 'user-check' }} me-2"></i> 
-                                                    {{ $employee->is_active ? 'Deactivate' : 'Activate' }}
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="toggleParticularsStatus({{ $particulars->id }})">
+                                                    <i class="bx bx-{{ $particulars->is_active ? 'user-x' : 'user-check' }} me-2"></i> 
+                                                    {{ $particulars->is_active ? 'Deactivate' : 'Activate' }}
                                                 </a>
                                             </div>
                                         </div>
@@ -384,8 +384,8 @@
                                 <td colspan="7" class="text-center py-4">
                                     <div class="d-flex flex-column align-items-center">
                                         <i class="bx bx-user text-muted" style="font-size: 3rem;"></i>
-                                        <h6 class="mt-2 text-muted">No employees found</h6>
-                                        <p class="text-muted">No employees match your current filters.</p>
+                                        <h6 class="mt-2 text-muted">No particulars found</h6>
+                                        <p class="text-muted">No particulars match your current filters.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -394,22 +394,22 @@
                     </table>
                 </div>
                 
-                @if($employees->hasPages())
+                @if($Particulars->hasPages())
                 <div class="d-flex justify-content-between align-items-center mt-3 px-3 py-2 border-top bg-light">
                     <div class="text-muted">
-                        <small>Page <strong>{{ $employees->currentPage() }}</strong> of <strong>{{ $employees->lastPage() }}</strong></small>
+                        <small>Page <strong>{{ $Particulars->currentPage() }}</strong> of <strong>{{ $Particulars->lastPage() }}</strong></small>
                     </div>
                     <div class="pagination-wrapper">
-                        {{ $employees->onEachSide(1)->links('pagination::bootstrap-4') }}
+                        {{ $Particulars->onEachSide(1)->links('pagination::bootstrap-4') }}
                     </div>
                     <div class="text-muted">
-                        <small><strong>{{ $employees->total() }}</strong> employees</small>
+                        <small><strong>{{ $Particulars->total() }}</strong> particulars</small>
                     </div>
                 </div>
                 @else
                 <div class="d-flex justify-content-end align-items-center mt-3 px-3 py-2 border-top bg-light">
                     <div class="text-muted">
-                        <small><strong>{{ $employees->total() }}</strong> employees</small>
+                        <small><strong>{{ $Particulars->total() }}</strong> Particulars</small>
                     </div>
                 </div>
                 @endif
@@ -417,25 +417,25 @@
                 <!-- Advanced Card View -->
                 <div id="cardView" class="d-none p-4">
                     <div class="row g-4">
-                        @forelse($employees as $employee)
+                        @forelse($Particulars as $particulars)
                         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
-                            <div class="card employee-card h-100 shadow-sm border-0 hover-lift">
+                            <div class="card particulars-card h-100 shadow-sm border-0 hover-lift">
                                 <div class="card-body p-3">
                                     <!-- Header with Photo and Status -->
                                     <div class="d-flex align-items-start justify-content-between mb-3">
                                         <div class="d-flex align-items-center">
                                             <div class="avatar avatar-lg me-3">
-                                                @if($employee->photo)
-                                                    <img src="{{ Storage::url('photos/' . $employee->photo) }}" alt="Employee Photo" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+                                                @if($particulars->photo)
+                                                    <img src="{{ Storage::url('photos/' . $particulars->photo) }}" alt="particulars Photo" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
                                                 @else
                                                     <span class="avatar-initial rounded-circle bg-label-primary d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.5rem;">
-                                                        {{ substr($employee->name, 0, 1) }}
+                                                        {{ substr($particulars->name, 0, 1) }}
                                                     </span>
                                                 @endif
                                             </div>
                                             <div>
-                                                <h6 class="mb-0 fw-bold">{{ $employee->name }}</h6>
-                                                <small class="text-muted">{{ $employee->employee_id }}</small>
+                                                <h6 class="mb-0 fw-bold">{{ $particulars->name }}</h6>
+                                                <small class="text-muted">{{ $particulars->particulars_id }}</small>
                                             </div>
                                         </div>
                                         <div class="dropdown">
@@ -443,27 +443,27 @@
                                                 <i class="bx bx-dots-vertical-rounded"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-end">
-                                                <a class="dropdown-item" href="{{ route('employees.show', $employee->id) }}" title="View Full Details">
+                                                <a class="dropdown-item" href="{{ route('personal-particulars.show', $particulars->id) }}" title="View Full Details">
                                                     <i class="bx bx-show me-2"></i> View Full Details
                                                 </a>
                                                 @if($canEditAll)
-                                                <a class="dropdown-item" href="{{ route('employees.edit', $employee->id) }}" title="Edit Employee">
-                                                    <i class="bx bx-edit me-2"></i> Edit Employee
+                                                <a class="dropdown-item" href="{{ route('personal-particulars.edit', $particulars->id) }}" title="Edit Particulars">
+                                                    <i class="bx bx-edit me-2"></i> Edit Particulars
                                                 </a>
                                                 <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item" href="{{ route('modules.hr.employees.registration-pdf', $employee->id) }}" target="_blank" title="Generate PDF">
+                                                <a class="dropdown-item" href="{{ route('modules.hr.personal-particulars.registration-pdf', $particulars->id) }}" target="_blank" title="Generate PDF">
                                                     <i class="bx bx-file-blank me-2"></i> Generate PDF
                                                 </a>
-                                                <a class="dropdown-item" href="javascript:void(0);" onclick="openUploadPhotoModal({{ $employee->id }})" title="Upload Photo">
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="openUploadPhotoModal({{ $particulars->id }})" title="Upload Photo">
                                                     <i class="bx bx-camera me-2"></i> Upload Photo
                                                 </a>
-                                                <a class="dropdown-item" href="javascript:void(0);" onclick="sendEmployeeSMS({{ $employee->id }})" title="Send SMS">
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="sendParticularsMS({{ $particulars->id }})" title="Send SMS">
                                                     <i class="bx bx-message me-2"></i> Send SMS
                                                 </a>
                                                 <div class="dropdown-divider"></div>
-                                                <a class="dropdown-item" href="javascript:void(0);" onclick="toggleEmployeeStatus({{ $employee->id }})" title="{{ $employee->is_active ? 'Deactivate' : 'Activate' }}">
-                                                    <i class="bx bx-{{ $employee->is_active ? 'user-x' : 'user-check' }} me-2"></i> 
-                                                    {{ $employee->is_active ? 'Deactivate' : 'Activate' }}
+                                                <a class="dropdown-item" href="javascript:void(0);" onclick="toggleParticularsStatus({{ $particulars->id }})" title="{{ $particulars->is_active ? 'Deactivate' : 'Activate' }}">
+                                                    <i class="bx bx-{{ $particulars->is_active ? 'user-x' : 'user-check' }} me-2"></i> 
+                                                    {{ $particulars->is_active ? 'Deactivate' : 'Activate' }}
                                                 </a>
                                                 @endif
                                             </div>
@@ -474,36 +474,36 @@
                                     <div class="mb-3">
                                         <div class="d-flex align-items-center mb-2">
                                             <i class="bx bx-building text-primary me-2"></i>
-                                            <span class="badge bg-label-info">{{ $employee->primaryDepartment->name ?? 'N/A' }}</span>
+                                            <span class="badge bg-label-info">{{ $particulars->primaryDepartment->name ?? 'N/A' }}</span>
                                         </div>
                                         <div class="d-flex align-items-center">
                                             <i class="bx bx-briefcase text-warning me-2"></i>
-                                            <small class="text-muted">{{ $employee->employee->position ?? 'N/A' }}</small>
+                                            <small class="text-muted">{{ $particulars->particulars->position ?? 'N/A' }}</small>
                                         </div>
                                     </div>
                                     
                                     <!-- Salary -->
-                                    @if($employee->employee && $employee->employee->salary)
+                                    @if($particulars->particulars && $particulars->particulars->salary)
                                     <div class="mb-3 p-2 bg-light rounded">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <small class="text-muted">Salary</small>
-                                            <strong class="text-success">{{ number_format($employee->employee->salary, 0) }} TZS</strong>
+                                            <strong class="text-success">{{ number_format($particulars->particulars->salary, 0) }} TZS</strong>
                                         </div>
                                     </div>
                                     @endif
                                     
                                     <!-- Profile Completion -->
-                                    @if(isset($employee->completion_percentage))
+                                    @if(isset($particulars->completion_percentage))
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
                                             <small class="text-muted">Profile Completion</small>
-                                            <small class="fw-bold {{ $employee->completion_percentage >= 90 ? 'text-success' : ($employee->completion_percentage >= 70 ? 'text-primary' : ($employee->completion_percentage >= 50 ? 'text-warning' : 'text-danger')) }}">
-                                                {{ number_format($employee->completion_percentage, 0) }}%
+                                            <small class="fw-bold {{ $particulars->completion_percentage >= 90 ? 'text-success' : ($particulars->completion_percentage >= 70 ? 'text-primary' : ($particulars->completion_percentage >= 50 ? 'text-warning' : 'text-danger')) }}">
+                                                {{ number_format($particulars->completion_percentage, 0) }}%
                                             </small>
                                         </div>
                                         <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar {{ $employee->completion_percentage >= 90 ? 'bg-success' : ($employee->completion_percentage >= 70 ? 'bg-primary' : ($employee->completion_percentage >= 50 ? 'bg-warning' : 'bg-danger')) }}" 
-                                                 style="width: {{ $employee->completion_percentage }}%"
+                                            <div class="progress-bar {{ $particulars->completion_percentage >= 90 ? 'bg-success' : ($particulars->completion_percentage >= 70 ? 'bg-primary' : ($particulars->completion_percentage >= 50 ? 'bg-warning' : 'bg-danger')) }}" 
+                                                 style="width: {{ $particulars->completion_percentage }}%"
                                                  role="progressbar">
                                             </div>
                                         </div>
@@ -512,16 +512,16 @@
                                     
                                     <!-- Status & Quick Actions -->
                                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                        <span class="badge {{ $employee->is_active ? 'bg-label-success' : 'bg-label-danger' }}">
-                                            <i class="bx bx-{{ $employee->is_active ? 'check-circle' : 'x-circle' }} me-1"></i>
-                                            {{ $employee->is_active ? 'Active' : 'Inactive' }}
+                                        <span class="badge {{ $particulars->is_active ? 'bg-label-success' : 'bg-label-danger' }}">
+                                            <i class="bx bx-{{ $particulars->is_active ? 'check-circle' : 'x-circle' }} me-1"></i>
+                                            {{ $particulars->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-primary" title="View Details">
+                                            <a href="{{ route('personal-particulars.show', $particulars->id) }}" class="btn btn-primary" title="View Details">
                                                 <i class="bx bx-show"></i>
                                             </a>
                                             @if($canEditAll)
-                                            <a href="{{ route('employees.edit', $employee->id) }}" class="btn btn-outline-warning" title="Edit">
+                                            <a href="{{ route('personal-particulars.edit', $particulars->id) }}" class="btn btn-outline-warning" title="Edit">
                                                 <i class="bx bx-edit"></i>
                                             </a>
                                             @endif
@@ -534,29 +534,29 @@
                         <div class="col-12">
                             <div class="text-center py-5">
                                 <i class="bx bx-user text-muted" style="font-size: 4rem;"></i>
-                                <h6 class="mt-3 text-muted">No employees found</h6>
-                                <p class="text-muted">No employees match your current filters.</p>
+                                <h6 class="mt-3 text-muted">No particulars found</h6>
+                                <p class="text-muted">No particulars match your current filters.</p>
                             </div>
                         </div>
                         @endforelse
                     </div>
                     
-                    @if($employees->hasPages())
+                    @if($Particulars->hasPages())
                     <div class="d-flex justify-content-between align-items-center mt-3 px-3 py-2 border-top bg-light">
                         <div class="text-muted">
-                            <small>Page <strong>{{ $employees->currentPage() }}</strong> of <strong>{{ $employees->lastPage() }}</strong></small>
+                            <small>Page <strong>{{ $Particulars->currentPage() }}</strong> of <strong>{{ $Particulars->lastPage() }}</strong></small>
                         </div>
                         <div class="pagination-wrapper">
-                            {{ $employees->onEachSide(1)->links('pagination::bootstrap-4') }}
+                            {{ $Particulars->onEachSide(1)->links('pagination::bootstrap-4') }}
                         </div>
                         <div class="text-muted">
-                            <small><strong>{{ $employees->total() }}</strong> employees</small>
+                            <small><strong>{{ $Particulars->total() }}</strong> Particulars</small>
                         </div>
                     </div>
                     @else
                     <div class="d-flex justify-content-end align-items-center mt-3 px-3 py-2 border-top bg-light">
                         <div class="text-muted">
-                            <small><strong>{{ $employees->total() }}</strong> employees</small>
+                            <small><strong>{{ $Particulars->total() }}</strong> Particulars</small>
                         </div>
                     </div>
                     @endif
@@ -587,19 +587,19 @@ function switchView(viewType) {
         cardView.classList.add('d-none');
         listBtn.classList.add('active');
         cardBtn.classList.remove('active');
-        localStorage.setItem('employeeViewType', 'list');
+        localStorage.setItem('particularsViewType', 'list');
     } else {
         listView.classList.add('d-none');
         cardView.classList.remove('d-none');
         cardBtn.classList.add('active');
         listBtn.classList.remove('active');
-        localStorage.setItem('employeeViewType', 'card');
+        localStorage.setItem('particularsViewType', 'card');
     }
 }
 
 // Restore view preference on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const savedView = localStorage.getItem('employeeViewType') || 'list';
+    const savedView = localStorage.getItem('particularsViewType') || 'list';
     if (savedView === 'card') {
         switchView('card');
     }
@@ -657,7 +657,7 @@ $(document).ready(function() {
     // Advanced search functionality
     $('#advancedSearch').on('keyup', function() {
         const searchTerm = $(this).val().toLowerCase();
-        filterEmployeesBySearch(searchTerm);
+        filterParticularsBySearch(searchTerm);
     });
     
     // Filter change handlers
@@ -670,12 +670,12 @@ $(document).ready(function() {
     $('#gridView').remove(); // Remove grid view completely if it exists
     
     // Select all functionality
-    $('#selectAllEmployees').change(function() {
-        $('.employee-checkbox').prop('checked', this.checked);
+    $('#selectAllParticulars').change(function() {
+        $('.particulars-checkbox').prop('checked', this.checked);
         updateBulkActionsVisibility();
     });
     
-    $('.employee-checkbox').change(function() {
+    $('.particulars-checkbox').change(function() {
         updateBulkActionsVisibility();
         updateSelectAllCheckbox();
     });
@@ -722,10 +722,10 @@ function refreshActivities() {
 
 // Removed setViewMode function - only list view is used now
 
-function sortEmployees(sortBy) {
+function sortParticulars(sortBy) {
     // This would typically require server-side sorting
     // For now, we'll implement client-side sorting
-    const rows = Array.from($('#employeeTable tbody tr'));
+    const rows = Array.from($('#particularsTable tbody tr'));
     
     rows.sort((a, b) => {
         let aVal, bVal;
@@ -750,7 +750,7 @@ function sortEmployees(sortBy) {
         return aVal > bVal ? 1 : -1;
     });
     
-    $('#employeeTable tbody').empty().append(rows);
+    $('#particularsTable tbody').empty().append(rows);
 }
 
 function applyFilters() {
@@ -761,7 +761,7 @@ function applyFilters() {
     const salaryRange = $('#salaryRangeFilter').val();
     
     // Only filter table rows (list view)
-    $('#employeeTable tbody tr').each(function() {
+    $('#particularsTable tbody tr').each(function() {
         let show = true;
         
         // Search filter
@@ -819,20 +819,20 @@ function applyFilters() {
     });
 }
 
-function filterEmployeesBySearch(searchTerm) {
+function filterParticularsBySearch(searchTerm) {
     applyFilters();
 }
 
 function updateSelectAllCheckbox() {
-    const totalCheckboxes = $('.employee-checkbox').length;
-    const checkedCheckboxes = $('.employee-checkbox:checked').length;
+    const totalCheckboxes = $('.particulars-checkbox').length;
+    const checkedCheckboxes = $('.particulars-checkbox:checked').length;
     
-    $('#selectAllEmployees').prop('checked', totalCheckboxes === checkedCheckboxes);
-    $('#selectAllEmployees').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
+    $('#selectAllParticulars').prop('checked', totalCheckboxes === checkedCheckboxes);
+    $('#selectAllParticulars').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
 }
 
 function updateBulkActionsVisibility() {
-    const checkedCount = $('.employee-checkbox:checked').length;
+    const checkedCount = $('.particulars-checkbox:checked').length;
     if (checkedCount > 0) {
         $('.bulk-actions').show();
         $('.bulk-count').text(checkedCount);
@@ -841,26 +841,26 @@ function updateBulkActionsVisibility() {
     }
 }
 
-function addNewEmployee() {
-    // Open add employee modal
-    openAddEmployeeModal();
+function addNewparticulars() {
+    // Open add particulars modal
+    openAddparticularsModal();
 }
 
-function openAddEmployeeModal() {
-    // Function is defined in employees.blade.php
-    if (typeof window.openAddEmployeeModal === 'undefined') {
+function openAddparticularsModal() {
+    // Function is defined in Particulars.blade.php
+    if (typeof window.openAddparticularsModal === 'undefined') {
         // Check if modal exists
-        if ($('#addEmployeeModal').length === 0) {
-            showToast('Add employee modal not found. Please ensure the main employees page is loaded.', 'error');
+        if ($('#addparticularsModal').length === 0) {
+            showToast('Add particulars modal not found. Please ensure the main Particulars page is loaded.', 'error');
             return;
         }
         
-        $('#addEmployeeModal').data('action', 'create');
-        if ($('#addEmployeeModalTitle').length > 0) {
-            $('#addEmployeeModalTitle').html('<i class="bx bx-user-plus me-2"></i>Add New Employee');
+        $('#addparticularsModal').data('action', 'create');
+        if ($('#addparticularsModalTitle').length > 0) {
+            $('#addparticularsModalTitle').html('<i class="bx bx-user-plus me-2"></i>Add New particulars');
         }
-        if ($('#addEmployeeForm').length > 0) {
-            $('#addEmployeeForm')[0].reset();
+        if ($('#addparticularsForm').length > 0) {
+            $('#addparticularsForm')[0].reset();
         }
         if ($('#add_user_id').length > 0) {
             $('#add_user_id').val('');
@@ -874,62 +874,62 @@ function openAddEmployeeModal() {
                 $('#personal-tab-btn').tab('show');
             }
         }
-        $('#addEmployeeModal').modal('show');
+        $('#addparticularsModal').modal('show');
     } else {
-        window.openAddEmployeeModal();
+        window.openAddparticularsModal();
     }
 }
 
-// Ensure viewEmployeeDetails is accessible
-if (typeof window.viewEmployeeDetails === 'undefined') {
-    window.viewEmployeeDetails = function(employeeId) {
-        if (!employeeId) {
-            showToast('Invalid employee ID.', 'error');
+// Ensure viewparticularsDetails is accessible
+if (typeof window.viewparticularsDetails === 'undefined') {
+    window.viewparticularsDetails = function(particularsId) {
+        if (!particularsId) {
+            showToast('Invalid particulars ID.', 'error');
             return;
         }
-        // This function should be defined in employees.blade.php
+        // This function should be defined in Particulars.blade.php
         // If not available, show error
-        showToast('Employee details function not available. Please refresh the page.', 'error');
+        showToast('particulars details function not available. Please refresh the page.', 'error');
     };
 }
 
-// Ensure openEditEmployeeModal is accessible
-if (typeof window.openEditEmployeeModal === 'undefined') {
-    window.openEditEmployeeModal = function(employeeId) {
-        if (!employeeId) {
-            showToast('Invalid employee ID.', 'error');
+// Ensure openEditparticularsModal is accessible
+if (typeof window.openEditparticularsModal === 'undefined') {
+    window.viewParticularsDetails = function(particularsId) {
+        if (!particularsId) {
+            showToast('Invalid particulars ID.', 'error');
             return;
         }
-        // This function should be defined in employees.blade.php
+        // This function should be defined in personal-particulars.blade.php
         // If not available, show error
-        showToast('Edit employee function not available. Please refresh the page.', 'error');
+        showToast('Edit particulars function not available. Please refresh the page.', 'error');
     };
 }
 
 // Ensure openUploadPhotoModal is accessible
 if (typeof window.openUploadPhotoModal === 'undefined') {
-    window.openUploadPhotoModal = function(employeeId) {
-        if (!employeeId) {
-            showToast('Invalid employee ID.', 'error');
+    window.openUploadPhotoModal = function(particularsId) {
+        if (!particularsId) {
+            showToast('Invalid particulars ID.', 'error');
             return;
         }
-        // This function should be defined in employees.blade.php
+        // This function should be defined in personal-particulars.blade.php
         // If not available, show error
         showToast('Upload photo function not available. Please refresh the page.', 'error');
     };
 }
 
-// Ensure toggleEmployeeStatus is accessible and uses toast notifications
-if (typeof window.toggleEmployeeStatus === 'undefined') {
-    window.toggleEmployeeStatus = function(employeeId) {
-        if (!employeeId) {
-            showToast('Invalid employee ID.', 'error');
+// Ensure toggleParticularstatus is accessible and uses toast notifications
+if (typeof window.toggleParticularsStatus === 'undefined') {
+    window.toggleParticularsStatus = function(particularsId) {
+        if (!particularsId) {
+            showToast('Invalid particulars ID.', 'error');
             return;
         }
         
         Swal.fire({
-            title: 'Change Employee Status?',
-            text: 'Are you sure you want to change this employee\'s status?',
+            title: 'Change Particulars Status?',
+            text: 'Are you sure you want to change this particulars\' status?',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Yes, Change',
@@ -938,7 +938,7 @@ if (typeof window.toggleEmployeeStatus === 'undefined') {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '{{ route("employees.toggle-status", ":id") }}'.replace(':id', employeeId),
+                    url: '{{ route("personal-particulars.toggle-status", ":id") }}'.replace(':id', particularsId),
                     type: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -946,12 +946,12 @@ if (typeof window.toggleEmployeeStatus === 'undefined') {
                     },
                     success: function(response) {
                         if (response.success) {
-                            showToast(response.message || 'Employee status updated successfully.', 'success');
+                            showToast(response.message || 'Particulars status updated successfully.', 'success');
                             setTimeout(() => {
                                 location.reload();
                             }, 1500);
                         } else {
-                            showToast(response.message || 'Failed to update employee status.', 'error');
+                            showToast(response.message || 'Failed to update particulars status.', 'error');
                         }
                     },
                     error: function(xhr) {
@@ -965,11 +965,11 @@ if (typeof window.toggleEmployeeStatus === 'undefined') {
     };
 }
 
-function exportEmployees() {
-    console.log('exportEmployees function called');
+function exportParticulars() {
+    console.log('exportParticulars function called');
     try {
         Swal.fire({
-            title: 'Export Employees',
+            title: 'Export Particulars',
             text: 'Choose export format',
             icon: 'question',
             showCancelButton: true,
@@ -979,7 +979,7 @@ function exportEmployees() {
             denyButtonText: 'PDF',
             confirmButtonColor: '#696cff'
         }).then((result) => {
-            const exportUrl = '{{ route("modules.hr.employees") }}';
+            const exportUrl = '{{ route("modules.hr.personal-particulars") }}';
             console.log('Export result:', result);
             
             if (result.isConfirmed) {
@@ -1003,7 +1003,7 @@ function exportEmployees() {
             showToast('Error opening export. Please try again.', 'error');
         });
     } catch (error) {
-        console.error('exportEmployees error:', error);
+        console.error('exportParticulars error:', error);
         showToast('Error: ' + error.message, 'error');
     }
 }
@@ -1011,7 +1011,7 @@ function exportEmployees() {
 function generateReport() {
     console.log('generateReport function called');
     try {
-        const reportUrl = '{{ route("modules.hr.employees.report") }}';
+        const reportUrl = '{{ route("modules.hr.personal-particulars.report") }}';
         console.log('Report URL:', reportUrl);
         
         Swal.fire({
@@ -1019,7 +1019,7 @@ function generateReport() {
             text: 'Select report type',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Employee Summary',
+            confirmButtonText: 'particulars Summary',
             cancelButtonText: 'Department Report',
             showDenyButton: true,
             denyButtonText: 'Salary Analysis',
@@ -1028,7 +1028,7 @@ function generateReport() {
             console.log('Report result:', result);
             
             if (result.isConfirmed) {
-                showToast('Generating employee summary report...', 'info', 2000);
+                showToast('Generating particulars summary report...', 'info', 2000);
                 const url = reportUrl + '?type=summary&format=pdf';
                 console.log('Opening summary report:', url);
                 window.open(url, '_blank');
@@ -1056,17 +1056,17 @@ function generateReport() {
 function bulkActions() {
     console.log('bulkActions function called');
     try {
-        const checkedCount = $('.employee-checkbox:checked').length;
-        console.log('Checked employees:', checkedCount);
+        const checkedCount = $('.particulars-checkbox:checked').length;
+        console.log('Checked Particulars:', checkedCount);
         
         if (checkedCount === 0) {
-            showToast('Please select employees first.', 'warning');
+            showToast('Please select Particulars first.', 'warning');
             return;
         }
     
         Swal.fire({
             title: 'Bulk Actions',
-            text: `${checkedCount} employee(s) selected`,
+            text: `${checkedCount} particulars(s) selected`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Activate All',
@@ -1076,11 +1076,11 @@ function bulkActions() {
             confirmButtonColor: '#696cff'
         }).then((result) => {
             if (result.isConfirmed) {
-                bulkActivateEmployees();
+                bulkActivateParticulars();
             } else if (result.isDenied) {
-                exportSelectedEmployees();
+                exportSelectedParticulars();
             } else if (result.dismiss === Swal.DismissReason.cancel) {
-                bulkDeactivateEmployees();
+                bulkDeactivateParticulars();
             }
         }).catch(error => {
             console.error('Bulk actions error:', error);
@@ -1092,18 +1092,18 @@ function bulkActions() {
     }
 }
 
-function bulkActivateEmployees() {
-    const selectedIds = $('.employee-checkbox:checked').map(function() {
+function bulkActivateParticulars() {
+    const selectedIds = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
     if (selectedIds.length === 0) {
-        showToast('Please select at least one employee.', 'warning');
+        showToast('Please select at least one particulars.', 'warning');
         return;
     }
     
     $.ajax({
-        url: '{{ route("modules.hr.employees.bulk-action") }}',
+        url: '{{ route("modules.hr.personal-particulars.bulk-action") }}',
         type: 'POST',
         data: { action: 'activate', employee_ids: selectedIds },
         headers: {
@@ -1112,12 +1112,12 @@ function bulkActivateEmployees() {
         },
         success: function(response) {
             if (response.success) {
-                showToast(response.message || `${selectedIds.length} employee(s) activated successfully.`, 'success');
+                showToast(response.message || `${selectedIds.length} particulars(s) activated successfully.`, 'success');
                 setTimeout(() => {
                     location.reload();
                 }, 1500);
             } else {
-                showToast(response.message || 'Failed to activate employees.', 'error');
+                showToast(response.message || 'Failed to activate Particulars.', 'error');
             }
         },
         error: function(xhr) {
@@ -1128,18 +1128,18 @@ function bulkActivateEmployees() {
     });
 }
 
-function bulkDeactivateEmployees() {
-    const selectedIds = $('.employee-checkbox:checked').map(function() {
+function bulkDeactivateParticulars() {
+    const selectedIds = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
     if (selectedIds.length === 0) {
-        showToast('Please select at least one employee.', 'warning');
+        showToast('Please select at least one particulars.', 'warning');
         return;
     }
     
     $.ajax({
-        url: '{{ route("modules.hr.employees.bulk-action") }}',
+        url: '{{ route("modules.hr.personal-particulars.bulk-action") }}',
         type: 'POST',
         data: { action: 'deactivate', employee_ids: selectedIds },
         headers: {
@@ -1148,12 +1148,12 @@ function bulkDeactivateEmployees() {
         },
         success: function(response) {
             if (response.success) {
-                showToast(response.message || `${selectedIds.length} employee(s) deactivated successfully.`, 'success');
+                showToast(response.message || `${selectedIds.length} particulars(s) deactivated successfully.`, 'success');
                 setTimeout(() => {
                     location.reload();
                 }, 1500);
             } else {
-                showToast(response.message || 'Failed to deactivate employees.', 'error');
+                showToast(response.message || 'Failed to deactivate Particulars.', 'error');
             }
         },
         error: function(xhr) {
@@ -1164,21 +1164,20 @@ function bulkDeactivateEmployees() {
     });
 }
 
-function exportSelectedEmployees() {
-    const selectedIds = $('.employee-checkbox:checked').map(function() {
+function exportSelectedParticulars() {
+    const selectedIds = $('.particulars-checkbox:checked').map(function() {
         return $(this).val();
     }).get();
     
     if (selectedIds.length === 0) {
-        showToast('Please select at least one employee to export.', 'warning');
+        showToast('Please select at least one particulars to export.', 'warning');
         return;
     }
     
-    const params = new URLSearchParams();
-    selectedIds.forEach(id => params.append('employee_ids[]', id));
+    const ids = selectedIds.join(',');
     
-    showToast(`Exporting ${selectedIds.length} selected employee(s)...`, 'info', 2000);
-    window.open(`/employees/export/selected?${params.toString()}`, '_blank');
+    showToast(`Exporting ${selectedIds.length} selected particulars(s)...`, 'info', 2000);
+    window.open('{{ route("modules.hr.personal-particulars") }}?export=excel&ids=' + ids, '_blank');
 }
 
 function refreshData() {
@@ -1186,7 +1185,7 @@ function refreshData() {
     try {
         Swal.fire({
             title: 'Refresh Data',
-            text: 'This will reload all employee data',
+            text: 'This will reload all particulars data',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Yes, Refresh',
@@ -1195,7 +1194,7 @@ function refreshData() {
         }).then((result) => {
             console.log('Refresh result:', result);
             if (result.isConfirmed) {
-                showToast('Refreshing employee data...', 'info', 1000);
+                showToast('Refreshing particulars data...', 'info', 1000);
                 setTimeout(() => {
                     console.log('Reloading page...');
                     location.reload();
@@ -1211,14 +1210,14 @@ function refreshData() {
     }
 }
 
-function syncAllEmployees() {
-    console.log('syncAllEmployees function called');
+function syncAllParticulars() {
+    console.log('syncAllParticulars function called');
     
     Swal.fire({
         title: 'Sync All Users',
         html: `
             <div class="text-start">
-                <p class="mb-3">This will create employee records for all users that don't have one.</p>
+                <p class="mb-3">This will create particulars records for all users that don't have one.</p>
                 <div class="alert alert-info">
                     <i class="bx bx-info-circle me-2"></i>
                     <strong>Note:</strong> This process may take a few moments depending on the number of users.
@@ -1232,8 +1231,8 @@ function syncAllEmployees() {
         confirmButtonColor: '#ff9800',
         showLoaderOnConfirm: true,
         preConfirm: () => {
-            const syncUrl = '{{ route("employees.sync-all") }}';
-            console.log('Syncing employees via:', syncUrl);
+            const syncUrl = '{{ route("personal-particulars.sync-all") }}';
+            console.log('Syncing Particulars via:', syncUrl);
             
             return $.ajax({
                 url: syncUrl,
@@ -1257,7 +1256,7 @@ function syncAllEmployees() {
                 }
             }).catch(error => {
                 console.error('Sync AJAX error:', error);
-                let errorMessage = 'Error syncing employees. Please try again.';
+                let errorMessage = 'Error syncing Particulars. Please try again.';
                 
                 if (error.responseJSON && error.responseJSON.message) {
                     errorMessage = error.responseJSON.message;
@@ -1280,8 +1279,8 @@ function syncAllEmployees() {
                 icon: 'success',
                 title: 'Sync Completed!',
                 html: `
-                    <p>${result.value.message || 'Employees synced successfully.'}</p>
-                    <p class="text-muted mb-0">${result.value.count || 0} employee record(s) created/updated.</p>
+                    <p>${result.value.message || 'Particulars synced successfully.'}</p>
+                    <p class="text-muted mb-0">${result.value.count || 0} particulars record(s) created/updated.</p>
                 `,
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#ff9800'
@@ -1292,7 +1291,7 @@ function syncAllEmployees() {
             Swal.fire({
                 icon: 'error',
                 title: 'Sync Failed',
-                text: result.value.message || 'Failed to sync employees. Please try again.',
+                text: result.value.message || 'Failed to sync Particulars. Please try again.',
                 confirmButtonText: 'OK'
             });
         } else if (result.isDismissed) {
@@ -1371,12 +1370,12 @@ function syncAllEmployees() {
 }
 
 /* Optimized table styles for better screen fit */
-#employeeTable {
+#particularsTable {
     font-size: 0.875rem;
     width: 100%;
 }
 
-#employeeTable thead th {
+#particularsTable thead th {
     white-space: nowrap;
     font-weight: 600;
     font-size: 0.75rem;
@@ -1385,18 +1384,18 @@ function syncAllEmployees() {
     padding: 0.75rem 0.5rem;
 }
 
-#employeeTable tbody td {
+#particularsTable tbody td {
     padding: 0.75rem 0.5rem;
     vertical-align: middle;
 }
 
-#employeeTable .avatar {
+#particularsTable .avatar {
     width: 32px;
     height: 32px;
     font-size: 0.75rem;
 }
 
-#employeeTable .progress {
+#particularsTable .progress {
     min-width: 60px;
 }
 
@@ -1498,13 +1497,13 @@ function syncAllEmployees() {
     z-index: 1052 !important;
 }
 
-.employee-card .dropdown,
-#employeeTable .dropdown {
+.particulars-card .dropdown,
+#particularsTable .dropdown {
     position: relative;
 }
 
-.employee-card .dropdown-menu,
-#employeeTable .dropdown-menu {
+.particulars-card .dropdown-menu,
+#particularsTable .dropdown-menu {
     position: absolute !important;
     z-index: 1052 !important;
     margin-top: 0.125rem !important;
@@ -1648,3 +1647,4 @@ function syncAllEmployees() {
     max-height: 0.75rem !important;
 }
 </style>
+

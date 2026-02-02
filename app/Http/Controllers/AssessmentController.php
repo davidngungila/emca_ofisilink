@@ -205,110 +205,13 @@ class AssessmentController extends Controller
             ];
         }
         
-        return view('modules.hr.assessments', compact(
+        return view('modules.hr.performance-management', compact(
             'awaitingMyAction', 'myAssessments', 'otherAssessments', 'pendingReports',
             'isHR', 'isHOD', 'isCEO', 'isAdmin', 'isManager', 'currentPeriodStatus', 'statistics'
         ));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'main_responsibility' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'contribution_percentage' => 'required|numeric|min:0|max:100',
-            'activities' => 'required|array|min:1',
-            'activities.*.activity_name' => 'required|string|max:255',
-            'activities.*.description' => 'nullable|string',
-            'activities.*.reporting_frequency' => 'required|in:daily,weekly,monthly',
-        ]);
 
-        $user = Auth::user();
-        $totalPercentage = (float)$request->contribution_percentage;
-
-        DB::beginTransaction();
-        try {
-            $assessment = Assessment::create([
-                'employee_id' => $user->id,
-                'main_responsibility' => $request->main_responsibility,
-                'description' => $request->description,
-                'contribution_percentage' => $totalPercentage,
-                'status' => 'pending_hod',
-            ]);
-
-            // Auto distribute activity contribution equally based on count
-            $count = max(1, count($request->activities));
-            // Handle rounding so the sum matches exactly the main contribution
-            $base = floor(($totalPercentage / $count) * 100) / 100; // 2 decimal base
-            $remainder = round($totalPercentage - ($base * $count), 2);
-
-            foreach (array_values($request->activities) as $index => $activityData) {
-                $contrib = $base + ($remainder > 0 ? min(0.01, $remainder) : 0);
-                $remainder = round($remainder - ($contrib - $base), 2);
-                AssessmentActivity::create([
-                    'assessment_id' => $assessment->id,
-                    'activity_name' => $activityData['activity_name'],
-                    'description' => $activityData['description'] ?? null,
-                    'reporting_frequency' => $activityData['reporting_frequency'],
-                    'contribution_percentage' => round($contrib, 2),
-                ]);
-            }
-
-            // Send notifications with SMS
-            try {
-                // Notify employee
-                $employeeMessage = "Assessment Submitted: Your responsibility assessment '{$assessment->main_responsibility}' has been submitted and is pending HOD approval.";
-                $this->notificationService->notify(
-                    $user->id,
-                    $employeeMessage,
-                    route('modules.hr.assessments'),
-                    'Assessment Submitted'
-                );
-
-                // Notify HOD with SMS
-                if ($user->primary_department_id) {
-                    $hodMessage = "New Assessment: Responsibility assessment '{$assessment->main_responsibility}' from {$user->name} requires your approval.";
-                    $this->notificationService->notifyHOD(
-                        $user->primary_department_id,
-                        $hodMessage,
-                        route('modules.hr.assessments'),
-                        'New Assessment Pending Approval',
-                        ['responsibility' => $assessment->main_responsibility, 'staff_name' => $user->name]
-                    );
-                }
-                
-                \Log::info('Assessment submitted - SMS notifications sent', [
-                    'assessment_id' => $assessment->id,
-                    'employee_id' => $user->id,
-                    'department_id' => $user->primary_department_id
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Notification error in store(): ' . $e->getMessage());
-            }
-
-            DB::commit();
-            
-            // Log activity
-            ActivityLogService::logCreated($assessment, "Created assessment: {$assessment->main_responsibility}", [
-                'main_responsibility' => $assessment->main_responsibility,
-                'contribution_percentage' => $assessment->contribution_percentage,
-                'activities_count' => count($request->activities),
-                'status' => $assessment->status,
-            ]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Assessment submitted successfully!',
-                'id' => $assessment->id
-            ]);
-        } catch (\Exception $e) {
-            DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to submit assessment: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 
     public function hodApprove(Request $request, Assessment $assessment)
     {
@@ -356,7 +259,7 @@ class AssessmentController extends Controller
                 $this->notificationService->notify(
                     $employee->id,
                     $approveMessage,
-                    route('modules.hr.assessments'),
+                    route('modules.hr.performance-management'),
                     'Assessment Approved'
                 );
                 
@@ -370,7 +273,7 @@ class AssessmentController extends Controller
                 $this->notificationService->notify(
                     $employee->id,
                     $rejectMessage,
-                    route('modules.hr.assessments'),
+                    route('modules.hr.performance-management'),
                     'Assessment Rejected'
                 );
                 
@@ -470,7 +373,7 @@ class AssessmentController extends Controller
                 $this->notificationService->notify(
                     $user->id,
                     $employeeMessage,
-                    route('modules.hr.assessments'),
+                    route('modules.hr.performance-management'),
                     'Progress Report Submitted'
                 );
 
@@ -480,7 +383,7 @@ class AssessmentController extends Controller
                     $this->notificationService->notifyHOD(
                         $activity->assessment->employee->primary_department_id,
                         $hodMessage,
-                        route('modules.hr.assessments'),
+                        route('modules.hr.performance-management'),
                         'New Progress Report',
                         ['activity' => $activity->activity_name, 'staff_name' => $user->name]
                     );
@@ -555,7 +458,7 @@ class AssessmentController extends Controller
                 $this->notificationService->notify(
                     $employee->id,
                     $approveMessage,
-                    route('modules.hr.assessments'),
+                    route('modules.hr.performance-management'),
                     'Progress Report Approved'
                 );
                 
@@ -570,7 +473,7 @@ class AssessmentController extends Controller
                 $this->notificationService->notify(
                     $employee->id,
                     $rejectMessage,
-                    route('modules.hr.assessments'),
+                    route('modules.hr.performance-management'),
                     'Progress Report Rejected'
                 );
                 
@@ -982,7 +885,7 @@ class AssessmentController extends Controller
             'performance_details' => $performanceDetails,
         ];
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.hr.assessments-pdf', $data);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.hr.performance-management-pdf', $data);
         $pdf->setPaper('A4', 'portrait');
         $fileName = 'Performance_Report_'.$employeeId.'_'.$year.'.pdf';
         return $pdf->stream($fileName);
@@ -1291,7 +1194,7 @@ class AssessmentController extends Controller
         $currentYear = date('Y');
         $performanceData = $this->calculatePerformanceMetrics($assessment, $currentYear);
         
-        return view('modules.hr.assessments-activities-reports', compact(
+        return view('modules.hr.performance-management-activities-reports', compact(
             'assessment',
             'isHR',
             'isHOD',
@@ -1347,7 +1250,7 @@ class AssessmentController extends Controller
         // Get timeline events
         $timeline = $this->getAssessmentTimeline($assessment);
         
-        return view('modules.hr.assessment-details', compact(
+        return view('modules.hr.performance-management-details', compact(
             'assessment',
             'isHR',
             'isHOD',
@@ -1471,15 +1374,36 @@ class AssessmentController extends Controller
         }
         
         $year = (int) $request->input('year', date('Y'));
+        $periodType = $request->input('period_type', 'year'); // year, semi, quarter, month
+        $periodValue = $request->input('period_value', '');
         $departmentId = $request->input('department_id');
-        
-        $query = Assessment::with([
-            'employee.primaryDepartment',
-            'activities.progressReports' => function($q) use ($year) {
-                $q->whereYear('report_date', $year);
+    
+        // Calculate Date Range
+        $startDate = Carbon::createFromDate($year, 1, 1)->startOfDay();
+        $endDate = Carbon::createFromDate($year, 12, 31)->endOfDay();
+    
+        if ($periodType === 'semi') {
+            if ($periodValue === 'h1') {
+                $startDate = Carbon::createFromDate($year, 1, 1)->startOfDay();
+                $endDate = Carbon::createFromDate($year, 6, 30)->endOfDay();
+            } else {
+                $startDate = Carbon::createFromDate($year, 7, 1)->startOfDay();
+                $endDate = Carbon::createFromDate($year, 12, 31)->endOfDay();
             }
-        ]);
-        
+        } elseif ($periodType === 'quarter') {
+            // q1, q2, q3, q4
+            $q = (int) str_replace('q', '', $periodValue);
+            $startDate = Carbon::createFromDate($year, 1, 1)->addMonths(($q-1)*3)->startOfDay();
+            $endDate = $startDate->copy()->addMonths(3)->subDay()->endOfDay();
+        } elseif ($periodType === 'month') {
+            $m = (int) $periodValue;
+            $startDate = Carbon::createFromDate($year, $m, 1)->startOfDay();
+            $endDate = $startDate->copy()->endOfMonth()->endOfDay();
+        }
+    
+        $query = Assessment::with(['employee.primaryDepartment'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+    
         if ($user->hasRole('HOD') && !$user->hasRole('System Admin') && !$user->hasRole('HR Officer')) {
             $query->whereHas('employee', function($q) use ($user) {
                 $q->where('primary_department_id', $user->primary_department_id);
@@ -1494,6 +1418,11 @@ class AssessmentController extends Controller
         
         $assessments = $query->get();
         
+        // Eager load progress reports within range manually to allow date filtering on relation
+        $assessments->load(['activities.progressReports' => function($q) use ($startDate, $endDate) {
+            $q->whereBetween('report_date', [$startDate, $endDate]);
+        }]);
+        
         // Status distribution
         $statusData = [
             'approved' => $assessments->where('status', 'approved')->count(),
@@ -1501,22 +1430,42 @@ class AssessmentController extends Controller
             'rejected' => $assessments->where('status', 'rejected')->count(),
         ];
         
-        // Monthly trend
-        $monthlyTrend = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $monthlyTrend[$i] = [
-                'assessments' => $assessments->filter(function($a) use ($i) {
-                    return $a->created_at->month == $i;
-                })->count(),
-                'reports' => $assessments->sum(function($a) use ($i, $year) {
-                    return $a->activities->sum(function($act) use ($i, $year) {
-                        return $act->progressReports->filter(function($r) use ($i, $year) {
-                            return $r->report_date && $r->report_date->month == $i && $r->report_date->year == $year;
-                        })->count();
-                    });
-                }),
-            ];
+        // Trend Data Logic
+        $trendLabels = [];
+        $trendAssessments = [];
+        $trendReports = [];
+        
+        if ($periodType === 'month') {
+            // Daily trend for the month
+            $daysInMonth = $endDate->day;
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $dayDate = Carbon::createFromDate($year, $startDate->month, $d);
+                $trendLabels[] = $dayDate->format('d M');
+                $trendAssessments[] = $assessments->filter(fn($a) => $a->created_at->day == $d)->count();
+                $trendReports[] = $assessments->sum(function($a) use ($year, $startDate, $d) {
+                    return $a->activities->sum(fn($act) => $act->progressReports->filter(fn($r) => $r->report_date && $r->report_date->day == $d)->count());
+                });
+            }
+        } else {
+            // Monthly trend for Year, Semi, Quarter
+            $startM = $startDate->month;
+            $endM = $endDate->month;
+            
+            for ($m = $startM; $m <= $endM; $m++) {
+                $dateObj = Carbon::createFromDate($year, $m, 1);
+                $trendLabels[] = $dateObj->format('M');
+                
+                $trendAssessments[] = $assessments->filter(fn($a) => $a->created_at->month == $m)->count();
+                $trendReports[] = $assessments->sum(function($a) use ($year, $m) {
+                    return $a->activities->sum(fn($act) => $act->progressReports->filter(fn($r) => $r->report_date && $r->report_date->month == $m)->count());
+                });
+            }
         }
+        $monthlyTrend = [
+            'labels' => $trendLabels,
+            'assessments' => $trendAssessments,
+            'reports' => $trendReports
+        ];
         
         // Department distribution
         $departmentData = [];
@@ -1559,6 +1508,46 @@ class AssessmentController extends Controller
             }
         }
         
+        // Organizational Goal distribution
+        $goalData = [];
+        $goals = \App\Models\OrganizationalGoal::all();
+        foreach ($goals as $goal) {
+            $count = $assessments->where('organizational_goal_id', $goal->id)->count();
+            if ($count > 0) {
+                $goalData[$goal->title] = $count;
+            }
+        }
+
+        // Performers with scores (Mock score calculation for now based on report approval rate)
+        $performersData = [];
+        foreach ($assessments->unique('employee_id') as $assessment) {
+            $employee = $assessment->employee;
+            if ($employee) {
+                $totalReports = 0;
+                $approvedReports = 0;
+                $totalAssessments = $assessments->where('employee_id', $employee->id);
+                
+                foreach ($totalAssessments as $ass) {
+                    foreach ($ass->activities as $act) {
+                        $reports = $act->progressReports;
+                        $totalReports += $reports->count();
+                        $approvedReports += $reports->where('status', 'approved')->count();
+                    }
+                }
+                
+                $score = $totalReports > 0 ? round(($approvedReports / $totalReports) * 100, 1) : 0;
+                $performersData[] = [
+                    'name' => $employee->name,
+                    'department' => $employee->primaryDepartment->name ?? 'N/A',
+                    'assessments_count' => $totalAssessments->count(),
+                    'reports_count' => $totalReports,
+                    'score' => $score
+                ];
+            }
+        }
+        usort($performersData, function($a, $b) { return $b['score'] <=> $a['score']; });
+        $topPerformersList = array_slice($performersData, 0, 10);
+
         return response()->json([
             'success' => true,
             'year' => $year,
@@ -1566,7 +1555,9 @@ class AssessmentController extends Controller
             'monthly_trend' => $monthlyTrend,
             'department_distribution' => $departmentData,
             'top_performers' => $topPerformers,
+            'top_performers_list' => $topPerformersList,
             'report_status_distribution' => $reportStatusData,
+            'goal_distribution' => $goalData,
         ]);
     }
 
@@ -1675,7 +1666,114 @@ class AssessmentController extends Controller
      */
     public function create()
     {
-        return view('modules.hr.assessments-create');
+        $goals = \App\Models\OrganizationalGoal::where('is_active', true)
+                 ->whereDate('end_date', '>=', now())
+                 ->get();
+        return view('modules.hr.performance-management-create', compact('goals'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'main_responsibility' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'organizational_goal_id' => 'nullable|exists:organizational_goals,id',
+            'contribution_percentage' => 'required|numeric|min:0|max:100',
+            'activities' => 'required|array|min:1',
+            'activities.*.activity_name' => 'required|string|max:255',
+            'activities.*.description' => 'nullable|string',
+            'activities.*.reporting_frequency' => 'required|in:daily,weekly,monthly',
+            'activities.*.task_activity_id' => 'nullable|exists:task_activities,id',
+        ]);
+
+        $user = Auth::user();
+        $totalPercentage = (float)$request->contribution_percentage;
+
+        DB::beginTransaction();
+        try {
+            $assessment = Assessment::create([
+                'employee_id' => $user->id,
+                'main_responsibility' => $request->main_responsibility,
+                'description' => $request->description,
+                'organizational_goal_id' => $request->organizational_goal_id,
+                'contribution_percentage' => $totalPercentage,
+                'status' => 'pending_hod',
+            ]);
+
+            // Auto distribute activity contribution equally based on count
+            $count = max(1, count($request->activities));
+            // Handle rounding so the sum matches exactly the main contribution
+            $base = floor(($totalPercentage / $count) * 100) / 100; // 2 decimal base
+            $remainder = round($totalPercentage - ($base * $count), 2);
+
+            foreach (array_values($request->activities) as $index => $activityData) {
+                $contrib = $base + ($remainder > 0 ? min(0.01, $remainder) : 0);
+                $remainder = round($remainder - ($contrib - $base), 2);
+                AssessmentActivity::create([
+                    'assessment_id' => $assessment->id,
+                    'activity_name' => $activityData['activity_name'],
+                    'description' => $activityData['description'] ?? null,
+                    'reporting_frequency' => $activityData['reporting_frequency'],
+                    'contribution_percentage' => round($contrib, 2),
+                    'task_activity_id' => $activityData['task_activity_id'] ?? null,
+                ]);
+            }
+
+            // Send notifications with SMS
+            try {
+                // Notify employee
+                $employeeMessage = "Assessment Submitted: Your responsibility assessment '{$assessment->main_responsibility}' has been submitted and is pending HOD approval.";
+                $this->notificationService->notify(
+                    $user->id,
+                    $employeeMessage,
+                    route('modules.hr.performance-management'),
+                    'Assessment Submitted'
+                );
+
+                // Notify HOD with SMS
+                if ($user->primary_department_id) {
+                    $hodMessage = "New Assessment: Responsibility assessment '{$assessment->main_responsibility}' from {$user->name} requires your approval.";
+                    $this->notificationService->notifyHOD(
+                        $user->primary_department_id,
+                        $hodMessage,
+                        route('modules.hr.performance-management'),
+                        'New Assessment Pending Approval',
+                        ['responsibility' => $assessment->main_responsibility, 'staff_name' => $user->name]
+                    );
+                }
+                
+                \Log::info('Assessment submitted - SMS notifications sent', [
+                    'assessment_id' => $assessment->id,
+                    'employee_id' => $user->id,
+                    'department_id' => $user->primary_department_id
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Notification error in store(): ' . $e->getMessage());
+            }
+
+            DB::commit();
+            
+            // Log activity
+            ActivityLogService::logCreated($assessment, "Created assessment: {$assessment->main_responsibility}", [
+                'main_responsibility' => $assessment->main_responsibility,
+                'contribution_percentage' => $assessment->contribution_percentage,
+                'organizational_goal_id' => $assessment->organizational_goal_id,
+                'activities_count' => count($request->activities),
+                'status' => $assessment->status,
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment submitted successfully!',
+                'id' => $assessment->id
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit assessment: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -1691,7 +1789,7 @@ class AssessmentController extends Controller
         
         $assessment->load(['employee', 'activities']);
         
-        return view('modules.hr.assessments-edit', compact('assessment'));
+        return view('modules.hr.performance-management-edit', compact('assessment'));
     }
 
     /**
@@ -1706,11 +1804,11 @@ class AssessmentController extends Controller
         }
         
         if ($assessment->status !== 'pending_hod') {
-            return redirect()->route('assessments.show', $assessment->id)
+            return redirect()->route('performance_management_module.show', $assessment->id)
                 ->with('error', 'Assessment is not pending approval');
         }
         
-        return view('modules.hr.assessments-approve', compact('assessment'));
+        return view('modules.hr.performance-management-approve', compact('assessment'));
     }
 
     /**
@@ -1725,11 +1823,11 @@ class AssessmentController extends Controller
         }
         
         if ($assessment->status !== 'pending_hod') {
-            return redirect()->route('assessments.show', $assessment->id)
+            return redirect()->route('performance_management_module.show', $assessment->id)
                 ->with('error', 'Assessment is not pending approval');
         }
         
-        return view('modules.hr.assessments-reject', compact('assessment'));
+        return view('modules.hr.performance-management-reject', compact('assessment'));
     }
 
     /**
@@ -1753,7 +1851,7 @@ class AssessmentController extends Controller
         
         $activity->load(['assessment.employee', 'progressReports.hodApprover']);
         
-        return view('modules.hr.assessments-activity-reports', compact('activity'));
+        return view('modules.hr.performance-management-activity-reports', compact('activity'));
     }
 
     /**
@@ -1768,11 +1866,11 @@ class AssessmentController extends Controller
         }
         
         if ($activity->assessment->status !== 'approved') {
-            return redirect()->route('modules.hr.assessments')
+            return redirect()->route('modules.hr.performance-management')
                 ->with('error', 'Assessment must be approved before submitting progress reports');
         }
         
-        return view('modules.hr.assessments-progress-create', compact('activity'));
+        return view('modules.hr.performance-management-progress-create', compact('activity'));
     }
 
     /**
@@ -1786,7 +1884,7 @@ class AssessmentController extends Controller
             abort(403);
         }
         
-        return view('modules.hr.assessments-analytics');
+        return view('modules.hr.performance-management-analytics');
     }
 }
 

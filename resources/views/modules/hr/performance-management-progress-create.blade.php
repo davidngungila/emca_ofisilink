@@ -13,7 +13,7 @@
                             <h4 class="mb-1"><i class="bx bx-file me-2"></i>Submit Progress Report</h4>
                             <p class="mb-0 text-muted">Activity: <strong>{{ $activity->activity_name }}</strong></p>
                         </div>
-                        <a href="{{ route('modules.hr.assessments') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('modules.hr.performance_management_module') }}" class="btn btn-outline-secondary">
                             <i class="bx bx-arrow-back me-1"></i>Back
                         </a>
                     </div>
@@ -62,7 +62,7 @@
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="bx bx-check me-2"></i>Submit Report
                             </button>
-                            <a href="{{ route('modules.hr.assessments') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                            <a href="{{ route('modules.hr.performance_management_module') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -100,7 +100,7 @@ $(document).ready(function() {
         
         $.ajax({
             type: 'POST',
-            url: '{{ route("assessments.progress-report", $activity->id) }}',
+            url: '{{ route("performance_management_module.progress-report", $activity->id) }}',
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                 'Accept': 'application/json',
@@ -111,7 +111,7 @@ $(document).ready(function() {
                 if (response.success) {
                     ok.text(response.message || 'Progress report submitted successfully!').removeClass('d-none');
                     setTimeout(() => {
-                        window.location.href = '{{ route("modules.hr.assessments") }}';
+                        window.location.href = '{{ route("modules.hr.performance_management_module") }}';
                     }, 1500);
                 } else {
                     err.text(response.message || 'Failed to submit').removeClass('d-none');

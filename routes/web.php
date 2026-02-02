@@ -421,13 +421,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/modules/tasks/{taskId}/activities/create', [App\Http\Controllers\TaskController::class, 'createActivity'])->name('modules.tasks.activities.create');
     Route::get('/modules/tasks/{id}/edit', [App\Http\Controllers\TaskController::class, 'edit'])->name('modules.tasks.edit');
     Route::get('/modules/tasks/{id}/report-pdf', [App\Http\Controllers\TaskController::class, 'generateTaskReportPdf'])->name('modules.tasks.report-pdf');
+    Route::get('/modules/tasks/user-tasks', [App\Http\Controllers\TaskController::class, 'getUserTasks'])->name('modules.tasks.user-tasks');
     Route::get('/modules/tasks/{id}', [App\Http\Controllers\TaskController::class, 'show'])->name('modules.tasks.show');
     Route::get('/modules/tasks/reports/{id}', [App\Http\Controllers\TaskController::class, 'showReport'])->name('modules.tasks.reports.show');
     
-    // Assessments Module Routes
-    Route::get('/modules/assessments', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.assessments');
-    Route::post('/modules/assessments/action', [App\Http\Controllers\AssessmentController::class, 'action'])->name('modules.assessments.action');
-    Route::get('/modules/assessments/pdf', [App\Http\Controllers\AssessmentController::class, 'pdf'])->name('modules.assessments.pdf');
+    // Performance Management Module Routes
+    Route::get('/modules/performance-management-module', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.performance_management_module');
+    Route::post('/modules/performance-management-module/action', [App\Http\Controllers\AssessmentController::class, 'action'])->name('modules.performance_management_module.action');
+    Route::get('/modules/performance-management-module/pdf', [App\Http\Controllers\AssessmentController::class, 'pdf'])->name('modules.performance_management_module.pdf');
     
 // HR Module Routes (authenticated users)
 Route::middleware('auth')->group(function () {
@@ -437,34 +438,46 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/leave/recommendations', [LeaveController::class, 'recommendationsManagement'])->name('modules.hr.leave.recommendations');
     Route::get('/modules/hr/leave/analytics', [LeaveController::class, 'analyticsPage'])->name('modules.hr.leave.analytics');
     Route::get('/modules/hr/permissions', [PermissionController::class, 'index'])->name('modules.hr.permissions');
-    Route::get('/modules/hr/employees', [EmployeeController::class, 'index'])->name('modules.hr.employees');
-    Route::get('/modules/hr/employees/register', [EmployeeController::class, 'create'])->name('modules.hr.employees.register');
-    Route::post('/modules/hr/employees/register', [EmployeeController::class, 'store'])->name('modules.hr.employees.store');
-    Route::get('/modules/hr/employees/{userId}/review', [EmployeeController::class, 'review'])->name('modules.hr.employees.review');
-    Route::post('/modules/hr/employees/{userId}/finalize', [EmployeeController::class, 'finalize'])->name('modules.hr.employees.finalize');
-    Route::get('/modules/hr/employees/{userId}/registration-pdf', [EmployeeController::class, 'generateRegistrationPDF'])->name('modules.hr.employees.registration-pdf');
-    Route::post('/modules/hr/employees/bulk-action', [EmployeeController::class, 'bulkAction'])->name('modules.hr.employees.bulk-action')->middleware('role:HR Officer,System Admin');
-    Route::post('/modules/hr/employees/bulk-sms', [EmployeeController::class, 'bulkSMS'])->name('modules.hr.employees.bulk-sms')->middleware('role:HR Officer,System Admin');
-    Route::post('/modules/hr/employees/bulk-generate-passwords-sms', [EmployeeController::class, 'bulkGeneratePasswordsAndSendSMS'])->name('modules.hr.employees.bulk-generate-passwords-sms')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/employees/report', [EmployeeController::class, 'generateReport'])->name('modules.hr.employees.report')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/personal-particulars', [EmployeeController::class, 'index'])->name('modules.hr.personal-particulars');
+    Route::get('/modules/hr/personal-particulars/register', [EmployeeController::class, 'create'])->name('modules.hr.personal-particulars.register');
+    Route::post('/modules/hr/personal-particulars/register', [EmployeeController::class, 'store'])->name('modules.hr.personal-particulars.store');
+    Route::get('/modules/hr/personal-particulars/{userId}/review', [EmployeeController::class, 'review'])->name('modules.hr.personal-particulars.review');
+    Route::post('/modules/hr/personal-particulars/{userId}/finalize', [EmployeeController::class, 'finalize'])->name('modules.hr.personal-particulars.finalize');
+    Route::get('/modules/hr/personal-particulars/{userId}/registration-pdf', [EmployeeController::class, 'generateRegistrationPDF'])->name('modules.hr.personal-particulars.registration-pdf');
+    Route::post('/modules/hr/personal-particulars/bulk-action', [EmployeeController::class, 'bulkParticularsAction'])->name('modules.hr.personal-particulars.bulk-action')->middleware('role:HR Officer,System Admin');
+    Route::post('/modules/hr/personal-particulars/bulk-sms', [EmployeeController::class, 'bulkParticularsSMS'])->name('modules.hr.personal-particulars.bulk-sms')->middleware('role:HR Officer,System Admin');
+    Route::post('/modules/hr/personal-particulars/bulk-generate-passwords-sms', [EmployeeController::class, 'bulkGeneratePasswordsAndSendSMS'])->name('modules.hr.personal-particulars.bulk-generate-passwords-sms')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/personal-particulars/report', [EmployeeController::class, 'generateParticularsReport'])->name('modules.hr.personal-particulars.report')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('modules.reports');
+    Route::post('/modules/reports/generate', [App\Http\Controllers\ReportController::class, 'generate'])->name('modules.reports.generate');
     Route::get('/modules/hr/payroll', [PayrollController::class, 'index'])->name('modules.hr.payroll');
     Route::get('/modules/hr/sick-sheets', [App\Http\Controllers\SickSheetController::class, 'index'])->name('modules.hr.sick-sheets');
-    Route::get('/modules/hr/assessments', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.hr.assessments');
+    Route::get('/modules/hr/performance-management-module', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.hr.performance_management_module');
+    Route::get('/modules/hr/performance-management', [App\Http\Controllers\PerformanceManagementController::class, 'index'])->name('modules.hr.performance-management');
+    Route::post('/modules/hr/performance-management/handle', [App\Http\Controllers\PerformanceManagementController::class, 'handleRequest'])->name('modules.hr.performance-management.handle');
     Route::get('/modules/hr/departments', [App\Http\Controllers\DepartmentController::class, 'index'])->name('modules.hr.departments');
     Route::get('/modules/hr/positions', [App\Http\Controllers\PositionController::class, 'index'])->name('modules.hr.positions');
+    Route::apiResource('/modules/hr/salary-structures', App\Http\Controllers\SalaryStructureController::class)
+        ->names('modules.hr.salary-structures');
+    
+    Route::get('/jobs/manpower-planning', [App\Http\Controllers\RecruitmentController::class, 'manpowerPlanningPage'])->name('jobs.manpower-planning');
     Route::get('/jobs', [App\Http\Controllers\RecruitmentController::class, 'index'])->name('jobs');
     Route::get('/jobs/list', [App\Http\Controllers\RecruitmentController::class, 'jobsPage'])->name('jobs.list');
     Route::get('/jobs/applications', [App\Http\Controllers\RecruitmentController::class, 'applicationsPage'])->name('jobs.applications');
     Route::get('/jobs/interviews', [App\Http\Controllers\RecruitmentController::class, 'interviewsPage'])->name('jobs.interviews');
     Route::get('/jobs/analytics', [App\Http\Controllers\RecruitmentController::class, 'analyticsPage'])->name('jobs.analytics');
     Route::post('/jobs/handle', [App\Http\Controllers\RecruitmentController::class, 'handleRequest'])->name('recruitment.handle');
-    Route::get('/modules/hr/attendance', [App\Http\Controllers\AttendanceController::class, 'index'])->name('modules.hr.attendance');
-    Route::get('/modules/hr/attendance/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/schedules', [App\Http\Controllers\AttendanceSettingsController::class, 'schedules'])->name('modules.hr.attendance.settings.schedules')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance/settings/policies', [App\Http\Controllers\AttendanceSettingsController::class, 'policies'])->name('modules.hr.attendance.settings.policies')->middleware('role:HR Officer,System Admin');
-    Route::post('/modules/hr/attendance/settings/general', [App\Http\Controllers\AttendanceSettingsController::class, 'saveGeneralSettings'])->name('modules.hr.attendance.settings.general')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance-and-time', [App\Http\Controllers\AttendanceController::class, 'index'])->name('modules.hr.attendance');
+    Route::get('/modules/hr/attendance-and-time/reports', [App\Http\Controllers\AttendanceReportController::class, 'index'])->name('modules.hr.attendance.reports');
+    Route::get('/modules/hr/attendance-and-time/reports/my', [App\Http\Controllers\AttendanceReportController::class, 'myReport'])->name('modules.hr.attendance.reports.my');
+    Route::post('/modules/hr/attendance-and-time/reports/general', [App\Http\Controllers\AttendanceReportController::class, 'generalReport'])->name('modules.hr.attendance.reports.general');
+    Route::get('/modules/hr/attendance-and-time/reports/timing-pdf', [App\Http\Controllers\AttendanceReportController::class, 'timingReportPdf'])->name('modules.hr.attendance.reports.timing-pdf');
+    Route::get('/modules/hr/attendance-and-time/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance-and-time/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance-and-time/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance-and-time/settings/schedules', [App\Http\Controllers\AttendanceSettingsController::class, 'schedules'])->name('modules.hr.attendance.settings.schedules')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance-and-time/settings/policies', [App\Http\Controllers\AttendanceSettingsController::class, 'policies'])->name('modules.hr.attendance.settings.policies')->middleware('role:HR Officer,System Admin');
+    Route::post('/modules/hr/attendance-and-time/settings/general', [App\Http\Controllers\AttendanceSettingsController::class, 'saveGeneralSettings'])->name('modules.hr.attendance.settings.general')->middleware('role:HR Officer,System Admin');
     
     // ZKTeco Individual Pages
     Route::get('/modules/hr/zkteco/test-connection', [App\Http\Controllers\ZKTecoTestController::class, 'testConnection'])->name('zkteco.test')->middleware('role:HR Officer,System Admin');
@@ -554,7 +567,7 @@ Route::prefix('sick-sheets')->name('sick-sheets.')->group(function () {
 });
 
 // Assessment Routes
-Route::prefix('assessments')->name('assessments.')->group(function () {
+Route::prefix('performance-management-module')->name('performance_management_module.')->group(function () {
     // Page routes (GET)
     Route::get('/create', [App\Http\Controllers\AssessmentController::class, 'create'])->name('create');
     Route::get('/{assessment}/edit', [App\Http\Controllers\AssessmentController::class, 'edit'])->name('edit')->middleware('role:System Admin,HR Officer');
@@ -584,6 +597,14 @@ Route::prefix('assessments')->name('assessments.')->group(function () {
     Route::put('/activities/{activity}', [App\Http\Controllers\AssessmentController::class, 'updateActivity'])->name('activities.update')->middleware('role:System Admin,HR Officer');
     Route::delete('/activities/{activity}', [App\Http\Controllers\AssessmentController::class, 'destroyActivity'])->name('activities.destroy')->middleware('role:System Admin');
     Route::delete('/progress-reports/{report}', [App\Http\Controllers\AssessmentController::class, 'destroyProgressReport'])->name('progress-reports.destroy')->middleware('role:System Admin');
+
+});
+
+// Organizational Goals (HR/Admin)
+Route::prefix('modules/hr/organizational-goals')->name('organizational-goals.')->middleware('role:System Admin,HR Officer')->group(function () {
+    Route::get('/', [\App\Http\Controllers\OrganizationalGoalController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\OrganizationalGoalController::class, 'store'])->name('store');
+    Route::delete('/{id}', [\App\Http\Controllers\OrganizationalGoalController::class, 'destroy'])->name('destroy');
 });
 
 // Department Management Routes (HR/Admin only)
@@ -604,14 +625,14 @@ Route::prefix('positions')->name('positions.')->middleware('role:HR Officer,Syst
     Route::delete('/{position}', [App\Http\Controllers\PositionController::class, 'destroy'])->name('destroy');
 });
 
-// Employee Management Routes
-Route::prefix('employees')->name('employees.')->group(function () {
+// Personal Particulars Management Routes
+Route::prefix('personal-particulars')->name('personal-particulars.')->group(function () {
     Route::post('/', [EmployeeController::class, 'store'])->name('store')->middleware('role:HR Officer,System Admin');
-    Route::post('/sync-all', [EmployeeController::class, 'syncAllEmployees'])->name('sync-all')->middleware('role:HR Officer,System Admin');
+    Route::post('/sync-all', [EmployeeController::class, 'syncAllParticulars'])->name('sync-all')->middleware('role:HR Officer,System Admin');
     Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit')->middleware('role:HR Officer,System Admin');
     Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
     Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update')->middleware('role:HR Officer,System Admin');
-    Route::post('/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('toggle-status')->middleware('role:HR Officer,System Admin');
+    Route::post('/{employee}/toggle-status', [EmployeeController::class, 'toggleParticularsStatus'])->name('toggle-status')->middleware('role:HR Officer,System Admin');
     Route::post('/{employee}/upload-photo', [EmployeeController::class, 'uploadPhoto'])->name('upload-photo');
     Route::get('/{employee}/registration-pdf', [EmployeeController::class, 'generateRegistrationPDF'])->name('registration-pdf')->middleware('role:HR Officer,System Admin');
     Route::post('/{employee}/send-sms', [EmployeeController::class, 'sendSMS'])->name('send-sms')->middleware('role:HR Officer,System Admin');
@@ -662,7 +683,7 @@ Route::prefix('api/device')->name('device.api.')->group(function () {
     
     // Sending data TO device (Pull API)
     Route::get('/users/{device_id}', [App\Http\Controllers\DeviceApiController::class, 'getUsersForDevice'])->name('users.list');
-    Route::get('/users/{device_id}/{employee_id}', [App\Http\Controllers\DeviceApiController::class, 'getUserForDevice'])->name('users.get');
+    Route::get('/users/{device_id}/{particulars_id}', [App\Http\Controllers\DeviceApiController::class, 'getUserForDevice'])->name('users.get');
     Route::get('/time/{device_id}', [App\Http\Controllers\DeviceApiController::class, 'getServerTime'])->name('time');
     Route::get('/commands/{device_id}', [App\Http\Controllers\DeviceApiController::class, 'getDeviceCommands'])->name('commands.get');
     Route::post('/commands/{device_id}', [App\Http\Controllers\DeviceApiController::class, 'sendDeviceCommand'])->name('commands.send');
@@ -671,7 +692,7 @@ Route::prefix('api/device')->name('device.api.')->group(function () {
 // Attendance Settings Routes (Admin/HR only)
 Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('role:HR Officer,System Admin')->group(function () {
     // API endpoints
-    Route::post('/employees/list', [App\Http\Controllers\AttendanceSettingsController::class, 'getEmployeesList'])->name('get-employees-list');
+    Route::post('/particulars/list', [App\Http\Controllers\AttendanceSettingsController::class, 'getParticularsList'])->name('get-particulars-list');
     
     // Locations
     Route::get('/locations', [App\Http\Controllers\AttendanceSettingsController::class, 'getLocations'])->name('locations.index');
@@ -705,7 +726,7 @@ Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('
     Route::post('/devices/{id}/save-step', [App\Http\Controllers\AttendanceSettingsController::class, 'saveDeviceStep'])->name('devices.save-step-update');
     
     // Employees API
-    Route::get('/api/employees', [App\Http\Controllers\AttendanceSettingsController::class, 'getEmployeesList'])->name('api.employees');
+    Route::get('/api/personal-particulars', [App\Http\Controllers\AttendanceSettingsController::class, 'getParticularsList'])->name('api.personal-particulars');
     Route::get('/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'getDevices'])->name('devices.index');
     Route::post('/users/enroll', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollUser'])->name('users.enroll');
     Route::post('/users/sync-all', [App\Http\Controllers\AttendanceSettingsController::class, 'syncAllUsers'])->name('users.sync-all');
@@ -718,7 +739,7 @@ Route::prefix('attendance-settings')->name('attendance-settings.')->middleware('
     Route::get('/dashboard/data', [App\Http\Controllers\AttendanceSettingsController::class, 'getDashboardData'])->name('dashboard.data');
     
     // Reports
-    Route::post('/reports/generate', [App\Http\Controllers\AttendanceSettingsController::class, 'generateReport'])->name('reports.generate');
+    Route::post('/reports/generate', [App\Http\Controllers\AttendanceSettingsController::class, 'generateParticularsReport'])->name('reports.generate');
     Route::get('/reports/export', [App\Http\Controllers\AttendanceSettingsController::class, 'exportReport'])->name('reports.export');
     
     // Notifications
@@ -793,7 +814,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::post('/{payroll}/mark-paid', [PayrollController::class, 'markAsPaid'])->name('mark-paid');
         Route::get('/{payroll}/details', [PayrollController::class, 'getPayrollDetails'])->name('details');
         Route::get('/payslip/{payrollItem}', [PayrollController::class, 'getPayslip'])->name('payslip');
-        Route::post('/calculate-deductions', [PayrollController::class, 'calculateEmployeeDeductions'])->name('calculate-deductions');
+        Route::post('/calculate-deductions', [PayrollController::class, 'calculateParticularsDeductions'])->name('calculate-deductions');
         Route::get('/{payroll}/export', [PayrollController::class, 'exportPayroll'])->name('export');
         // PDF Generation Routes
         Route::get('/payslip/{payrollItem}/pdf', [PayrollController::class, 'generatePayslipPdf'])->name('payslip.pdf');
@@ -802,7 +823,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         // Deduction Management Routes
         Route::get('/deductions', [PayrollController::class, 'showDeductionManagement'])->name('deductions.index');
         Route::get('/deductions/summary', [PayrollController::class, 'getDeductionsSummary'])->name('deductions.summary');
-        Route::get('/deductions/employee/{employeeId}', [PayrollController::class, 'getEmployeeDeductions'])->name('deductions.employee');
+        Route::get('/deductions/particulars/{particularsId}', [PayrollController::class, 'getParticularsDeductions'])->name('deductions.particulars');
         Route::post('/deductions', [PayrollController::class, 'storeDeduction'])->name('deductions.store');
         Route::put('/deductions/{deductionId}', [PayrollController::class, 'updateDeduction'])->name('deductions.update');
         Route::delete('/deductions/{deductionId}', [PayrollController::class, 'deleteDeduction'])->name('deductions.delete');
@@ -854,7 +875,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::get('/analytics/data', [App\Http\Controllers\IncidentController::class, 'analytics'])->name('modules.incidents.analytics.data');
         Route::get('/export', [App\Http\Controllers\IncidentController::class, 'exportPage'])->name('modules.incidents.export');
         Route::post('/export/download', [App\Http\Controllers\IncidentController::class, 'export'])->name('modules.incidents.export.download');
-        Route::post('/bulk-action', [App\Http\Controllers\IncidentController::class, 'bulkAction'])->name('modules.incidents.bulk.action');
+        Route::post('/bulk-action', [App\Http\Controllers\IncidentController::class, 'bulkParticularsAction'])->name('modules.incidents.bulk.action');
         Route::post('/action', [App\Http\Controllers\IncidentsController::class, 'action'])->name('modules.incidents.action');
         Route::post('/sync-emails', [App\Http\Controllers\IncidentController::class, 'syncEmails'])->name('modules.incidents.sync.emails');
         Route::get('/sync-status', [App\Http\Controllers\IncidentController::class, 'getSyncStatus'])->name('modules.incidents.sync.status');
@@ -1122,7 +1143,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
             'update' => 'admin.branches.update',
             'destroy' => 'admin.branches.destroy',
         ]);
-        Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+        Route::post('users/{user}/toggle-status', [UserController::class, 'toggleParticularsStatus'])->name('admin.users.toggle-status');
         Route::post('users/{user}/send-password-reset-sms', [UserController::class, 'sendPasswordResetSMS'])->name('admin.users.send-password-reset-sms');
         Route::post('users/bulk-activate', [UserController::class, 'bulkActivate'])->name('admin.users.bulk-activate');
         Route::post('users/bulk-deactivate', [UserController::class, 'bulkDeactivate'])->name('admin.users.bulk-deactivate');
@@ -1135,7 +1156,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
         Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
         Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
-        Route::post('roles/{role}/toggle-status', [RoleController::class, 'toggleStatus'])->name('roles.toggle-status');
+        Route::post('roles/{role}/toggle-status', [RoleController::class, 'toggleParticularsStatus'])->name('roles.toggle-status');
         
         // Permission Management (Admin)
         Route::name('admin.permissions.')->group(function(){
@@ -1144,7 +1165,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
             Route::post('permissions', [App\Http\Controllers\Admin\PermissionController::class, 'store'])->name('store');
             Route::put('permissions/{permission}', [App\Http\Controllers\Admin\PermissionController::class, 'update'])->name('update');
             Route::delete('permissions/{permission}', [App\Http\Controllers\Admin\PermissionController::class, 'destroy'])->name('destroy');
-            Route::post('permissions/{permission}/toggle-status', [App\Http\Controllers\Admin\PermissionController::class, 'toggleStatus'])->name('toggle-status');
+            Route::post('permissions/{permission}/toggle-status', [App\Http\Controllers\Admin\PermissionController::class, 'toggleParticularsStatus'])->name('toggle-status');
             Route::post('permissions/{permission}/assign-roles', [App\Http\Controllers\Admin\PermissionController::class, 'assignToRoles'])->name('assign-roles');
             Route::get('permissions/{permission}/roles', [App\Http\Controllers\Admin\PermissionController::class, 'getPermissionRoles'])->name('get-roles');
             Route::post('permissions/bulk-activate', [App\Http\Controllers\Admin\PermissionController::class, 'bulkActivate'])->name('bulk-activate');
@@ -1212,3 +1233,4 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::get('activity-log/export', [ActivityLogController::class, 'export'])->name('activity-log.export');
     });
 });
+

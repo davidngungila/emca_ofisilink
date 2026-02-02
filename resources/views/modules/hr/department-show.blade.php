@@ -210,7 +210,7 @@
                                 <i class="bx bx-lock me-2"></i>Delete (Locked)
                             </button>
                         @endif
-                        <a href="{{ route('modules.hr.employees') }}?department={{ $department->id }}" class="btn btn-outline-info">
+                        <a href="{{ route('modules.hr.personal-particulars') }}?department={{ $department->id }}" class="btn btn-outline-info">
                             <i class="bx bx-group me-2"></i>View All Employees
                         </a>
                     </div>
@@ -228,7 +228,7 @@
                         <i class="bx bx-group me-2"></i>Department Employees ({{ $department->primaryUsers->count() }})
                     </h6>
                     @if($department->primaryUsers->count() > 0)
-                    <a href="{{ route('modules.hr.employees') }}?department={{ $department->id }}" class="btn btn-sm btn-light">
+                    <a href="{{ route('modules.hr.personal-particulars') }}?department={{ $department->id }}" class="btn btn-sm btn-light">
                         <i class="bx bx-link-external me-1"></i>View All
                     </a>
                     @endif
@@ -284,7 +284,7 @@
                                             </span>
                                         </td>
                                         <td class="text-center">
-                                            <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-sm btn-info" title="View Details">
+                                            <a href="{{ route('personal-particulars.show', $employee->id) }}" class="btn btn-sm btn-info" title="View Details">
                                                 <i class="bx bx-show"></i>
                                             </a>
                                         </td>
@@ -298,7 +298,7 @@
                             <i class="bx bx-group text-muted" style="font-size: 4rem;"></i>
                             <h5 class="text-muted mt-3">No Employees in This Department</h5>
                             <p class="text-muted">Employees will appear here once they are assigned to this department.</p>
-                            <a href="{{ route('modules.hr.employees') }}" class="btn btn-primary">
+                            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-primary">
                                 <i class="bx bx-plus me-1"></i>Add Employee
                             </a>
                         </div>

@@ -80,10 +80,10 @@
             <div class="stat-card border-left-success">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Enrolled Employees</h6>
-                        <h3 class="mb-0 text-success">{{ $stats['enrolled_employees'] ?? 0 }}</h3>
+                        <h6 class="text-muted mb-1">Enrolled Particulars</h6>
+                        <h3 class="mb-0 text-success">{{ $stats['enrolled_particulars'] ?? 0 }}</h3>
                         <small class="text-info">
-                            <i class="bx bx-user"></i> {{ $stats['total_employees'] ?? 0 }} Total
+                            <i class="bx bx-user"></i> {{ $stats['total_particulars'] ?? 0 }} Total
                         </small>
                     </div>
                     <div class="avatar-sm">
@@ -157,10 +157,10 @@
                         <div class="settings-icon text-success">
                             <i class="bx bx-user-plus"></i>
                         </div>
-                        <h5 class="card-title">User Enrollment</h5>
-                        <p class="text-muted">Register employees to biometric devices and manage enrollment status</p>
+                        <h5 class="card-title">Particulars Enrollment</h5>
+                        <p class="text-muted">Register particulars to biometric devices and manage enrollment status</p>
                         <div class="mt-3">
-                            <span class="badge bg-success">{{ $stats['enrolled_employees'] ?? 0 }} Enrolled</span>
+                            <span class="badge bg-success">{{ $stats['enrolled_particulars'] ?? 0 }} Enrolled</span>
                         </div>
                     </div>
                 </div>

@@ -32,7 +32,7 @@
                                         <i class="bx bx-dots-vertical-rounded me-1"></i>Quick Actions
                                     </button>
                                     <ul class="dropdown-menu" style="z-index: 1062; position: absolute;">
-                                        <li><a class="dropdown-item" href="{{ route('modules.hr.employees.register') }}">
+                                        <li><a class="dropdown-item" href="{{ route('modules.hr.personal-particulars.register') }}">
                                             <i class="bx bx-user-plus me-2"></i>Register New Employee
                                         </a></li>
                                         <li><hr class="dropdown-divider"></li>
@@ -184,7 +184,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('modules.hr.employees.register') }}" class="btn btn-danger btn-lg quick-action-btn" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); transition: all 0.3s ease;">
+                        <a href="{{ route('modules.hr.personal-particulars.register') }}" class="btn btn-danger btn-lg quick-action-btn" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); transition: all 0.3s ease;">
                             <i class="bx bx-user-plus me-2"></i>Register New Employee
                         </a>
                         
@@ -527,7 +527,7 @@
                                                 </li>
                                                 @if($user->employee_id)
                                                 <li>
-                                                    <a class="dropdown-item" href="{{ route('employees.show', $user->id) }}">
+                                                    <a class="dropdown-item" href="{{ route('personal-particulars.show', $user->id) }}">
                                                         <i class="bx bx-user me-2"></i>View Employee Details
                                                     </a>
                                                 </li>
@@ -1065,7 +1065,7 @@ $(document).ready(function() {
                                 </li>
                                 ${user.employee_id ? `
                                 <li>
-                                    <a class="dropdown-item" href="/employees/${user.id}">
+                                    <a class="dropdown-item" href="/personal-particulars/${user.id}">
                                         <i class="bx bx-user me-2"></i>View Employee Details
                                     </a>
                                 </li>
@@ -1784,3 +1784,4 @@ function refreshUserData() {
 }
 </script>
 @endpush
+

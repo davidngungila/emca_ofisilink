@@ -1,206 +1,171 @@
 @extends('layouts.app')
 
-@section('title', 'Recruitment Analytics - Recruitment')
+@section('title', 'Recruitment Analytics')
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.css">
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s;
+        height: 100%;
+        border: 1px solid #e5e7eb;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .chart-box {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        height: 100%;
+        min-height: 400px;
+    }
+
+    .insight-card {
+        background: #f8fafc;
+        border-left: 4px solid #6366f1;
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 1rem;
+    }
+
+    .insight-warning { border-color: #f59e0b; background: #fffbeb; }
+    .insight-success { border-color: #10b981; background: #f0fdf4; }
+    .insight-info { border-color: #3b82f6; background: #eff6ff; }
+</style>
+@endpush
 
 @section('content')
-<div class="container-xxl flex-grow-1 container-p-y">
-    <!-- Professional Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-lg bg-success" style="border-radius: 15px; overflow: hidden;">
-                <div class="card-body text-white p-4">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap">
-                        <div class="mb-3 mb-md-0">
-                            <h3 class="mb-2 text-white fw-bold">
-                                <i class="bx bx-bar-chart me-2"></i>Recruitment Analytics & Reports
-                            </h3>
-                            <p class="mb-0 text-white-50 fs-6">
-                                Comprehensive analytics, insights, and reports for recruitment performance tracking
-                            </p>
-                        </div>
-                        <div class="d-flex gap-2 flex-wrap align-items-center">
-                            <button class="btn btn-light btn-lg shadow-sm" id="export-pdf-btn">
-                                <i class="bx bx-file me-2"></i>Export PDF
-                            </button>
-                            <button class="btn btn-light btn-lg shadow-sm" id="export-excel-btn">
-                                <i class="bx bx-spreadsheet me-2"></i>Export Excel
-                            </button>
-                            <a href="{{ route('jobs.list') }}" class="btn btn-light btn-lg shadow-sm">
-                                <i class="bx bx-briefcase me-2"></i>Job Vacancies
-                            </a>
-                            <a href="{{ route('jobs.applications') }}" class="btn btn-light btn-lg shadow-sm">
-                                <i class="bx bx-user-check me-2"></i>Applications
-                            </a>
-                            <a href="{{ route('jobs.interviews') }}" class="btn btn-light btn-lg shadow-sm">
-                                <i class="bx bx-calendar me-2"></i>Interviews
-                            </a>
-                            <a href="{{ route('jobs') }}" class="btn btn-light btn-lg shadow-sm">
-                                <i class="bx bx-arrow-back me-2"></i>Back
-                            </a>
-                        </div>
-                    </div>
+<div class="container-fluid flex-grow-1 container-p-y">
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold py-3 mb-0 text-primary">
+                <i class="bx bx-bar-chart-alt-2 me-2"></i>Recruitment Intelligence
+            </h4>
+            <p class="text-muted mb-0">Performance metrics and hiring insights.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="bx bx-printer me-1"></i> Print
+            </button>
+            <button class="btn btn-primary" id="refreshBtn">
+                <i class="bx bx-refresh me-1"></i> Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon text-white" style="background: var(--primary-gradient);">
+                    <i class="bx bx-briefcase"></i>
                 </div>
+                <h3 class="mb-1 fw-bold" id="totalJobs">0</h3>
+                <div class="text-muted small">Total Job Listings</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon text-white" style="background: var(--secondary-gradient);">
+                    <i class="bx bx-user-voice"></i>
+                </div>
+                <h3 class="mb-1 fw-bold" id="totalApps">0</h3>
+                <div class="text-muted small">Total Applications</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon text-white" style="background: var(--success-gradient);">
+                    <i class="bx bx-stopwatch"></i>
+                </div>
+                <h3 class="mb-1 fw-bold" id="avgTime">0 <small class="fs-6 fw-normal">days</small></h3>
+                <div class="text-muted small">Avg. Time to Hire</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon text-white" style="background: var(--warning-gradient);">
+                    <i class="bx bx-target-lock"></i>
+                </div>
+                <h3 class="mb-1 fw-bold" id="hireRate">0%</h3>
+                <div class="text-muted small">Hiring Success Rate</div>
             </div>
         </div>
     </div>
 
-    <!-- Key Metrics -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100 border-primary" style="border-left: 4px solid var(--bs-primary) !important;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-lg me-3 bg-primary">
-                            <i class="bx bx-briefcase fs-2 text-white"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-1 small">Total Jobs</h6>
-                            <h3 class="mb-0 fw-bold text-primary" id="totalJobs">0</h3>
-                            <small class="text-info">
-                                <i class="bx bx-trending-up me-1"></i>All Vacancies
-                            </small>
-                        </div>
+    <!-- Main Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="chart-box">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0 fw-bold">Application Trends</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">Last 6 Months</button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="#">Last Year</a></li>
+                        </ul>
                     </div>
                 </div>
+                <div id="applicationTrendChart" style="min-height: 350px;"></div>
             </div>
         </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #10b981 !important;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                            <i class="bx bx-user fs-2 text-white"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-1 small">Total Applications</h6>
-                            <h3 class="mb-0 fw-bold text-success" id="totalApplications">0</h3>
-                            <small class="text-success">
-                                <i class="bx bx-trending-up me-1"></i>All Candidates
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                            <i class="bx bx-trending-up fs-2 text-white"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-1 small">Hire Rate</h6>
-                            <h3 class="mb-0 fw-bold text-warning" id="hireRate">0%</h3>
-                            <small class="text-warning">
-                                <i class="bx bx-percent me-1"></i>Success Rate
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #3b82f6 !important;">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                            <i class="bx bx-time fs-2 text-white"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="text-muted mb-1 small">Avg. Time to Hire</h6>
-                            <h3 class="mb-0 fw-bold text-primary" id="avgTimeToHire">0 days</h3>
-                            <small class="text-primary">
-                                <i class="bx bx-calendar me-1"></i>Average
-                            </small>
-                        </div>
-                    </div>
-                </div>
+        <div class="col-lg-4">
+             <div class="chart-box">
+                <h5 class="mb-4 fw-bold">Pipeline Distribution</h5>
+                <div id="pipelineChart" style="min-height: 350px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Row 1 -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="bx bx-pie-chart me-2"></i> Applications by Status</h5>
-                </div>
-                <div class="card-body">
-                    <div style="position: relative; height: 300px; margin-top: 20px;">
-                        <canvas id="applicationsStatusChart"></canvas>
-                    </div>
-                </div>
+    <!-- Secondary Charts & Insights -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="chart-box">
+                 <h5 class="mb-4 fw-bold">Top Performing Jobs</h5>
+                 <div id="topJobsChart" style="min-height: 300px;"></div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="bx bx-bar-chart me-2"></i> Applications Over Time</h5>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bx bx-bulb me-2 text-warning"></i>AI Insights</h5>
                 </div>
-                <div class="card-body">
-                    <div style="position: relative; height: 300px; margin-top: 20px;">
-                        <canvas id="applicationsOverTimeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row 2 -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="bx bx-bar-chart-alt me-2"></i> Jobs by Status</h5>
-                </div>
-                <div class="card-body">
-                    <div style="position: relative; height: 300px; margin-top: 20px;">
-                        <canvas id="jobsStatusChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="bx bx-line-chart me-2"></i> Interview Completion Rate</h5>
-                </div>
-                <div class="card-body">
-                    <div style="position: relative; height: 300px; margin-top: 20px;">
-                        <canvas id="interviewRateChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Insights Section -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="bx bx-bulb me-2"></i> Key Insights</h5>
-                </div>
-                <div class="card-body">
-                    <div id="insightsContainer">
-                        <!-- Insights will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0"><i class="bx bx-list-ul me-2"></i> Top Performing Jobs</h5>
-                </div>
-                <div class="card-body">
-                    <div id="topJobsContainer">
-                        <!-- Top jobs will be loaded here -->
+                <div class="card-body p-4" id="insightsContainer">
+                    <div class="text-center text-muted py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2">Analyzing data...</p>
                     </div>
                 </div>
             </div>
@@ -209,245 +174,137 @@
 </div>
 @endsection
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.css') }}">
-<script src="{{ asset('assets/vendor/libs/chart.js/chart.umd.min.js') }}" onerror="this.onerror=null; this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';"></script>
-<style>
-    .metric-item {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-left: 4px solid #007bff;
-    }
-</style>
-@endpush
-
 @push('scripts')
-<script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.js"></script>
 <script>
-$(document).ready(function() {
-    const csrfToken = '{{ csrf_token() }}';
-    const recruitmentUrl = '{{ route("recruitment.handle") }}';
-    
-    let applicationsStatusChart = null;
-    let applicationsOverTimeChart = null;
-    let jobsStatusChart = null;
-    let interviewRateChart = null;
-    
-    // Initialize
-    loadAnalytics();
-    
-    // Export Buttons
-    $('#export-pdf-btn').on('click', function() {
-        window.location.href = recruitmentUrl + '?action=export_jobs_pdf&export_type=analytics';
-    });
-    
-    $('#export-excel-btn').on('click', function() {
-        window.location.href = recruitmentUrl + '?action=export_applications_excel&export_type=analytics';
-    });
-    
-    // Load Analytics
-    function loadAnalytics() {
-        $.ajax({
-            url: recruitmentUrl,
-            method: 'POST',
-            data: {
-                _token: csrfToken,
-                action: 'get_analytics'
-            },
-            success: function(response) {
-                if (response.success) {
-                    const analytics = response.analytics || {};
-                    updateMetrics(analytics);
-                    renderCharts(analytics);
-                    renderInsights(analytics);
-                    renderTopJobs(analytics);
+    document.addEventListener("DOMContentLoaded", function() {
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        const recruitmentUrl = '{{ route("recruitment.handle") }}';
+
+        // Load Data
+        loadAnalytics();
+
+        $('#refreshBtn').click(loadAnalytics);
+
+        function loadAnalytics() {
+            $.ajax({
+                url: recruitmentUrl, type: 'POST',
+                data: { _token: csrfToken, action: 'get_analytics' },
+                success: function(res) {
+                    if(res.success) {
+                        const data = res.analytics;
+                        updateStats(data);
+                        renderPipelineChart(data.applications_by_status);
+                        renderTrendChart(data.applications_over_time);
+                        renderTopJobs(data.top_jobs);
+                        renderInsights(data.insights);
+                    }
                 }
+            });
+        }
+
+        function updateStats(data) {
+            $('#totalJobs').text(data.total_jobs);
+            $('#totalApps').text(data.total_applications);
+            $('#avgTime').html(`${data.avg_time_to_hire} <small class="fs-6 fw-normal">days</small>`);
+            $('#hireRate').text(data.hire_rate + '%');
+        }
+
+        function renderPipelineChart(data) {
+            const labels = data.map(i => i.status);
+            const series = data.map(i => i.count);
+
+            var options = {
+                series: series,
+                labels: labels,
+                chart: { type: 'donut', height: 350 },
+                colors: ['#696cff', '#03c3ec', '#ffab00', '#71dd37', '#ff3e1d', '#8592a3'],
+                legend: { position: 'bottom' },
+                dataLabels: { enabled: true },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            const chartEl = document.querySelector("#pipelineChart");
+            chartEl.innerHTML = '';
+            new ApexCharts(chartEl, options).render();
+        }
+
+        function renderTrendChart(data) {
+            const categories = data.map(i => i.date);
+            const counts = data.map(i => i.count);
+
+            var options = {
+                series: [{ name: "Applications", data: counts }],
+                chart: { type: 'area', height: 350, toolbar: { show: false } },
+                colors: ['#696cff'],
+                fill: {
+                    type: "gradient",
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9, stops: [0, 90, 100] }
+                },
+                dataLabels: { enabled: false },
+                stroke: { curve: 'smooth', width: 2 },
+                xaxis: { categories: categories, type: 'datetime' },
+                tooltip: { x: { format: 'dd MMM yyyy' } }
+            };
+
+            const chartEl = document.querySelector("#applicationTrendChart");
+            chartEl.innerHTML = '';
+            new ApexCharts(chartEl, options).render();
+        }
+
+        function renderTopJobs(data) {
+            const categories = data.map(i => i.job_title);
+            const counts = data.map(i => i.applications_count);
+
+            var options = {
+                series: [{ name: "Applications", data: counts }],
+                chart: { type: 'bar', height: 300, toolbar: { show: false } },
+                plotOptions: {
+                    bar: { borderRadius: 4, horizontal: true, barHeight: '50%' }
+                },
+                colors: ['#696cff'],
+                xaxis: { categories: categories }
+            };
+
+            const chartEl = document.querySelector("#topJobsChart");
+            chartEl.innerHTML = '';
+            new ApexCharts(chartEl, options).render();
+        }
+
+        function renderInsights(insights) {
+            const container = $('#insightsContainer');
+            container.empty();
+
+            if(!insights || insights.length === 0) {
+                container.html('<p class="text-muted text-center">No sufficient data for insights yet.</p>');
+                return;
             }
-        });
-    }
-    
-    // Update Metrics
-    function updateMetrics(analytics) {
-        $('#totalJobs').text(analytics.total_jobs || 0);
-        $('#totalApplications').text(analytics.total_applications || 0);
-        
-        const hireRate = analytics.hire_rate || 0;
-        $('#hireRate').text(hireRate.toFixed(1) + '%');
-        
-        const avgTime = analytics.avg_time_to_hire || 0;
-        $('#avgTimeToHire').text(avgTime + ' days');
-    }
-    
-    // Render Charts
-    function renderCharts(analytics) {
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js is not loaded');
-            return;
-        }
-        
-        // Applications by Status Chart
-        const ctx1 = document.getElementById('applicationsStatusChart');
-        if (ctx1) {
-            if (applicationsStatusChart) applicationsStatusChart.destroy();
-            applicationsStatusChart = new Chart(ctx1.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: analytics.applications_by_status?.map(s => s.status) || [],
-                    datasets: [{
-                        data: analytics.applications_by_status?.map(s => s.count) || [],
-                        backgroundColor: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc949']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
-        }
-        
-        // Applications Over Time Chart
-        const ctx2 = document.getElementById('applicationsOverTimeChart');
-        if (ctx2) {
-            if (applicationsOverTimeChart) applicationsOverTimeChart.destroy();
-            applicationsOverTimeChart = new Chart(ctx2.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: analytics.applications_over_time?.map(t => t.date) || [],
-                    datasets: [{
-                        label: 'Applications',
-                        data: analytics.applications_over_time?.map(t => t.count) || [],
-                        borderColor: '#4e79a7',
-                        backgroundColor: 'rgba(78,121,167,0.2)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-        
-        // Jobs by Status Chart
-        const ctx3 = document.getElementById('jobsStatusChart');
-        if (ctx3) {
-            if (jobsStatusChart) jobsStatusChart.destroy();
-            jobsStatusChart = new Chart(ctx3.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: analytics.jobs_by_status?.map(j => j.status) || [],
-                    datasets: [{
-                        label: 'Jobs',
-                        data: analytics.jobs_by_status?.map(j => j.count) || [],
-                        backgroundColor: '#59a14f'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-        
-        // Interview Rate Chart
-        const ctx4 = document.getElementById('interviewRateChart');
-        if (ctx4) {
-            if (interviewRateChart) interviewRateChart.destroy();
-            interviewRateChart = new Chart(ctx4.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: analytics.interview_stats?.map(i => i.month) || [],
-                    datasets: [{
-                        label: 'Completed',
-                        data: analytics.interview_stats?.map(i => i.completed) || [],
-                        backgroundColor: '#28a745'
-                    }, {
-                        label: 'Scheduled',
-                        data: analytics.interview_stats?.map(i => i.scheduled) || [],
-                        backgroundColor: '#17a2b8'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-    }
-    
-    // Render Insights
-    function renderInsights(analytics) {
-        const container = $('#insightsContainer');
-        container.empty();
-        
-        const insights = analytics.insights || [];
-        if (insights.length === 0) {
-            container.html('<p class="text-muted">No insights available</p>');
-            return;
-        }
-        
-        insights.forEach(insight => {
-            container.append(`
-                <div class="metric-item">
-                    <h6>${escapeHtml(insight.title)}</h6>
-                    <p class="mb-0">${escapeHtml(insight.description)}</p>
-                </div>
-            `);
-        });
-    }
-    
-    // Render Top Jobs
-    function renderTopJobs(analytics) {
-        const container = $('#topJobsContainer');
-        container.empty();
-        
-        const topJobs = analytics.top_jobs || [];
-        if (topJobs.length === 0) {
-            container.html('<p class="text-muted">No data available</p>');
-            return;
-        }
-        
-        topJobs.forEach((job, index) => {
-            container.append(`
-                <div class="metric-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">${index + 1}. ${escapeHtml(job.job_title)}</h6>
-                            <small class="text-muted">${job.applications_count || 0} applications</small>
-                        </div>
-                        <span class="badge bg-primary">${job.applications_count || 0}</span>
+
+            insights.forEach(i => {
+                const typeClass = `insight-${i.type}`; // warning, success, info
+                container.append(`
+                    <div class="insight-card ${typeClass}">
+                        <h6 class="fw-bold mb-1">${i.title}</h6>
+                        <p class="mb-0 small text-muted">${i.description}</p>
                     </div>
-                </div>
-            `);
-        });
-    }
-    
-    function escapeHtml(text) {
-        if (!text) return '';
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.toString().replace(/[&<>"']/g, m => map[m]);
-    }
-});
+                `);
+            });
+        }
+    });
 </script>
 @endpush

@@ -24,10 +24,10 @@
                             </p>
                         </div>
                         <div class="d-flex gap-2 mt-3 mt-md-0">
-                            <a href="{{ route('assessments.show', $assessment->id) }}" class="btn btn-light">
+                            <a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-light">
                                 <i class="bx bx-arrow-back me-1"></i>Back to Assessment
                             </a>
-                            <a href="{{ route('modules.hr.assessments') }}" class="btn btn-outline-light">
+                            <a href="{{ route('modules.hr.performance_management_module') }}" class="btn btn-outline-light">
                                 <i class="bx bx-list-ul me-1"></i>All Assessments
                             </a>
                         </div>
@@ -132,51 +132,28 @@
                     $approvalRate = $totalReports > 0 ? round(($approvedCount / $totalReports) * 100, 1) : 0;
                 @endphp
                 <div class="activity-card mb-4" data-activity-id="{{ $activity->id }}" data-frequency="{{ strtolower($activity->reporting_frequency) }}" data-name="{{ strtolower($activity->activity_name) }}">
-                    <div class="card border-0 shadow-sm activity-item" style="border-radius: 12px; transition: all 0.3s ease;">
-                        <div class="card-header bg-white border-bottom" style="border-radius: 12px 12px 0 0; cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#activityCollapse{{ $activity->id }}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="activity-icon me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="bx bx-task text-white fs-4"></i>
+                            <div class="card border-0 shadow-sm activity-item overflow-hidden" style="border-radius: 12px; transition: all 0.3s ease;">
+                                <div class="card-header bg-white border-bottom-0 p-3 pt-3 pb-2 cursor-pointer" data-bs-toggle="collapse" data-bs-target="#activityCollapse{{ $activity->id }}">
+                                    <div class="d-flex align-items-center flex-wrap gap-2">
+                                        <div class="avatar bg-label-primary rounded d-flex align-items-center justify-content-center flex-shrink-0 me-2" style="width: 2.5rem; height: 2.5rem;">
+                                            <span class="fw-bold fs-5">{{ $index + 1 }}</span>
                                         </div>
-                                        <div>
-                                            <h6 class="mb-1 fw-bold text-dark">{{ $activity->activity_name }}</h6>
-                                            <div class="d-flex gap-2 flex-wrap">
-                                                <span class="badge bg-secondary">
-                                                    <i class="bx bx-time me-1"></i>{{ ucfirst($activity->reporting_frequency) }}
-                                                </span>
-                                                <span class="badge bg-info">
-                                                    <i class="bx bx-percent me-1"></i>{{ $activity->contribution_percentage }}% Contribution
-                                                </span>
+                                        <div class="flex-grow-1" style="min-width: 200px;">
+                                            <h6 class="mb-1 text-dark fw-bold text-break">{{ $activity->activity_name }}</h6>
+                                            <div class="d-flex flex-wrap gap-3 align-items-center text-muted small">
+                                                <span class="badge bg-label-info"><i class="bx bx-time-five me-1"></i>{{ ucfirst($activity->reporting_frequency) }}</span>
+                                                <span class="badge bg-label-warning"><i class="bx bx-pie-chart-alt-2 me-1"></i>{{ $activity->contribution_percentage }}% Contrib.</span>
                                                 @if($totalReports > 0)
-                                                <span class="badge bg-success">
-                                                    <i class="bx bx-check-circle me-1"></i>{{ $approvalRate }}% Approval Rate
-                                                </span>
+                                                <span class="badge bg-label-success"><i class="bx bx-check-circle me-1"></i>{{ $approvalRate }}% Approval</span>
                                                 @endif
                                             </div>
                                         </div>
+                                        <div class="text-end flex-shrink-0 ms-auto d-flex flex-column align-items-end justify-content-center">
+                                            <span class="badge bg-secondary mb-1">{{ $totalReports }} Reports</span>
+                                            <i class="bx bx-chevron-down text-muted fs-4 activity-chevron"></i>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="text-end ms-3">
-                                    <div class="mb-2">
-                                        <span class="badge bg-primary fs-6">{{ $totalReports }} Report{{ $totalReports !== 1 ? 's' : '' }}</span>
-                                    </div>
-                                    <div class="d-flex gap-1 justify-content-end">
-                                        @if($approvedCount > 0)
-                                        <span class="badge bg-success">{{ $approvedCount }} Approved</span>
-                                        @endif
-                                        @if($pendingCount > 0)
-                                        <span class="badge bg-warning">{{ $pendingCount }} Pending</span>
-                                        @endif
-                                        @if($rejectedCount > 0)
-                                        <span class="badge bg-danger">{{ $rejectedCount }} Rejected</span>
-                                        @endif
-                                    </div>
-                                    <i class="bx bx-chevron-down activity-chevron mt-2" style="font-size: 1.5rem; color: #667eea; transition: transform 0.3s;"></i>
-                                </div>
-                            </div>
-                        </div>
                         <div id="activityCollapse{{ $activity->id }}" class="collapse {{ $index === 0 ? 'show' : '' }}" data-bs-parent=".activities-container">
                             <div class="card-body p-4">
                                 @if($activity->description)
@@ -328,7 +305,7 @@
                                             <strong>No Progress Reports</strong>
                                             <p class="mb-0">No progress reports have been submitted for this activity yet.</p>
                                             @if($isOwn && $assessment->status === 'approved')
-                                            <a href="{{ route('assessments.progress.create', $activity->id) }}" class="btn btn-primary btn-sm mt-2">
+                                            <a href="{{ route('performance_management_module.progress.create', $activity->id) }}" class="btn btn-primary btn-sm mt-2">
                                                 <i class="bx bx-plus me-1"></i>Submit First Report
                                             </a>
                                             @endif
@@ -521,7 +498,7 @@ $(document).ready(function() {
         });
         
         $.ajax({
-            url: `/assessments/progress-reports/${reportId}/approve`,
+            url: `/performance-management-module/progress-reports/${reportId}/approve`,
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': csrfToken,

@@ -667,16 +667,20 @@
         <div class="section-title">10. Statutory Information</div>
         <table class="info-table">
             <tr>
+                <th>NIDA Number:</th>
+                <td><code>{{ $employee->employee->nida_number ?? 'N/A' }}</code></td>
                 <th>TIN Number:</th>
                 <td><code>{{ $employee->employee->tin_number ?? 'N/A' }}</code></td>
-                <th>NSSF Number:</th>
-                <td><code>{{ $employee->employee->nssf_number ?? 'N/A' }}</code></td>
             </tr>
             <tr>
+                <th>NSSF Number:</th>
+                <td><code>{{ $employee->employee->nssf_number ?? 'N/A' }}</code></td>
                 <th>NHIF Number:</th>
                 <td><code>{{ $employee->employee->nhif_number ?? 'N/A' }}</code></td>
+            </tr>
+            <tr>
                 <th>HESLB Number:</th>
-                <td><code>{{ $employee->employee->heslb_number ?? 'N/A' }}</code></td>
+                <td colspan="3"><code>{{ $employee->employee->heslb_number ?? 'N/A' }}</code></td>
             </tr>
             <tr>
                 <th>Has Student Loan:</th>

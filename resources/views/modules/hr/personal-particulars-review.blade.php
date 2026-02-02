@@ -30,7 +30,7 @@
                             <p class="text-white-50 mb-0">Review all information before finalizing</p>
                         </div>
                         <div>
-                            <a href="{{ route('modules.hr.employees.registration-pdf', $employee->id) }}" class="btn btn-light btn-sm" target="_blank">
+                            <a href="{{ route('modules.hr.personal-particulars.registration-pdf', $employee->id) }}" class="btn btn-light btn-sm" target="_blank">
                                 <i class="bx bx-file-blank me-1"></i> Generate PDF
                             </a>
                         </div>
@@ -343,6 +343,7 @@
                         </div>
                         <div class="card-body">
                             <table class="table table-borderless">
+                                <tr><th width="200">NIDA Number:</th><td>{{ $employee->employee->nida_number ?? 'N/A' }}</td></tr>
                                 <tr><th width="200">TIN Number:</th><td>{{ $employee->employee->tin_number ?? 'N/A' }}</td></tr>
                                 <tr><th>NSSF Number:</th><td>{{ $employee->employee->nssf_number ?? 'N/A' }}</td></tr>
                                 <tr><th>NHIF Number:</th><td>{{ $employee->employee->nhif_number ?? 'N/A' }}</td></tr>
@@ -397,11 +398,11 @@
 
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-between align-items-center mt-4">
-                        <a href="{{ route('modules.hr.employees.register') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('modules.hr.personal-particulars.register') }}" class="btn btn-outline-secondary">
                             <i class="bx bx-arrow-back me-1"></i> Back to Edit
                         </a>
                         <div>
-                            <a href="{{ route('modules.hr.employees.registration-pdf', $employee->id) }}" class="btn btn-outline-primary" target="_blank">
+                            <a href="{{ route('modules.hr.personal-particulars.registration-pdf', $employee->id) }}" class="btn btn-outline-primary" target="_blank">
                                 <i class="bx bx-file-blank me-1"></i> Generate PDF
                             </a>
                             <button type="button" class="btn btn-success" onclick="finalizeRegistration()">
@@ -424,7 +425,7 @@ function finalizeRegistration() {
     }
     
     $.ajax({
-        url: '{{ route("modules.hr.employees.finalize", $employee->id) }}',
+        url: '{{ route("modules.hr.personal-particulars.finalize", $employee->id) }}',
         method: 'POST',
         data: {
             _token: '{{ csrf_token() }}'
@@ -540,7 +541,7 @@ function finalizeRegistration() {
                     }
                 }
                 
-                smsDetails += '<div class="mt-3"><button class="btn btn-primary w-100" onclick="window.location.href=\'{{ route("modules.hr.employees") }}\'">Go to Employees List</button></div>';
+                smsDetails += '<div class="mt-3"><button class="btn btn-primary w-100" onclick="window.location.href=\'{{ route("modules.hr.personal-particulars") }}\'">Go to Employees List</button></div>';
                 smsDetails += '</div>';
                 
                 // Show SweetAlert or custom modal
@@ -555,7 +556,7 @@ function finalizeRegistration() {
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = '{{ route("modules.hr.employees") }}';
+                            window.location.href = '{{ route("modules.hr.personal-particulars") }}';
                         }
                     });
                 } else {

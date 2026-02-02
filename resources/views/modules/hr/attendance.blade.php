@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Attendance Management')
+@section('title', 'Attendance and Time Management')
 
 @section('content')
 <div class="container-fluid">
@@ -12,7 +12,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="card-title text-white mb-1">
-                                <i class="bx bx-time me-2"></i>Attendance Management
+                                <i class="bx bx-time me-2"></i>Attendance and Time Management
                             </h4>
                             <p class="card-text text-white-50 mb-0">Track employee attendance automatically via ZKTeco biometric devices</p>
                         </div>
@@ -25,6 +25,9 @@
                                 <i class="bx bx-trash me-1"></i>Delete All
                             </button>
                             @endif
+                            <a href="{{ route('attendance.export', array_merge(request()->all(), ['format' => 'pdf', 'report_type' => 'timing'])) }}" class="btn btn-light btn-info me-2" target="_blank" title="Generate Timing Report (Early/Late/Early Leave)">
+                                <i class="bx bx-file-blank me-1"></i>Timing Report PDF
+                            </a>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bx bx-download me-1"></i>Export

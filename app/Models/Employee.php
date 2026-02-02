@@ -16,6 +16,8 @@ class Employee extends Model
         'department_id',
         'hire_date',
         'salary',
+        'salary_structure_id',
+        'institutional_position_id',
         'employment_type',
         'employment_status',
         'manager_id',
@@ -33,6 +35,7 @@ class Employee extends Model
         'heslb_number',
         'has_student_loan',
         'termination_date',
+        'nida_number',
         'notes',
     ];
 
@@ -90,5 +93,21 @@ class Employee extends Model
     public function attendances()
     {
         return $this->hasMany(Attendance::class, 'employee_id');
+    }
+
+    /**
+     * Get the salary structure
+     */
+    public function salaryStructure()
+    {
+        return $this->belongsTo(SalaryStructure::class);
+    }
+
+    /**
+     * Get the institutional position
+     */
+    public function institutionalPosition()
+    {
+        return $this->belongsTo(InstitutionalPosition::class);
     }
 }

@@ -40,16 +40,16 @@ class AttendanceSettingsController extends Controller
         $policies = AttendancePolicy::with(['location', 'department', 'creator'])->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         
-        // Load employees for enrollment
-        // Auto-generate enroll_id from employee_id if not set
-        $employees = User::with(['employee', 'primaryDepartment'])
+        // Load particulars for enrollment
+        // Auto-generate enroll_id from particulars_id if not set
+        $Particulars = User::with(['employee', 'primaryDepartment'])
             ->whereHas('employee')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
         
-        // Auto-generate enroll_id from employee_id for employees without enroll_id
-        foreach ($employees as $employee) {
+        // Auto-generate enroll_id from employee_id for particulars without enroll_id
+        foreach ($Particulars as $employee) {
             if (!$employee->enroll_id && $employee->employee && $employee->employee->employee_id) {
                 // Extract numeric part from employee_id (e.g., "EMP20251107DU" -> "20251107")
                 $enrollId = preg_replace('/[^0-9]/', '', $employee->employee->employee_id);
@@ -71,8 +71,8 @@ class AttendanceSettingsController extends Controller
             }
         }
         
-        // Reload employees with updated enroll_id
-        $employees = User::with(['employee', 'primaryDepartment'])
+        // Reload particulars with updated enroll_id
+        $Particulars = User::with(['employee', 'primaryDepartment'])
             ->whereHas('employee')
             ->where('is_active', true)
             ->orderBy('name')
@@ -92,8 +92,8 @@ class AttendanceSettingsController extends Controller
         ];
         
         // Calculate enrollment stats
-        $stats['total_employees'] = $employees->count();
-        $stats['enrolled_employees'] = $employees->where('registered_on_device', true)->count();
+        $stats['total_particulars'] = $Particulars->count();
+        $stats['enrolled_particulars'] = $Particulars->where('registered_on_device', true)->count();
         
         // Use index view (dashboard)
         return view('modules.hr.attendance-settings-index', compact(
@@ -102,7 +102,7 @@ class AttendanceSettingsController extends Controller
             'schedules',
             'policies',
             'departments',
-            'employees',
+            'Particulars',
             'stats'
         ));
     }
@@ -189,16 +189,16 @@ class AttendanceSettingsController extends Controller
         
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         
-        // Load employees for enrollment
+        // Load particulars for enrollment
         // Auto-generate enroll_id from employee_id if not set
-        $employees = User::with(['employee', 'primaryDepartment'])
+        $Particulars = User::with(['employee', 'primaryDepartment'])
             ->whereHas('employee')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
         
-        // Auto-generate enroll_id from employee_id for employees without enroll_id
-        foreach ($employees as $employee) {
+        // Auto-generate enroll_id from employee_id for particulars without enroll_id
+        foreach ($Particulars as $employee) {
             if (!$employee->enroll_id && $employee->employee && $employee->employee->employee_id) {
                 // Extract numeric part from employee_id (e.g., "EMP20251107DU" -> "20251107")
                 $enrollId = preg_replace('/[^0-9]/', '', $employee->employee->employee_id);
@@ -220,8 +220,8 @@ class AttendanceSettingsController extends Controller
             }
         }
         
-        // Reload employees with updated enroll_id
-        $employees = User::with(['employee', 'primaryDepartment'])
+        // Reload particulars with updated enroll_id
+        $Particulars = User::with(['employee', 'primaryDepartment'])
             ->whereHas('employee')
             ->where('is_active', true)
             ->orderBy('name')
@@ -262,7 +262,7 @@ class AttendanceSettingsController extends Controller
             $deviceCommKey = config('zkteco.password', 0);
         }
         
-        return view('modules.hr.attendance-settings-enrollment', compact('employees', 'departments', 'deviceIp', 'devicePort', 'deviceCommKey'));
+        return view('modules.hr.attendance-settings-enrollment', compact('Particulars', 'departments', 'deviceIp', 'devicePort', 'deviceCommKey'));
     }
 
     /**
@@ -1086,7 +1086,7 @@ class AttendanceSettingsController extends Controller
     /**
      * Get employees list for enrollment (API endpoint)
      */
-    public function getEmployeesList(Request $request)
+    public function getParticularsList(Request $request)
     {
         $user = Auth::user();
         
@@ -1245,7 +1245,7 @@ class AttendanceSettingsController extends Controller
     /**
      * Generate attendance report
      */
-    public function generateReport(Request $request)
+    public function generateParticularsReport(Request $request)
     {
         $user = Auth::user();
         
@@ -2947,3 +2947,4 @@ class AttendanceSettingsController extends Controller
         }
     }
 }
+

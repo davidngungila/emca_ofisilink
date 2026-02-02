@@ -13,6 +13,8 @@ class AssessmentProgressReport extends Model
         'activity_id',
         'report_date',
         'progress_text',
+        'performance_score',
+        'source',
         'status',
         'hod_approved_at',
         'hod_approved_by',
@@ -21,6 +23,7 @@ class AssessmentProgressReport extends Model
 
     protected $casts = [
         'report_date' => 'date',
+        'performance_score' => 'decimal:2',
         'hod_approved_at' => 'datetime',
     ];
 

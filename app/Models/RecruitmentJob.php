@@ -12,12 +12,18 @@ class RecruitmentJob extends Model
 
     protected $fillable = [
         'job_title',
+        'institutional_position_id',
+        'salary_structure_id',
         'job_description',
         'qualifications',
         'application_deadline',
         'required_attachments',
         'interview_mode',
         'status',
+        'payroll_approval_status',
+        'payroll_approved_by',
+        'payroll_approved_at',
+        'payroll_approval_notes',
         'rejection_reason',
         'created_by',
         'approved_by',
@@ -27,6 +33,7 @@ class RecruitmentJob extends Model
     protected $casts = [
         'application_deadline' => 'date',
         'approved_at' => 'datetime',
+        'payroll_approved_at' => 'datetime',
         'required_attachments' => 'array',
         'interview_mode' => 'array',
     ];
@@ -77,6 +84,30 @@ class RecruitmentJob extends Model
     public function isDeadlinePassed(): bool
     {
         return $this->application_deadline < now()->startOfDay();
+    }
+
+    /**
+     * Get the institutional position
+     */
+    public function institutionalPosition(): BelongsTo
+    {
+        return $this->belongsTo(InstitutionalPosition::class);
+    }
+
+    /**
+     * Get the salary structure
+     */
+    public function salaryStructure(): BelongsTo
+    {
+        return $this->belongsTo(SalaryStructure::class);
+    }
+
+    /**
+     * Get the payroll approver
+     */
+    public function payrollApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payroll_approved_by');
     }
 }
 

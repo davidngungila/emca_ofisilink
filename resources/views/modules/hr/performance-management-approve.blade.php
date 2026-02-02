@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Reject Assessment - OfisiLink')
+@section('title', 'Approve Assessment - OfisiLink')
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -10,10 +10,10 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h4 class="mb-1"><i class="bx bx-x-circle me-2"></i>Reject Assessment</h4>
+                            <h4 class="mb-1"><i class="bx bx-check-circle me-2"></i>Approve Assessment</h4>
                             <p class="mb-0 text-muted">Assessment: <strong>{{ $assessment->main_responsibility }}</strong></p>
                         </div>
-                        <a href="{{ route('assessments.show', $assessment->id) }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-outline-secondary">
                             <i class="bx bx-arrow-back me-1"></i>Back
                         </a>
                     </div>
@@ -25,7 +25,7 @@
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-danger text-white">
+                <div class="card-header bg-success text-white">
                     <h5 class="mb-0 text-white">Assessment Details</h5>
                 </div>
                 <div class="card-body">
@@ -34,26 +34,27 @@
                     @if($assessment->description)
                     <p><strong>Description:</strong> {{ $assessment->description }}</p>
                     @endif
+                    <p><strong>Activities:</strong> {{ $assessment->activities->count() }}</p>
                 </div>
             </div>
 
             <div class="card shadow-sm mt-4">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0">Rejection Form</h5>
+                    <h5 class="mb-0">Approval Form</h5>
                 </div>
                 <div class="card-body">
-                    <form id="reject-form">
+                    <form id="approve-form">
                         @csrf
-                        <input type="hidden" name="decision" value="reject">
+                        <input type="hidden" name="decision" value="approve">
                         <div class="mb-3">
                             <label class="form-label">Comments <span class="text-danger">*</span></label>
-                            <textarea name="comments" class="form-control" rows="4" required placeholder="Provide reason for rejection..."></textarea>
+                            <textarea name="comments" class="form-control" rows="4" required placeholder="Provide comments for approval..."></textarea>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-danger btn-lg">
-                                <i class="bx bx-x me-2"></i>Reject Assessment
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bx bx-check me-2"></i>Approve Assessment
                             </button>
-                            <a href="{{ route('assessments.show', $assessment->id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                            <a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -65,7 +66,7 @@
 
 @push('scripts')
 <script>
-$('#reject-form').on('submit', function(e) {
+$('#approve-form').on('submit', function(e) {
     e.preventDefault();
     const formData = $(this).serialize();
     const submitBtn = $(this).find('button[type="submit"]');
@@ -74,14 +75,14 @@ $('#reject-form').on('submit', function(e) {
     
     $.ajax({
         type: 'POST',
-        url: '{{ route("assessments.hod-approve", $assessment->id) }}',
+        url: '{{ route("performance_management_module.hod-approve", $assessment->id) }}',
         data: formData,
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
         success: function(response) {
             if (response.success) {
-                window.location.href = '{{ route("assessments.show", $assessment->id) }}';
+                window.location.href = '{{ route("performance_management_module.show", $assessment->id) }}';
             } else {
-                alert(response.message || 'Failed to reject');
+                alert(response.message || 'Failed to approve');
                 submitBtn.prop('disabled', false).html(originalText);
             }
         },

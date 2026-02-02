@@ -20,8 +20,8 @@
             <a href="{{ route('modules.finance.petty') }}" class="btn btn-light btn-lg shadow-sm">
               <i class="bx bx-money me-2"></i>Financial Review
             </a>
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-light btn-lg shadow-sm">
-              <i class="bx bx-group me-2"></i>Employees
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-light btn-lg shadow-sm">
+              <i class="bx bx-group me-2"></i>Particulars
             </a>
           </div>
         </div>
@@ -75,9 +75,9 @@
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-danger w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-danger w-100 d-flex flex-column align-items-center py-3 shadow-sm">
               <i class="bx bx-group fs-3 mb-2"></i>
-              <span>Employees</span>
+              <span>Particulars</span>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">

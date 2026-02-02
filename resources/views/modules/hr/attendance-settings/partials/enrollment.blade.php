@@ -158,7 +158,7 @@
                     <button type="button" class="btn btn-info btn-sm" onclick="syncFromDevice()" title="Sync users from device">
                         <i class="bx bx-download me-1"></i>Sync Users
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshEmployeesList()">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshParticularsList()">
                         <i class="bx bx-refresh me-1"></i>Refresh
                     </button>
                 </div>
@@ -167,10 +167,10 @@
                 <!-- Filters -->
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <input type="text" class="form-control" id="employeeSearch" placeholder="Search by name or employee ID..." onkeyup="filterEmployees()">
+                        <input type="text" class="form-control" id="particularsSearch" placeholder="Search by name or employee ID..." onkeyup="filterParticulars()">
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" id="employeeDepartmentFilter" onchange="filterEmployees()">
+                        <select class="form-select" id="particularsDepartmentFilter" onchange="filterParticulars()">
                             <option value="">All Departments</option>
                             @foreach($departments ?? [] as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -178,7 +178,7 @@
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <select class="form-select" id="employeeEnrollmentFilter" onchange="filterEmployees()">
+                        <select class="form-select" id="particularsEnrollmentFilter" onchange="filterParticulars()">
                             <option value="">All Status</option>
                             <option value="enrolled">Enrolled</option>
                             <option value="not_enrolled">Not Enrolled</option>
@@ -186,7 +186,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button type="button" class="btn btn-outline-secondary w-100" onclick="refreshEmployeesList()">
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="refreshParticularsList()">
                             <i class="bx bx-refresh me-1"></i>Refresh
                         </button>
                     </div>
@@ -194,11 +194,11 @@
 
                 <!-- Employees Table -->
                 <div class="table-responsive">
-                    <table class="table table-hover" id="employeesEnrollmentTable">
+                    <table class="table table-hover" id="particularsEnrollmentTable">
                         <thead>
                             <tr>
                                 <th width="5%">
-                                    <input type="checkbox" id="selectAllEmployees" onchange="toggleSelectAll()">
+                                    <input type="checkbox" id="selectAllParticulars" onchange="toggleSelectAll()">
                                 </th>
                                 <th>Employee ID</th>
                                 <th>Name</th>
@@ -209,7 +209,7 @@
                                 <th width="15%">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="employeesEnrollmentTableBody">
+                        <tbody id="particularsEnrollmentTableBody">
                             <tr>
                                 <td colspan="8" class="text-center py-5">
                                     <div class="spinner-border text-primary" role="status">
@@ -228,12 +228,12 @@
 
 <script>
 try {
-    let employeesData = @json($employees ?? []);
-    if (typeof employeesData === 'undefined' || employeesData === null) {
-        employeesData = [];
+    let particularsData = @json($employees ?? []);
+    if (typeof particularsData === 'undefined' || particularsData === null) {
+        particularsData = [];
     }
 } catch(e) {
-    var employeesData = [];
+    var particularsData = [];
     console.error('Error loading employees data:', e);
 }
 
@@ -242,23 +242,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const enrollmentTab = document.querySelector('a[href="#enrollment"]');
     if (enrollmentTab) {
         enrollmentTab.addEventListener('shown.bs.tab', function() {
-            loadEmployeesList();
+            loadParticularsList();
         });
     }
 });
 
-function loadEmployeesList() {
-    const tbody = document.getElementById('employeesEnrollmentTableBody');
+function loadParticularsList() {
+    const tbody = document.getElementById('particularsEnrollmentTableBody');
     if (!tbody) return;
 
-    if (!employeesData || employeesData.length === 0) {
+    if (!particularsData || particularsData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bx bx-inbox fs-1"></i><p class="mt-2">No employees found</p></td></tr>';
         updateStatistics();
         return;
     }
 
     let html = '';
-    employeesData.forEach(employee => {
+    particularsData.forEach(employee => {
         const enrollId = employee.enroll_id || '';
         const isEnrolled = employee.registered_on_device || false;
         const hasEnrollId = enrollId !== '';
@@ -277,7 +277,7 @@ function loadEmployeesList() {
         const lastEnrolled = employee.device_registered_at ? new Date(employee.device_registered_at).toLocaleDateString() : '-';
         
         html += '<tr data-employee-id="' + employee.id + '" data-enroll-id="' + enrollId + '" data-enrolled="' + isEnrolled + '">';
-        html += '<td><input type="checkbox" class="employee-checkbox" value="' + employee.id + '"' + (!hasEnrollId ? ' disabled' : '') + '></td>';
+        html += '<td><input type="checkbox" class="particulars-checkbox" value="' + employee.id + '"' + (!hasEnrollId ? ' disabled' : '') + '></td>';
         html += '<td><strong>' + (employeeId || 'N/A') + '</strong></td>';
         html += '<td>' + (employee.name || 'N/A') + '</td>';
         html += '<td><span class="badge bg-light text-dark">' + department + '</span></td>';
@@ -312,7 +312,7 @@ function loadEmployeesList() {
 }
 
 function updateStatistics() {
-    if (!employeesData || employeesData.length === 0) {
+    if (!particularsData || particularsData.length === 0) {
         document.getElementById('statTotalEmployees').textContent = '0';
         document.getElementById('statEnrolled').textContent = '0';
         document.getElementById('statNotEnrolled').textContent = '0';
@@ -320,10 +320,10 @@ function updateStatistics() {
         return;
     }
     
-    const total = employeesData.length;
-    const enrolled = employeesData.filter(e => e.registered_on_device).length;
-    const notEnrolled = employeesData.filter(e => e.enroll_id && !e.registered_on_device).length;
-    const noEnrollId = employeesData.filter(e => !e.enroll_id).length;
+    const total = particularsData.length;
+    const enrolled = particularsData.filter(e => e.registered_on_device).length;
+    const notEnrolled = particularsData.filter(e => e.enroll_id && !e.registered_on_device).length;
+    const noEnrollId = particularsData.filter(e => !e.enroll_id).length;
     
     document.getElementById('statTotalEmployees').textContent = total;
     document.getElementById('statEnrolled').textContent = enrolled;
@@ -331,15 +331,15 @@ function updateStatistics() {
     document.getElementById('statNoEnrollId').textContent = noEnrollId;
 }
 
-function filterEmployees() {
-    const search = document.getElementById('employeeSearch')?.value.toLowerCase() || '';
-    const deptFilter = document.getElementById('employeeDepartmentFilter')?.value || '';
-    const statusFilter = document.getElementById('employeeEnrollmentFilter')?.value || '';
-    const rows = document.querySelectorAll('#employeesEnrollmentTableBody tr[data-employee-id]');
+function filterParticulars() {
+    const search = document.getElementById('particularsSearch')?.value.toLowerCase() || '';
+    const deptFilter = document.getElementById('particularsDepartmentFilter')?.value || '';
+    const statusFilter = document.getElementById('particularsEnrollmentFilter')?.value || '';
+    const rows = document.querySelectorAll('#particularsEnrollmentTableBody tr[data-employee-id]');
 
     rows.forEach(row => {
         const employeeId = row.getAttribute('data-employee-id');
-        const employee = employeesData.find(e => e.id == employeeId);
+        const employee = particularsData.find(e => e.id == employeeId);
         if (!employee) return;
 
         const name = (employee.name || '').toLowerCase();
@@ -372,8 +372,8 @@ function filterEmployees() {
 }
 
 function toggleSelectAll() {
-    const selectAll = document.getElementById('selectAllEmployees');
-    const checkboxes = document.querySelectorAll('.employee-checkbox:not(:disabled)');
+    const selectAll = document.getElementById('selectAllParticulars');
+    const checkboxes = document.querySelectorAll('.particulars-checkbox:not(:disabled)');
     checkboxes.forEach(cb => cb.checked = selectAll.checked);
 }
 
@@ -486,7 +486,7 @@ function generateEnrollId(userId) {
     .then(data => {
         if (data.success) {
             showToast('Enroll ID generated successfully', 'success');
-            refreshEmployeesList();
+            refreshParticularsList();
         } else {
             showToast(data.message || 'Failed to generate Enroll ID', 'error');
         }
@@ -512,7 +512,7 @@ function enrollSingleEmployee(userId) {
         const password = passwordInput ? parseInt(passwordInput) : 0;
 
         // Find employee data
-        const employee = employeesData.find(e => e.id == userId);
+        const employee = particularsData.find(e => e.id == userId);
         if (!employee) {
             showToast('Employee not found', 'error');
             return;
@@ -632,7 +632,7 @@ function enrollSingleEmployee(userId) {
                         hideRegistrationSplash();
                     }
                     showToast('✓ Employee registered successfully to device!', 'success');
-                    refreshEmployeesList();
+                    refreshParticularsList();
                 }, 2000);
             } else {
                 throw new Error(data.message || 'Failed to register employee');
@@ -715,14 +715,14 @@ function enrollSelectedEmployees() {
     const port = portInput ? parseInt(portInput) : 4370;
     const password = passwordInput ? parseInt(passwordInput) : 0;
 
-    const selected = Array.from(document.querySelectorAll('.employee-checkbox:checked')).map(cb => parseInt(cb.value));
+    const selected = Array.from(document.querySelectorAll('.particulars-checkbox:checked')).map(cb => parseInt(cb.value));
     
     if (selected.length === 0) {
         showToast('Please select at least one employee to register', 'warning');
         return;
     }
 
-    const selectedEmployees = employeesData.filter(e => selected.includes(e.id) && e.enroll_id && !e.registered_on_device);
+    const selectedEmployees = particularsData.filter(e => selected.includes(e.id) && e.enroll_id && !e.registered_on_device);
 
     if (selectedEmployees.length === 0) {
         showToast('Selected employees are already enrolled or missing Enroll ID.', 'info');
@@ -761,7 +761,7 @@ function enrollAllEmployees() {
     const port = portInput ? parseInt(portInput) : 4370;
     const password = passwordInput ? parseInt(passwordInput) : 0;
 
-    const allEmployees = employeesData.filter(e => e.enroll_id && !e.registered_on_device);
+    const allEmployees = particularsData.filter(e => e.enroll_id && !e.registered_on_device);
 
     if (allEmployees.length === 0) {
         showToast('No employees to register. All employees are already enrolled or missing Enroll ID.', 'info');
@@ -824,7 +824,7 @@ function enrollEmployeesBatch(userIds, ip, port, password) {
             
             // Refresh the list after a short delay
             setTimeout(() => {
-                refreshEmployeesList();
+                refreshParticularsList();
             }, 1500);
             return;
         }
@@ -921,7 +921,7 @@ function unregisterEmployee(userId) {
     const password = passwordInput ? parseInt(passwordInput) : 0;
 
     // Find employee data
-    const employee = employeesData.find(e => e.id == userId);
+    const employee = particularsData.find(e => e.id == userId);
     if (!employee) {
         showToast('Employee not found', 'error');
         return;
@@ -987,7 +987,7 @@ function unregisterEmployee(userId) {
             showToast('✓ Employee unregistered successfully from device!', 'success');
             // Refresh the list after a short delay
             setTimeout(() => {
-                refreshEmployeesList();
+                refreshParticularsList();
             }, 1000);
         } else {
             showToast(data.message || 'Failed to unregister employee', 'error');
@@ -1061,9 +1061,9 @@ function syncAttendanceFromDevices() {
     });
 }
 
-function refreshEmployeesList() {
+function refreshParticularsList() {
     // Reload employees from API
-    const apiUrl = '/attendance-settings/employees/list';
+    const apiUrl = '/attendance-settings/particulars/list';
     const csrfToken = '{{ csrf_token() }}';
     
     fetch(apiUrl, {
@@ -1088,8 +1088,8 @@ function refreshEmployeesList() {
     })
     .then(data => {
         if (data.success && data.employees) {
-            employeesData = data.employees;
-            loadEmployeesList();
+            particularsData = data.employees;
+            loadParticularsList();
             showToast('Employees list refreshed', 'success');
         } else {
             showToast('Failed to refresh employees list', 'error');
@@ -1188,4 +1188,5 @@ function updateSplashStep(stepNumber, stepText) {
     }
 }
 </script>
+
 

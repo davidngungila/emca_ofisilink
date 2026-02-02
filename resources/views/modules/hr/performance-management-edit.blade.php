@@ -13,7 +13,7 @@
                             <h4 class="mb-1"><i class="bx bx-edit me-2"></i>Edit Assessment</h4>
                             <p class="mb-0 text-muted">Assessment ID: <strong>#{{ $assessment->id }}</strong></p>
                         </div>
-                        <a href="{{ route('assessments.show', $assessment->id) }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-outline-secondary">
                             <i class="bx bx-arrow-back me-1"></i>Back
                         </a>
                     </div>
@@ -67,7 +67,7 @@
                             <button type="submit" class="btn btn-warning btn-lg">
                                 <i class="bx bx-save me-2"></i>Update Assessment
                             </button>
-                            <a href="{{ route('assessments.show', $assessment->id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                            <a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
                         </div>
                     </form>
                 </div>

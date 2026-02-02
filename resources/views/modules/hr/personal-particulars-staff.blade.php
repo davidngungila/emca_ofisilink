@@ -733,8 +733,8 @@
                     <div class="tab-pane fade show active" id="overview" role="tabpanel">
                         <div class="text-center py-5">
                             <i class="bx bx-user text-muted" style="font-size: 4rem;"></i>
-                            <h5 class="mt-3 text-muted">No Employee Profile Found</h5>
-                            <p class="text-muted">Please contact HR to set up your employee profile.</p>
+                            <h5 class="mt-3 text-muted">No Particulars Profile Found</h5>
+                            <p class="text-muted">Please contact HR to set up your personal particulars profile.</p>
                             <button type="button" class="btn btn-primary" onclick="contactHR()">
                                 <i class="bx bx-envelope me-2"></i>Contact HR
                             </button>
@@ -826,7 +826,7 @@
                         <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $avgRating }}%"></div>
                     </div>
                     <div class="d-grid">
-                        <a href="{{ route('assessments.index') }}" class="btn btn-outline-primary btn-sm">
+                        <a href="{{ route('performance_management_module.index') }}" class="btn btn-outline-primary btn-sm">
                             <i class="bx bx-bar-chart me-1"></i>View Assessments
                         </a>
                     </div>
@@ -839,13 +839,13 @@
 </div>
 
 <script>
-function viewEmployeeDetails(employeeId) {
-    if (!employeeId) {
-        Swal.fire('Error', 'Invalid employee ID.', 'error');
+function viewParticularsDetails(particularsId) {
+    if (!particularsId) {
+        Swal.fire('Error', 'Invalid particulars ID.', 'error');
         return;
     }
-    // Redirect to employee show page (employee-show.blade.php)
-    window.location.href = '/employees/' + employeeId;
+    // Redirect to particulars show page (personal-particulars-show.blade.php)
+    window.location.href = '/modules/hr/personal-particulars/' + particularsId;
 }
 
 function viewPayslips() {

@@ -78,10 +78,10 @@
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.employees') }}" class="btn text-white w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn text-white w-100 d-flex flex-column align-items-center py-3 shadow-sm" style="border-radius: 10px; transition: all 0.3s; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
               <i class="bx bx-group fs-3 mb-2"></i>
-              <span class="fw-semibold">HR</span>
-              <small class="text-white-50">Human Resources</small>
+              <span class="fw-semibold">Particulars</span>
+              <small class="text-white-50">Personal Particulars</small>
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
@@ -344,8 +344,8 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <h6 class="text-muted mb-1">Assessments</h6>
-            <h4 class="mb-0">{{ $stats['pending_assessments'] ?? 0 }}</h4>
+            <h6 class="text-muted mb-1">Performance Management</h6>
+            <h4 class="mb-0">{{ $stats['pending_performance_management'] ?? 0 }}</h4>
             <small class="text-muted">Pending HOD review</small>
           </div>
           <i class="bx bx-target-lock fs-1 text-info opacity-50"></i>
@@ -457,7 +457,7 @@
             <a class="nav-link" data-bs-toggle="tab" href="#imprest">Imprest ({{ $pendingApprovals['imprest_requests']->count() }})</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#assessments">Assessments ({{ $pendingApprovals['assessments']->count() }})</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#performance-management-tab">Performance Management ({{ $pendingApprovals['performance_management']->count() }})</a>
           </li>
         </ul>
         <div class="tab-content mt-3">
@@ -599,7 +599,7 @@
               </table>
             </div>
           </div>
-          <div class="tab-pane fade" id="assessments">
+          <div class="tab-pane fade" id="performance-management-tab">
             <div class="table-responsive">
               <table class="table table-hover">
                 <thead>
@@ -611,15 +611,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @forelse($pendingApprovals['assessments'] as $assessment)
+                  @forelse($pendingApprovals['performance_management'] as $assessment)
                   <tr>
                     <td>{{ $assessment->employee->name ?? 'N/A' }}</td>
                     <td>{{ \Illuminate\Support\Str::limit($assessment->main_responsibility ?? 'N/A', 40) }}</td>
                     <td><span class="badge bg-warning">{{ $assessment->status ?? 'Pending' }}</span></td>
-                    <td><a href="{{ route('assessments.show', $assessment->id) }}" class="btn btn-sm btn-primary">Review</a></td>
+                    <td><a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-sm btn-primary">Review</a></td>
                   </tr>
                   @empty
-                  <tr><td colspan="4" class="text-center text-muted">No pending assessments</td></tr>
+                  <tr><td colspan="4" class="text-center text-muted">No pending Performance Management</td></tr>
                   @endforelse
                 </tbody>
               </table>

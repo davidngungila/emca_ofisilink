@@ -17,8 +17,8 @@
             </p>
           </div>
           <div class="d-flex gap-2">
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-light btn-lg shadow-sm">
-              <i class="bx bx-group me-2"></i>Staff
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-light btn-lg shadow-sm">
+              <i class="bx bx-group me-2"></i>Particulars
             </a>
             <a href="{{ route('modules.hr.leave') }}" class="btn btn-light btn-lg shadow-sm">
               <i class="bx bx-calendar me-2"></i>Leave Requests
@@ -69,11 +69,11 @@
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.assessments') }}" class="btn btn-success w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.hr.performance_management_module') }}" class="btn btn-success w-100 d-flex flex-column align-items-center py-3 shadow-sm">
               <i class="bx bx-clipboard fs-3 mb-2"></i>
-              <span>Assessments</span>
-              @if($stats['pending_assessments'] > 0)
-                <span class="badge bg-danger mt-1">{{ $stats['pending_assessments'] }}</span>
+              <span>Performance Management</span>
+              @if($stats['pending_performance_management'] > 0)
+                <span class="badge bg-danger mt-1">{{ $stats['pending_performance_management'] }}</span>
               @endif
             </a>
           </div>
@@ -85,10 +85,10 @@
             </a>
           </div>
           <div class="col-lg-2 col-md-4 col-sm-6">
-            <a href="{{ route('modules.hr.employees') }}" class="btn btn-dark w-100 d-flex flex-column align-items-center py-3 shadow-sm">
+            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-dark w-100 d-flex flex-column align-items-center py-3 shadow-sm">
               <i class="bx bx-group fs-3 mb-2"></i>
-              <span>Staff</span>
-              <small class="text-white-50">{{ $stats['department_employees'] ?? 0 }} employees</small>
+              <span>Particulars</span>
+              <small class="text-white-50">{{ $stats['department_employees'] ?? 0 }} particulars</small>
             </a>
           </div>
         </div>
@@ -120,7 +120,7 @@
         <div class="d-flex justify-content-between align-items-center">
           <div>
             <h6 class="text-white-50 mb-2">Pending Approvals</h6>
-            <h2 class="mb-0 fw-bold">{{ ($stats['pending_leave_requests'] ?? 0) + ($stats['pending_permissions'] ?? 0) + ($stats['pending_sick_sheets'] ?? 0) + ($stats['pending_assessments'] ?? 0) }}</h2>
+            <h2 class="mb-0 fw-bold">{{ ($stats['pending_leave_requests'] ?? 0) + ($stats['pending_permissions'] ?? 0) + ($stats['pending_sick_sheets'] ?? 0) + ($stats['pending_performance_management'] ?? 0) }}</h2>
             <small class="text-white-50">Requires your review</small>
           </div>
           <i class="bx bx-time fs-1 opacity-50"></i>
@@ -186,7 +186,7 @@
 </div>
 
 <!-- Pending Approvals Alert -->
-@if(($stats['pending_leave_requests'] ?? 0) + ($stats['pending_permissions'] ?? 0) + ($stats['pending_sick_sheets'] ?? 0) + ($stats['pending_assessments'] ?? 0) > 0)
+@if(($stats['pending_leave_requests'] ?? 0) + ($stats['pending_permissions'] ?? 0) + ($stats['pending_sick_sheets'] ?? 0) + ($stats['pending_performance_management'] ?? 0) > 0)
 <div class="row mb-4">
   <div class="col-12">
     <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
@@ -202,8 +202,8 @@
         @if($stats['pending_sick_sheets'] > 0)
           <li><strong>{{ $stats['pending_sick_sheets'] }}</strong> sick sheet(s)</li>
         @endif
-        @if($stats['pending_assessments'] > 0)
-          <li><strong>{{ $stats['pending_assessments'] }}</strong> assessment(s)</li>
+        @if($stats['pending_performance_management'] > 0)
+          <li><strong>{{ $stats['pending_performance_management'] }}</strong> assessment(s)</li>
         @endif
       </ul>
       <hr>
@@ -217,8 +217,8 @@
         @if($stats['pending_sick_sheets'] > 0)
           <a href="{{ route('modules.hr.sick-sheets') }}" class="btn btn-sm btn-danger">Review Sick Sheets</a>
         @endif
-        @if($stats['pending_assessments'] > 0)
-          <a href="{{ route('modules.hr.assessments') }}" class="btn btn-sm btn-success">Review Assessments</a>
+        @if($stats['pending_performance_management'] > 0)
+          <a href="{{ route('modules.hr.performance_management_module') }}" class="btn btn-sm btn-success">Review Performance Management</a>
         @endif
       </div>
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -339,7 +339,7 @@
                     {{ $employee->is_active ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
-                <td><a href="{{ route('employees.show', $employee->id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+                <td><a href="{{ route('personal-particulars.show', $employee->id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
               </tr>
               @empty
               <tr><td colspan="5" class="text-center text-muted">No employees in your department</td></tr>
@@ -373,14 +373,14 @@ $(document).ready(function() {
         new Chart(approvalsCtx, {
             type: 'bar',
             data: {
-                labels: ['Leave', 'Permissions', 'Sick Sheets', 'Assessments'],
+                labels: ['Leave', 'Permissions', 'Sick Sheets', 'Performance Management'],
                 datasets: [{
                     label: 'Pending Approvals',
                     data: [
                         {{ $stats['pending_leave_requests'] ?? 0 }},
                         {{ $stats['pending_permissions'] ?? 0 }},
                         {{ $stats['pending_sick_sheets'] ?? 0 }},
-                        {{ $stats['pending_assessments'] ?? 0 }}
+                        {{ $stats['pending_performance_management'] ?? 0 }}
                     ],
                     backgroundColor: [
                         'rgba(54, 162, 235, 0.8)',

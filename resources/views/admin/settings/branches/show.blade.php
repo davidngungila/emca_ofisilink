@@ -238,7 +238,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('modules.hr.employees') }}?branch={{ $branch->id }}" class="btn btn-outline-primary btn-sm">
+                        <a href="{{ route('modules.hr.personal-particulars') }}?branch={{ $branch->id }}" class="btn btn-outline-primary btn-sm">
                             <i class="bx bx-group me-1"></i>Branch Employees ({{ $branch->users->count() }})
                         </a>
                         <button class="btn btn-outline-info btn-sm" onclick="editBranch({{ $branch->id }})">
@@ -259,7 +259,7 @@
                         <i class="bx bx-group me-2"></i>Branch Employees ({{ $branch->users->count() }})
                     </h6>
                     @if($branch->users->count() > 0)
-                    <a href="{{ route('modules.hr.employees') }}?branch={{ $branch->id }}" class="btn btn-sm btn-light">
+                    <a href="{{ route('modules.hr.personal-particulars') }}?branch={{ $branch->id }}" class="btn btn-sm btn-light">
                         <i class="bx bx-link-external me-1"></i>View All
                     </a>
                     @endif
@@ -303,7 +303,7 @@
                                             </span>
                                         </td>
                                         <td class="text-center">
-                                            <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-sm btn-info" title="View Details">
+                                            <a href="{{ route('personal-particulars.show', $employee->id) }}" class="btn btn-sm btn-info" title="View Details">
                                                 <i class="bx bx-show"></i>
                                             </a>
                                         </td>
@@ -314,7 +314,7 @@
                         </div>
                         @if($branch->users->count() > 10)
                         <div class="text-center mt-3">
-                            <a href="{{ route('modules.hr.employees') }}?branch={{ $branch->id }}" class="btn btn-primary">
+                            <a href="{{ route('modules.hr.personal-particulars') }}?branch={{ $branch->id }}" class="btn btn-primary">
                                 View All {{ $branch->users->count() }} Employees
                             </a>
                         </div>
@@ -324,7 +324,7 @@
                             <i class="bx bx-group text-muted" style="font-size: 4rem;"></i>
                             <h5 class="text-muted mt-3">No Employees in This Branch</h5>
                             <p class="text-muted">Employees will appear here once they are assigned to this branch.</p>
-                            <a href="{{ route('modules.hr.employees') }}" class="btn btn-primary">
+                            <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-primary">
                                 <i class="bx bx-plus me-1"></i>Add Employee
                             </a>
                         </div>

@@ -104,24 +104,24 @@
         </a>
       </li>
       
-      <!-- Employee - Available to ALL (access controlled in controller) -->
-      <li class="menu-item {{ request()->routeIs('modules.hr.employees*') ? 'active' : '' }}">
-        <a href="{{ route('modules.hr.employees') }}" class="menu-link">
-          <div data-i18n="Employee" style="font-weight: bold;">Employee</div>
+      <!-- Personal Particulars - Available to ALL (access controlled in controller) -->
+      <li class="menu-item {{ request()->routeIs('modules.hr.personal-particulars*') ? 'active' : '' }}">
+        <a href="{{ route('modules.hr.personal-particulars') }}" class="menu-link">
+          <div data-i18n="Personal Particulars" style="font-weight: bold;">Personal Particulars</div>
         </a>
       </li>
       
       <!-- Attendance - Available to ALL (access controlled in controller) -->
       <li class="menu-item {{ request()->routeIs('modules.hr.attendance') || request()->routeIs('attendance.*') ? 'active' : '' }}">
         <a href="{{ route('modules.hr.attendance') }}" class="menu-link">
-          <div data-i18n="Attendance" style="font-weight: bold;">Attendance</div>
+          <div data-i18n="Attendance and Time" style="font-weight: bold;">Attendance and Time</div>
         </a>
       </li>
       
-      <!-- Assessments (All Users) -->
-      <li class="menu-item {{ request()->routeIs('modules.assessments') || request()->routeIs('modules.assessments.*') ? 'active' : '' }}">
-        <a href="{{ route('modules.assessments') }}" class="menu-link">
-          <div data-i18n="Assessments" style="font-weight: bold;">Assessments</div>
+      <!-- Performance Management (All Users) -->
+      <li class="menu-item {{ request()->routeIs('modules.performance_management_module') || request()->routeIs('performance_management_module.*') ? 'active' : '' }}">
+        <a href="{{ route('modules.performance_management_module') }}" class="menu-link">
+          <div data-i18n="Performance Management" style="font-weight: bold;">Performance Management</div>
         </a>
       </li>
       

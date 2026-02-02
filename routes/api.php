@@ -207,8 +207,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/hr/jobs/{id}/apply', [HrApiController::class, 'jobApply']);
     
     // HR - Employees
-    Route::get('/hr/employees', [HrApiController::class, 'employeeIndex']);
-    Route::get('/hr/employees/{id}', [HrApiController::class, 'employeeShow']);
+    Route::get('/hr/personal-particulars', [HrApiController::class, 'particularsIndex']);
+    Route::get('/hr/personal-particulars/{id}', [HrApiController::class, 'particularsShow']);
     
     // Notifications
     Route::get('/notifications', [NotificationApiController::class, 'index']);
@@ -410,8 +410,8 @@ Route::prefix('mobile/v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/hr/jobs/{id}/apply', [HrApiController::class, 'jobApply']);
     
     // HR - Employees
-    Route::get('/hr/employees', [HrApiController::class, 'employeeIndex']);
-    Route::get('/hr/employees/{id}', [HrApiController::class, 'employeeShow']);
+    Route::get('/hr/personal-particulars', [HrApiController::class, 'particularsIndex']);
+    Route::get('/hr/personal-particulars/{id}', [HrApiController::class, 'particularsShow']);
     
     // Notifications
     Route::get('/notifications', [NotificationApiController::class, 'index']);
@@ -434,6 +434,8 @@ Route::prefix('mobile/v1')->middleware('auth:sanctum')->group(function () {
     Route::put('/incidents/{id}', [HrApiController::class, 'incidentUpdate']);
     Route::post('/incidents/{id}/update', [HrApiController::class, 'incidentAddUpdate']);
 });
+
+
 
 
 

@@ -104,15 +104,15 @@ class EmployeeController extends Controller
                     $query->orderBy('users.name', $sortOrder);
             }
             
-            $employees = $query->paginate($request->get('per_page', 20));
+            $Particulars = $query->paginate($request->get('per_page', 20));
             
-            // Calculate completion percentage for each employee
-            foreach ($employees as $emp) {
+            // Calculate completion percentage for each particulars
+            foreach ($Particulars as $emp) {
                 // Load necessary relationships for completion calculation
                 $emp->loadMissing([
                     'family', 'nextOfKin', 'referees', 'educations', 'bankAccounts'
                 ]);
-                $emp->completion_percentage = $this->calculateEmployeeCompletion($emp);
+                $emp->completion_percentage = $this->calculateParticularsCompletion($emp);
             }
             
             $employee = null; // Not needed for manager view
@@ -123,7 +123,7 @@ class EmployeeController extends Controller
             // Generate Employee ID if missing
             if (empty($employee->employee_id)) {
                 try {
-                    $employeeId = $this->generateEmployeeId($employee->hire_date, $employee->primary_department_id);
+                    $employeeId = $this->generateParticularsId($employee->hire_date, $employee->primary_department_id);
                     $employee->update(['employee_id' => $employeeId]);
                     $employee->refresh();
                     Log::info('Auto-generated Employee ID for staff user', [
@@ -224,10 +224,10 @@ class EmployeeController extends Controller
                 ->get();
             
             // Calculate completion percentage
-            $employee->completion_percentage = $this->calculateEmployeeCompletion($employee);
+            $employee->completion_percentage = $this->calculateParticularsCompletion($employee);
             
             // Create a simple paginator to avoid errors in the view
-            $employees = new \Illuminate\Pagination\LengthAwarePaginator(
+            $Particulars = new \Illuminate\Pagination\LengthAwarePaginator(
                 collect([$employee]),
                 1,
                 1,
@@ -289,7 +289,7 @@ class EmployeeController extends Controller
         
         // Auto-sync: Create employee records for users that don't have them
         if ($canEditAll) {
-            $this->syncEmployeeRecords();
+            $this->syncParticularsRecords();
         }
         
         // Get recent activities from ActivityLog database - Employee/User related activities
@@ -313,8 +313,8 @@ class EmployeeController extends Controller
         
         // For staff view, pass additional data
         if (!$canViewAll && isset($employee)) {
-            return view('modules.hr.employees', compact(
-                'employees', 
+            return view('modules.hr.personal-particulars', compact(
+                'Particulars', 
                 'employee', 
                 'departments',
                 'branches',
@@ -334,14 +334,14 @@ class EmployeeController extends Controller
             ));
         }
         
-        return view('modules.hr.employees', compact('employees', 'employee', 'departments', 'branches', 'roles', 'positions', 'canViewAll', 'canEditAll', 'recentActivities'));
+        return view('modules.hr.personal-particulars', compact('Particulars', 'employee', 'departments', 'branches', 'roles', 'positions', 'canViewAll', 'canEditAll', 'recentActivities'));
     }
     
     /**
      * Sync employee records for all users that don't have employee records
      * Also generates Employee IDs for users without them
      */
-    private function syncEmployeeRecords()
+    private function syncParticularsRecords()
     {
         $usersWithoutEmployees = User::whereDoesntHave('employee')->where('is_active', true)->get();
         $count = 0;
@@ -352,7 +352,7 @@ class EmployeeController extends Controller
                 // Generate Employee ID if user doesn't have one
                 if (empty($user->employee_id)) {
                     try {
-                        $employeeId = $this->generateEmployeeId($user->hire_date, $user->primary_department_id);
+                        $employeeId = $this->generateParticularsId($user->hire_date, $user->primary_department_id);
                         $user->update(['employee_id' => $employeeId]);
                         Log::info('Auto-generated Employee ID during sync', [
                             'user_id' => $user->id,
@@ -383,7 +383,7 @@ class EmployeeController extends Controller
             // Generate Employee ID if missing
             if (empty($user->employee_id)) {
                 try {
-                    $employeeId = $this->generateEmployeeId($user->hire_date, $user->primary_department_id);
+                    $employeeId = $this->generateParticularsId($user->hire_date, $user->primary_department_id);
                     $user->update(['employee_id' => $employeeId]);
                     Log::info('Auto-generated Employee ID during sync', [
                         'user_id' => $user->id,
@@ -440,7 +440,7 @@ class EmployeeController extends Controller
      * Alternative: Can use date-based format (EMP + YYYYMMDD + Department Code)
      * by setting config('app.employee_id_format') to 'date-based'
      */
-    private function generateEmployeeId($hireDate = null, $departmentId = null)
+    private function generateParticularsId($hireDate = null, $departmentId = null)
     {
         try {
             $format = config('app.employee_id_format', 'sequential'); // Default to sequential
@@ -731,7 +731,7 @@ class EmployeeController extends Controller
         // Generate Employee ID if missing
         if (empty($employee->employee_id)) {
             try {
-                $employeeId = $this->generateEmployeeId($employee->hire_date, $employee->primary_department_id);
+                $employeeId = $this->generateParticularsId($employee->hire_date, $employee->primary_department_id);
                 $employee->update(['employee_id' => $employeeId]);
                 $employee->refresh();
                 // Clear cache since we updated the employee
@@ -766,7 +766,7 @@ class EmployeeController extends Controller
         }
         
         // Calculate completion percentage
-        $completionPercentage = $this->calculateEmployeeCompletion($employee);
+        $completionPercentage = $this->calculateParticularsCompletion($employee);
         
         // Add photo_url to employee data if photo exists
         if ($employee->photo) {
@@ -804,13 +804,13 @@ class EmployeeController extends Controller
         }
         
         // Return view for browser requests
-        return view('modules.hr.employee-show', compact('employee', 'canEdit', 'completionPercentage'));
+        return view('modules.hr.personal-particulars-show', compact('employee', 'canEdit', 'completionPercentage'));
     }
     
     /**
      * Calculate employee profile completion percentage
      */
-    private function calculateEmployeeCompletion($employee)
+    private function calculateParticularsCompletion($employee)
     {
         $totalSections = 9;
         $completedSections = 0;
@@ -896,6 +896,7 @@ class EmployeeController extends Controller
             
             // 9. Statutory/Deductions
             if ($employee->employee && (
+                !empty($employee->employee->nida_number) ||
                 !empty($employee->employee->tin_number) ||
                 !empty($employee->employee->nssf_number) ||
                 !empty($employee->employee->nhif_number)
@@ -916,7 +917,7 @@ class EmployeeController extends Controller
      * Send welcome SMS to new employee with login credentials
      * Sends only to the phone field (not mobile)
      */
-    private function sendWelcomeSMS($employee, $password = null)
+    private function sendWelcomeToParticularsSMS($employee, $password = null)
     {
         try {
             // Use only the phone field, not mobile
@@ -1366,7 +1367,7 @@ class EmployeeController extends Controller
         // Generate Employee ID if missing
         if (empty($employee->employee_id)) {
             try {
-                $employeeId = $this->generateEmployeeId($employee->hire_date, $employee->primary_department_id);
+                $employeeId = $this->generateParticularsId($employee->hire_date, $employee->primary_department_id);
                 $employee->update(['employee_id' => $employeeId]);
                 $employee->refresh();
                 Log::info('Auto-generated Employee ID in update method', [
@@ -1413,31 +1414,31 @@ class EmployeeController extends Controller
             // Handle all 12 sections
             $sectionHandled = false;
             if ($section === 'personal') {
-                $this->updatePersonalInfo($employee, $request);
+                $this->updateParticularsPersonalInfo($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'employment') {
-                $this->updateEmployment($employee, $request);
+                $this->updateParticularsEmployment($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'emergency') {
-                $this->updateEmergencyContact($employee, $request);
+                $this->updateParticularsEmergencyContact($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'family') {
-                $this->updateFamily($employee, $request);
+                $this->updateParticularsFamily($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'next-of-kin') {
-                $this->updateNextOfKin($employee, $request);
+                $this->updateParticularsNextOfKin($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'referees') {
-                $this->updateReferees($employee, $request);
+                $this->updateParticularsReferees($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'bank' || $section === 'banking') {
-                $this->updateBankAccounts($employee, $request);
+                $this->updateParticularsBankAccounts($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'education') {
-                $this->updateEducation($employee, $request);
+                $this->updateParticularsEducation($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'deductions') {
-                $this->updateDeductions($employee, $request);
+                $this->updateParticularsDeductions($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'profile') {
                 $this->updateProfile($employee, $request);
@@ -1446,7 +1447,7 @@ class EmployeeController extends Controller
                 $this->updateDocuments($employee, $request);
                 $sectionHandled = true;
             } elseif ($section === 'statutory') {
-                $this->updateStatutory($employee, $request);
+                $this->updateParticularsStatutory($employee, $request);
                 $sectionHandled = true;
             }
             
@@ -1532,7 +1533,7 @@ class EmployeeController extends Controller
             
             // Ensure response is sent immediately
             // Calculate updated completion percentage (relationships already loaded above)
-            $completionPercentage = $this->calculateEmployeeCompletion($employee);
+            $completionPercentage = $this->calculateParticularsCompletion($employee);
             
             return response()->json([
                 'success' => true,
@@ -1579,7 +1580,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updatePersonalInfo($employee, $request)
+    private function updateParticularsPersonalInfo($employee, $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -1629,14 +1630,14 @@ class EmployeeController extends Controller
         ]);
     }
     
-    private function updateEmployment($employee, $request)
+    private function updateParticularsEmployment($employee, $request)
     {
         $employeeRecord = $employee->employee;
         if (!$employeeRecord) {
             $employeeRecord = Employee::create(['user_id' => $employee->id]);
         }
         
-        $employeeData = $request->only(['employment_type', 'salary']);
+        $employeeData = $request->only(['employment_type', 'salary', 'salary_structure_id']);
         
         // Handle position - use custom if provided, otherwise use selected position
         if ($request->filled('position_custom')) {
@@ -1709,7 +1710,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateEmergencyContact($employee, $request)
+    private function updateParticularsEmergencyContact($employee, $request)
     {
             $employeeRecord = $employee->employee;
         if (!$employeeRecord) {
@@ -1767,7 +1768,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateFamily($employee, $request)
+    private function updateParticularsFamily($employee, $request)
     {
         if ($request->has('family') && is_array($request->family)) {
             $existingIds = [];
@@ -1845,7 +1846,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateNextOfKin($employee, $request)
+    private function updateParticularsNextOfKin($employee, $request)
     {
         if ($request->has('next_of_kin') && is_array($request->next_of_kin)) {
             $existingIds = [];
@@ -1928,7 +1929,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateReferees($employee, $request)
+    private function updateParticularsReferees($employee, $request)
     {
         // Check if referees data exists in request (even if empty array)
         if ($request->has('referees')) {
@@ -2043,7 +2044,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateBankAccounts($employee, $request)
+    private function updateParticularsBankAccounts($employee, $request)
     {
         if ($request->has('bank_accounts') && is_array($request->bank_accounts)) {
             $existingIds = [];
@@ -2171,7 +2172,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateEducation($employee, $request)
+    private function updateParticularsEducation($employee, $request)
     {
         // Check if educations data exists in request (even if empty array)
         if ($request->has('educations')) {
@@ -2292,7 +2293,7 @@ class EmployeeController extends Controller
         }
     }
     
-    private function updateStatutory($employee, $request)
+    private function updateParticularsStatutory($employee, $request)
     {
         $employeeRecord = $employee->employee;
         if (!$employeeRecord) {
@@ -2300,7 +2301,7 @@ class EmployeeController extends Controller
         }
         
         $updateData = $request->only([
-            'tin_number', 'nssf_number', 'nhif_number', 'heslb_number', 'has_student_loan'
+            'nida_number', 'tin_number', 'nssf_number', 'nhif_number', 'heslb_number', 'has_student_loan'
         ]);
         
         // Handle boolean conversion for has_student_loan
@@ -2451,7 +2452,7 @@ class EmployeeController extends Controller
         ]);
     }
     
-    private function updateDeductions($employee, $request)
+    private function updateParticularsDeductions($employee, $request)
     {
         // Handle salary deductions (loans, advances, etc.)
         if ($request->has('deductions') && is_array($request->deductions)) {
@@ -2709,7 +2710,7 @@ class EmployeeController extends Controller
         }
     }
     
-    public function toggleStatus($id)
+    public function toggleParticularsStatus($id)
     {
         $user = Auth::user();
         
@@ -2973,7 +2974,7 @@ class EmployeeController extends Controller
                 // Auto-generate Employee ID if not provided
                 $employeeId = $request->employee_id;
                 if (empty($employeeId)) {
-                    $employeeId = $this->generateEmployeeId($request->hire_date, $request->primary_department_id);
+                    $employeeId = $this->generateParticularsId($request->hire_date, $request->primary_department_id);
                     Log::info('Auto-generated Employee ID', [
                         'employee_id' => $employeeId,
                         'hire_date' => $request->hire_date,
@@ -3446,7 +3447,7 @@ class EmployeeController extends Controller
             ]);
             
             // Calculate completion percentage
-            $completionPercentage = $this->calculateEmployeeCompletion($employeeUser);
+            $completionPercentage = $this->calculateParticularsCompletion($employeeUser);
             
             $message = $isDraft ? "Employee information saved successfully at {$stage} stage. Progress saved!" : "Employee created successfully at {$stage} stage.";
             
@@ -3598,7 +3599,7 @@ class EmployeeController extends Controller
         $roles = \App\Models\Role::where('is_active', true)->orderBy('name')->get();
         $positions = \App\Models\Position::where('is_active', true)->orderBy('title')->get();
         
-        return view('modules.hr.employee-register', compact('departments', 'roles', 'positions'));
+        return view('modules.hr.personal-particulars-register', compact('departments', 'roles', 'positions'));
     }
 
     /**
@@ -3621,8 +3622,9 @@ class EmployeeController extends Controller
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $roles = \App\Models\Role::where('is_active', true)->orderBy('name')->get();
         $positions = \App\Models\Position::where('is_active', true)->orderBy('title')->get();
+        $salaryStructures = \App\Models\SalaryStructure::where('is_active', true)->orderBy('name')->get();
         
-        return view('modules.hr.employee-edit', compact('employee', 'departments', 'roles', 'positions'));
+        return view('modules.hr.personal-particulars-edit', compact('employee', 'departments', 'roles', 'positions', 'salaryStructures'));
     }
 
     /**
@@ -3642,7 +3644,7 @@ class EmployeeController extends Controller
             'bankAccounts', 'salaryDeductions', 'documents'
         ])->findOrFail($userId);
         
-        return view('modules.hr.employee-review', compact('employee'));
+        return view('modules.hr.personal-particulars-review', compact('employee'));
     }
 
     /**
@@ -3682,7 +3684,7 @@ class EmployeeController extends Controller
             // Send welcome SMS with login credentials to new employee
             try {
                 $phone = $employeeUser->mobile ?? $employeeUser->phone;
-                $smsResults['welcome'] = $this->sendWelcomeSMS($employeeUser, $password);
+                $smsResults['welcome'] = $this->sendWelcomeToParticularsSMS($employeeUser, $password);
                 $smsResults['congratulations'] = $this->sendCongratulationsSMS($employeeUser);
             } catch (\Exception $smsError) {
                 Log::warning('Failed to send SMS to employee', [
@@ -3769,7 +3771,7 @@ class EmployeeController extends Controller
             $password = $request->password ?? $this->generateOrRetrievePassword($employee);
             
             // Send welcome SMS with login credentials to phone field only
-            $smsResult = $this->sendWelcomeSMS($employee, $password);
+            $smsResult = $this->sendWelcomeToParticularsSMS($employee, $password);
             
             if ($smsResult && is_array($smsResult) && $smsResult['sent']) {
                 return response()->json([
@@ -3876,7 +3878,7 @@ class EmployeeController extends Controller
     /**
      * Sync all users to have employee records
      */
-    public function syncAllEmployees()
+    public function syncAllParticulars()
     {
         $user = Auth::user();
         
@@ -3885,7 +3887,7 @@ class EmployeeController extends Controller
         }
         
         try {
-            $count = $this->syncEmployeeRecords();
+            $count = $this->syncParticularsRecords();
             
             return response()->json([
                 'success' => true,
@@ -4262,7 +4264,7 @@ class EmployeeController extends Controller
     /**
      * Handle bulk actions for employees (activate/deactivate)
      */
-    public function bulkAction(Request $request)
+    public function bulkParticularsAction(Request $request)
     {
         $user = Auth::user();
         
@@ -4337,7 +4339,7 @@ class EmployeeController extends Controller
     /**
      * Send SMS to multiple employees
      */
-    public function bulkSMS(Request $request)
+    public function bulkParticularsSMS(Request $request)
     {
         $user = Auth::user();
         
@@ -4384,7 +4386,7 @@ class EmployeeController extends Controller
                     // If sending credentials, generate password and send welcome SMS
                     if ($sendCredentials) {
                         $password = $this->generateOrRetrievePassword($employee);
-                        $smsResult = $this->sendWelcomeSMS($employee, $password);
+                        $smsResult = $this->sendWelcomeToParticularsSMS($employee, $password);
                         
                         if ($smsResult && is_array($smsResult) && $smsResult['sent']) {
                             $sentCount++;
@@ -4518,7 +4520,7 @@ class EmployeeController extends Controller
                     $password = $this->generateOrRetrievePassword($employee);
                     
                     // Send welcome SMS with credentials
-                    $smsResult = $this->sendWelcomeSMS($employee, $password);
+                    $smsResult = $this->sendWelcomeToParticularsSMS($employee, $password);
                     
                     if ($smsResult && is_array($smsResult) && $smsResult['sent']) {
                         $sentCount++;
@@ -4580,7 +4582,7 @@ class EmployeeController extends Controller
     /**
      * Generate employee reports
      */
-    public function generateReport(Request $request)
+    public function generateParticularsReport(Request $request)
     {
         $user = Auth::user();
         
@@ -4608,7 +4610,7 @@ class EmployeeController extends Controller
             
             // Calculate completion for each employee
             foreach ($employees as $emp) {
-                $emp->completion_percentage = $this->calculateEmployeeCompletion($emp);
+                $emp->completion_percentage = $this->calculateParticularsCompletion($emp);
             }
             
             // Prepare report data based on type
@@ -4889,7 +4891,7 @@ class EmployeeController extends Controller
                 foreach ($employees as $employee) {
                     // Load relationships if not loaded
                     $employee->loadMissing(['family', 'nextOfKin', 'referees', 'educations', 'bankAccounts']);
-                    $completion = $this->calculateEmployeeCompletion($employee);
+                    $completion = $this->calculateParticularsCompletion($employee);
                     fputcsv($file, [
                         $employee->employee_id ?? 'N/A',
                         $employee->name ?? 'N/A',
@@ -4939,3 +4941,5 @@ class EmployeeController extends Controller
         }
     }
 }
+
+

@@ -511,7 +511,7 @@ class HrApiController extends Controller
 
     // Employees
 
-    public function employeeIndex(Request $request)
+    public function particularsIndex(Request $request)
     {
         $user = Auth::user();
         
@@ -539,7 +539,7 @@ class HrApiController extends Controller
         ]);
     }
 
-    public function employeeShow($id)
+    public function particularsShow($id)
     {
         $employee = Employee::with(['user'])->findOrFail($id);
         
@@ -699,6 +699,7 @@ class HrApiController extends Controller
         ], 201);
     }
 }
+
 
 
 

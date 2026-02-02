@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Assessments Management')
+@section('title', 'Performance Management')
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -12,18 +12,24 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div class="mb-3 mb-md-0">
                             <h3 class="mb-2 text-white fw-bold">
-                                <i class="bx bx-target-lock me-2"></i>Assessments Management System
+                                <i class="bx bx-target-lock me-2"></i>Performance Management Module
                             </h3>
                             <p class="mb-0 text-white-50 fs-6">
                                 Main responsibilities, activities, and progress reports with advanced analytics and performance tracking
                             </p>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="{{ route('assessments.create') }}" class="btn btn-light btn-lg shadow-sm">
+                            <button type="button" class="btn btn-outline-light btn-lg shadow-sm" id="btn-sync-tasks">
+                                <i class="bx bx-sync me-2"></i>Sync Tasks
+                            </button>
+                            <a href="{{ route('performance_management_module.create') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-plus-circle me-2"></i>Create New Assessment
                             </a>
                             @if($isAdmin || $isHR)
-                            <a href="{{ route('assessments.analytics.page') }}" class="btn btn-light btn-lg shadow-sm">
+                            <a href="{{ route('organizational-goals.index') }}" class="btn btn-outline-light btn-lg shadow-sm">
+                                <i class="bx bx-bullseye me-2"></i>Goals
+                            </a>
+                            <a href="{{ route('performance_management_module.analytics.page') }}" class="btn btn-light btn-lg shadow-sm">
                                 <i class="bx bx-bar-chart-alt-2 me-2"></i>View Analytics
                             </a>
                             @endif
@@ -226,7 +232,7 @@
     <div class="tab-content border-0 shadow-sm p-4 rounded">
         <div class="tab-pane fade show active" id="pane-my" role="tabpanel" aria-labelledby="tab-my">
             @if(($myAssessments ?? collect())->isEmpty())
-                <div class="text-muted">No assessments.</div>
+                <div class="text-muted">No Performance Management assessments found.</div>
             @else
                 <div class="table-responsive">
                     <table class="table table-sm table-striped">
@@ -276,11 +282,11 @@
                                                 <i class="bx bx-file"></i> Report Progress
                                             </button>
                                         @endif
-                                        <a href="{{ route('assessments.show', $a->id) }}" class="btn btn-outline-secondary">
+                                        <a href="{{ route('performance_management_module.show', $a->id) }}" class="btn btn-outline-secondary">
                                             <i class="bx bx-show"></i> View Details
                                         </a>
                                         @if($isAdmin || $isHR)
-                                        <a href="{{ route('assessments.edit', $a->id) }}" class="btn btn-outline-warning">
+                                        <a href="{{ route('performance_management_module.edit', $a->id) }}" class="btn btn-outline-warning">
                                             <i class="bx bx-edit"></i> Edit
                                         </a>
                                         @endif
@@ -371,13 +377,13 @@
                                                                 @endif
                                                             </div>
                                                         @elseif($canSubmit)
-                                                            <a href="{{ route('assessments.progress.create', $act->id) }}" class="btn btn-sm btn-primary">
+                                                            <a href="{{ route('performance_management_module.progress.create', $act->id) }}" class="btn btn-sm btn-primary">
                                                                 <i class="bx bx-file"></i> Submit Progress
                                                             </a>
                                                         @endif
                                                         
                                                         <div class="btn-group btn-group-sm mt-1" role="group">
-                                                            <a href="{{ route('assessments.activities.reports', $act->id) }}" class="btn btn-sm btn-outline-secondary">
+                                                            <a href="{{ route('performance_management_module.activities.reports', $act->id) }}" class="btn btn-sm btn-outline-secondary">
                                                                 <i class="bx bx-list-ul"></i> View Reports
                                                             </a>
                                                             @if($isAdmin || $isHR)
@@ -465,11 +471,11 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{{ route('assessments.show', $a->id) }}" class="btn btn-outline-secondary">
+                                        <a href="{{ route('performance_management_module.show', $a->id) }}" class="btn btn-outline-secondary">
                                             <i class="bx bx-show"></i> View Details
                                         </a>
                                         @if($isAdmin || $isHR)
-                                        <a href="{{ route('assessments.edit', $a->id) }}" class="btn btn-outline-warning">
+                                        <a href="{{ route('performance_management_module.edit', $a->id) }}" class="btn btn-outline-warning">
                                             <i class="bx bx-edit"></i> Edit
                                         </a>
                                         @endif
@@ -494,7 +500,7 @@
             @if($pendingAssessments->isEmpty())
                 <div class="text-center text-muted py-5">
                     <i class="bx bx-time-five" style="font-size: 3rem;"></i>
-                    <p class="mt-2">No pending assessments.</p>
+                    <p class="mt-2">No pending Performance Management assessments found.</p>
                 </div>
             @else
                 <div class="table-responsive">
@@ -566,7 +572,7 @@
             @if($approvedAssessments->isEmpty())
                 <div class="text-center text-muted py-5">
                     <i class="bx bx-check-circle" style="font-size: 3rem;"></i>
-                    <p class="mt-2">No approved assessments.</p>
+                    <p class="mt-2">No approved Performance Management assessments found.</p>
                 </div>
             @else
                 <div class="table-responsive">
@@ -617,7 +623,7 @@
                                             <i class="bx bx-show"></i> View
                                         </button>
                                         @if($isAdmin || $isHR)
-                                        <a href="{{ route('assessments.edit', $a->id) }}" class="btn btn-outline-warning">
+                                        <a href="{{ route('performance_management_module.edit', $a->id) }}" class="btn btn-outline-warning">
                                             <i class="bx bx-edit"></i> Edit
                                         </a>
                                         @endif
@@ -637,7 +643,7 @@
             @if($rejectedAssessments->isEmpty())
                 <div class="text-center text-muted py-5">
                     <i class="bx bx-x-circle" style="font-size: 3rem;"></i>
-                    <p class="mt-2">No rejected assessments.</p>
+                    <p class="mt-2">No rejected Performance Management assessments found.</p>
                 </div>
             @else
                 <div class="table-responsive">
@@ -696,7 +702,7 @@
                                             <i class="bx bx-show"></i> View
                                         </button>
                                         @if($isAdmin || $isHR)
-                                        <a href="{{ route('assessments.edit', $a->id) }}" class="btn btn-outline-warning">
+                                        <a href="{{ route('performance_management_module.edit', $a->id) }}" class="btn btn-outline-warning">
                                             <i class="bx bx-edit"></i> Edit
                                         </a>
                                         @endif
@@ -871,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     }
                 });
                 
-                fetch("{{ route('assessments.hod-approve', ['assessment' => 0]) }}".replace('/0/', '/'+assessmentId+'/'), {
+                fetch("{{ route('performance_management_module.hod-approve', ['assessment' => 0]) }}".replace('/0/', '/'+assessmentId+'/'), {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
                     body: JSON.stringify({ decision: decision, comments: comments })
@@ -940,7 +946,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         }
                     });
                     
-                    fetch("{{ route('assessments.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
+                    fetch("{{ route('performance_management_module.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
                         method: 'POST',
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
                         body: JSON.stringify({ decision: decision, comments: '' })
@@ -1004,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         }
                     });
                     
-                    fetch("{{ route('assessments.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
+                    fetch("{{ route('performance_management_module.progress-approve', ['report' => 0]) }}".replace('/0/', '/'+reportId+'/'), {
                         method: 'POST',
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json', 'Content-Type': 'application/json' },
                         body: JSON.stringify({ decision: decision, comments: comments })
@@ -1136,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', function(){
             const body = document.getElementById('perfBody');
             body.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border" role="status"></div><div class="mt-2">Loading performance data...</div></div>';
             try {
-                const url = "{{ route('assessments.performance') }}?year="+encodeURIComponent(year);
+                const url = "{{ route('performance_management_module.performance') }}?year="+encodeURIComponent(year);
                 const res = await fetch(url);
                 
                 if (!res.ok) {
@@ -1159,11 +1165,11 @@ document.addEventListener('DOMContentLoaded', function(){
         }
         if (e.target && e.target.id === 'perf-export' || e.target.id === 'perf-export-detailed'){
             const year = document.getElementById('perf-year').value;
-            window.open("{{ route('assessments.export', ['employeeId' => auth()->id()]) }}?year="+encodeURIComponent(year)+'&type=detailed', '_blank');
+            window.open("{{ route('performance_management_module.export', ['employeeId' => auth()->id()]) }}?year="+encodeURIComponent(year)+'&type=detailed', '_blank');
         }
         if (e.target && e.target.id === 'perf-export-summary'){
             const year = document.getElementById('perf-year').value;
-            window.open("{{ route('assessments.export', ['employeeId' => auth()->id()]) }}?year="+encodeURIComponent(year)+'&type=summary', '_blank');
+            window.open("{{ route('performance_management_module.export', ['employeeId' => auth()->id()]) }}?year="+encodeURIComponent(year)+'&type=summary', '_blank');
         }
         if (e.target && e.target.id === 'perf-print'){
             window.print();
@@ -1179,7 +1185,7 @@ document.addEventListener('DOMContentLoaded', function(){
             
             if (assessmentId) {
                 // Redirect to assessment details page
-                window.location.href = "{{ route('assessments.show', ['assessment' => 0]) }}".replace('/0', '/' + assessmentId);
+                window.location.href = "{{ route('performance_management_module.show', ['assessment' => 0]) }}".replace('/0', '/' + assessmentId);
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -1224,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         }
                     });
                     
-                    fetch("{{ route('assessments.destroy', ['assessment' => 0]) }}".replace('/0/', '/'+id+'/'), {
+                    fetch("{{ route('performance_management_module.destroy', ['assessment' => 0]) }}".replace('/0/', '/'+id+'/'), {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -1294,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         }
                     });
                     
-                    fetch("{{ route('assessments.activities.destroy', ['activity' => 0]) }}".replace('/0/', '/'+id+'/'), {
+                    fetch("{{ route('performance_management_module.activities.destroy', ['activity' => 0]) }}".replace('/0/', '/'+id+'/'), {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -1352,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
-                        fetch('{{ route("assessments.calendar.events") }}?start=' + fetchInfo.startStr + '&end=' + fetchInfo.endStr)
+                        fetch('{{ route("performance_management_module.calendar.events") }}?start=' + fetchInfo.startStr + '&end=' + fetchInfo.endStr)
                             .then(response => response.json())
                             .then(data => {
                                 successCallback(data);
@@ -1364,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     },
                     eventClick: function(info) {
                         if (info.event.extendedProps.type === 'assessment') {
-                            window.location.href = '/assessments/' + info.event.extendedProps.assessment_id;
+                            window.location.href = '/performance-management-module/' + info.event.extendedProps.assessment_id;
                         } else if (info.event.extendedProps.type === 'progress_report') {
                             // Show report details in a pop-up
                             Swal.fire({
@@ -1397,7 +1403,7 @@ document.addEventListener('DOMContentLoaded', function(){
         
         content.html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading analytics...</p></div>');
         
-            fetch('{{ route("assessments.analytics.data") }}?year=' + year)
+            fetch('{{ route("performance_management_module.analytics.data") }}?year=' + year)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -1564,6 +1570,57 @@ document.addEventListener('DOMContentLoaded', function(){
         if ($('#analytics-content').text().includes('Click "Load"')) {
             $('#btn-load-analytics-data').click();
         }
+    });
+
+    // Sync Tasks Button Logic
+    $('#btn-sync-tasks').on('click', function() {
+        const btn = $(this);
+        const originalText = btn.html();
+        
+        // Confirmation
+        Swal.fire({
+            title: 'Sync Tasks?',
+            text: "This will check your completed tasks and automatically update linked performance activities.",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, sync now',
+            confirmButtonColor: '#696cff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-2"></i>Syncing...');
+                
+                $.ajax({
+                    url: "{{ route('modules.hr.performance-management.handle') }}",
+                    method: 'POST',
+                    data: {
+                        action: 'sync_tasks',
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Synced!',
+                                text: response.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            // Optional: Reload page to show updates
+                            setTimeout(() => { location.reload(); }, 2000);
+                        } else {
+                            Swal.fire('Error', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Error', 'Failed to sync tasks.', 'error');
+                        console.error(xhr);
+                    },
+                    complete: function() {
+                        btn.prop('disabled', false).html(originalText);
+                    }
+                });
+            }
+        });
     });
 });
 </script>
