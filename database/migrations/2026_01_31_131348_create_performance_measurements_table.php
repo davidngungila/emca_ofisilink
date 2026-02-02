@@ -40,7 +40,7 @@ return new class extends Migration
             //$table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             //$table->foreign('approved_by')->references('id')->on('users')->onDelete('set null');
             
-            $table->index(['measurement_type', 'period_type', 'year', 'period_start']);
+            $table->index(['measurement_type', 'period_type', 'year', 'period_start'], 'perf_meas_type_period_idx');
         });
     }
 
