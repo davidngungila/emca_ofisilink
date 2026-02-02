@@ -160,10 +160,13 @@ class SystemDatabaseBackup extends Command
             $fullZipPath = storage_path('app' . DIRECTORY_SEPARATOR . $backupDir . DIRECTORY_SEPARATOR . $baseName . '.zip');
             $password = 'Ofisilink';
             
-            // Try to create password-protected ZIP
+            // Prepare storage directory path to include in backup
+            $storagePath = storage_path('app');
+            
+            // Try to create password-protected ZIP with database and storage files
             $zipCreated = false;
             if (class_exists(\ZipArchive::class)) {
-                $zipCreated = $this->zipWithPassword($fullSqlPath, $fullZipPath, $password);
+                $zipCreated = $this->zipWithPasswordAndStorage($fullSqlPath, $fullZipPath, $password, $storagePath, $backupDir);
             }
             
             // Note: Don't update backup record here - it will be updated later after verification
@@ -646,6 +649,200 @@ class SystemDatabaseBackup extends Command
             return true;
         }
         return $this->zipExternal($sourceFile, $zipFile, $password);
+    }
+
+    /**
+     * Create password-protected ZIP with database backup and storage files
+     */
+    protected function zipWithPasswordAndStorage(string $sourceFile, string $zipFile, string $password, string $storagePath, string $excludeBackupDir): bool
+    {
+        if (class_exists(\ZipArchive::class)) {
+            $zip = new \ZipArchive();
+            if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                \Log::error('Failed to open ZIP file for writing: ' . $zipFile);
+                return false;
+            }
+
+            // Add database backup file
+            $dbName = basename($sourceFile);
+            if (!$zip->addFile($sourceFile, 'database/' . $dbName)) {
+                \Log::error('Failed to add database file to ZIP');
+                $zip->close();
+                return false;
+            }
+
+            // Add storage files (excluding backups directory to avoid circular issues)
+            $this->addStorageFilesToZip($zip, $storagePath, $excludeBackupDir);
+
+            // Set password encryption for all files
+            $fileCount = $zip->numFiles;
+            if (defined('ZipArchive::EM_AES_256')) {
+                $zip->setPassword($password);
+                // Encrypt all files in the ZIP
+                for ($i = 0; $i < $fileCount; $i++) {
+                    $zip->setEncryptionIndex($i, \ZipArchive::EM_AES_256);
+                }
+            } else {
+                // Fallback: try external 7z/zip
+                $zip->close();
+                return $this->zipExternalWithStorage($sourceFile, $zipFile, $password, $storagePath, $excludeBackupDir);
+            }
+
+            $zip->close();
+            \Log::info('ZIP created with database and storage files', [
+                'zip_file' => $zipFile,
+                'files_count' => $fileCount
+            ]);
+            return true;
+        }
+        return $this->zipExternalWithStorage($sourceFile, $zipFile, $password, $storagePath, $excludeBackupDir);
+    }
+
+    /**
+     * Recursively add storage files to ZIP (excluding backups directory)
+     */
+    protected function addStorageFilesToZip(\ZipArchive $zip, string $storagePath, string $excludeBackupDir): void
+    {
+        $excludePath = $storagePath . DIRECTORY_SEPARATOR . $excludeBackupDir;
+        
+        if (!is_dir($storagePath)) {
+            \Log::warning('Storage path does not exist: ' . $storagePath);
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($storagePath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        $addedCount = 0;
+        foreach ($iterator as $file) {
+            $filePath = $file->getPathname();
+            
+            // Skip backups directory to avoid including backup files in backup
+            if (strpos($filePath, $excludePath) === 0) {
+                continue;
+            }
+
+            // Skip if it's a directory
+            if ($file->isDir()) {
+                continue;
+            }
+
+            // Get relative path for ZIP entry
+            $relativePath = 'storage/' . str_replace($storagePath . DIRECTORY_SEPARATOR, '', $filePath);
+            $relativePath = str_replace('\\', '/', $relativePath); // Normalize path separators
+
+            // Add file to ZIP
+            if ($zip->addFile($filePath, $relativePath)) {
+                $addedCount++;
+            } else {
+                \Log::warning('Failed to add file to ZIP: ' . $filePath);
+            }
+        }
+
+        \Log::info('Added storage files to ZIP', ['count' => $addedCount]);
+    }
+
+    /**
+     * External ZIP creation with storage files (fallback method)
+     */
+    protected function zipExternalWithStorage(string $sourceFile, string $zipFile, string $password, string $storagePath, string $excludeBackupDir): bool
+    {
+        // Create a temporary directory to organize files
+        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'backup_' . uniqid();
+        @mkdir($tempDir, 0755, true);
+        
+        // Copy database file
+        $dbName = basename($sourceFile);
+        $tempDbPath = $tempDir . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . $dbName;
+        @mkdir(dirname($tempDbPath), 0755, true);
+        copy($sourceFile, $tempDbPath);
+
+        // Copy storage files (excluding backups)
+        $excludePath = $storagePath . DIRECTORY_SEPARATOR . $excludeBackupDir;
+        $tempStoragePath = $tempDir . DIRECTORY_SEPARATOR . 'storage';
+        $this->copyStorageFiles($storagePath, $tempStoragePath, $excludePath);
+
+        // Try 7z first
+        $cmd7z = sprintf('7z a -tzip -p%s -mem=AES256 -r %s %s',
+            escapeshellarg($password),
+            escapeshellarg($zipFile),
+            escapeshellarg($tempDir . DIRECTORY_SEPARATOR . '*')
+        );
+        $exit = $this->runShell($cmd7z);
+        
+        if ($exit === 0 && file_exists($zipFile)) {
+            // Cleanup temp directory
+            $this->deleteDirectory($tempDir);
+            return true;
+        }
+
+        // Try zip (Info-ZIP) with password
+        $cmdZip = sprintf('zip -r -P %s %s %s',
+            escapeshellarg($password),
+            escapeshellarg($zipFile),
+            escapeshellarg($tempDir)
+        );
+        $exit = $this->runShell($cmdZip);
+        
+        // Cleanup temp directory
+        $this->deleteDirectory($tempDir);
+        
+        return $exit === 0 && file_exists($zipFile);
+    }
+
+    /**
+     * Copy storage files to temporary directory (excluding backups)
+     */
+    protected function copyStorageFiles(string $source, string $dest, string $excludePath): void
+    {
+        if (!is_dir($source)) {
+            return;
+        }
+
+        @mkdir($dest, 0755, true);
+        
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $file) {
+            $filePath = $file->getPathname();
+            
+            // Skip backups directory
+            if (strpos($filePath, $excludePath) === 0) {
+                continue;
+            }
+
+            $relativePath = str_replace($source . DIRECTORY_SEPARATOR, '', $filePath);
+            $destPath = $dest . DIRECTORY_SEPARATOR . $relativePath;
+
+            if ($file->isDir()) {
+                @mkdir($destPath, 0755, true);
+            } else {
+                @mkdir(dirname($destPath), 0755, true);
+                @copy($filePath, $destPath);
+            }
+        }
+    }
+
+    /**
+     * Recursively delete directory
+     */
+    protected function deleteDirectory(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            is_dir($path) ? $this->deleteDirectory($path) : @unlink($path);
+        }
+        @rmdir($dir);
     }
 
     protected function zipExternal(string $sourceFile, string $zipFile, string $password): bool
