@@ -1583,6 +1583,7 @@ class EmployeeController extends Controller
     private function updateParticularsPersonalInfo($employee, $request)
     {
         $validator = Validator::make($request->all(), [
+            'place_of_domicile' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $employee->id,
             'phone' => 'nullable|string|max:20',
@@ -1598,7 +1599,7 @@ class EmployeeController extends Controller
         }
         
             $userData = $request->only([
-                'name', 'email', 'phone', 'employee_id', 'primary_department_id', 'hire_date', 'is_active'
+                'name', 'email', 'phone', 'employee_id', 'primary_department_id', 'hire_date', 'is_active', 'place_of_domicile'
             ]);
         
         // Only update employee_id if provided and different
@@ -2537,7 +2538,7 @@ class EmployeeController extends Controller
     
     private function updateProfile($employee, $request)
     {
-        $profileData = $request->only(['marital_status', 'date_of_birth', 'gender', 'nationality', 'address']);
+        $profileData = $request->only(['marital_status', 'date_of_birth', 'gender', 'nationality', 'address', 'place_of_domicile']);
         
         // Update user profile fields
         $updateData = [];
@@ -2565,6 +2566,11 @@ class EmployeeController extends Controller
             $updateData['address'] = $profileData['address'];
         } elseif (isset($profileData['address']) && empty($profileData['address'])) {
             $updateData['address'] = null;
+        }
+        if (isset($profileData['place_of_domicile']) && !empty($profileData['place_of_domicile'])) {
+            $updateData['place_of_domicile'] = $profileData['place_of_domicile'];
+        } elseif (isset($profileData['place_of_domicile']) && empty($profileData['place_of_domicile'])) {
+            $updateData['place_of_domicile'] = null;
         }
         
         if (!empty($updateData)) {

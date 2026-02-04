@@ -35,6 +35,7 @@ class User extends Authenticatable
         'gender',
         'nationality',
         'address',
+        'place_of_domicile',
         'hire_date',
         'primary_department_id',
         'branch_id',

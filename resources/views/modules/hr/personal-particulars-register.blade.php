@@ -430,8 +430,17 @@
                                             <input type="text" name="nationality" class="form-control" placeholder="e.g., Tanzanian">
                                         </div>
                                         <div class="col-md-12">
-                                            <label class="form-label">Address</label>
-                                            <textarea name="address" class="form-control" rows="3" placeholder="Full residential address"></textarea>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Address</label>
+                                                <textarea name="address" class="form-control" rows="3" placeholder="Full residential address"></textarea>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Place of Domicile</label>
+                                                <input type="text" name="place_of_domicile" class="form-control" placeholder="e.g., Arusha, Tanzania">
+                                                <small class="text-muted d-block mt-1">
+                                                    <i class="bx bx-info-circle me-1"></i> This will be used as default location during leave requests
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

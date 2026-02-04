@@ -8,12 +8,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0 text-gray-800">
-                <i class="bx bx-calendar me-2"></i>Leave Types Management
+                <i class="bx bx-calendar me-2"></i>LEAVE TYPES MANAGEMENT
             </h1>
-            <p class="text-muted mb-0">Define and manage all leave types with their allocated days</p>
+            <p class="text-muted mb-0">define and manage all leave types with their allocated days</p>
         </div>
         <div>
-            <button class="btn btn-primary shadow-sm" id="new-leave-type-btn">
+            <button class="btn btn-custom-primary shadow-sm" id="new-leave-type-btn">
                 <i class="bx bx-plus-circle me-1"></i>Add New Leave Type
             </button>
         </div>
@@ -22,7 +22,7 @@
     <!-- Leave Types Table -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">All Leave Types</h6>
+            <h6 class="m-0 font-weight-bold text-custom-primary">ALL LEAVE TYPES</h6>
         </div>
         <div class="card-body">
             @if($leaveTypes->count() > 0)
@@ -46,7 +46,7 @@
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>
-                                    <strong><i class="bx bx-calendar-check text-primary me-1"></i>{{ $leaveType->name }}</strong>
+                                    <strong><i class="bx bx-calendar-check text-custom-primary me-1"></i>{{ $leaveType->name }}</strong>
                                 </td>
                                 <td>
                                     <div class="text-truncate" style="max-width: 300px;" title="{{ $leaveType->description ?? 'No description' }}">
@@ -54,50 +54,50 @@
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-info fs-6">
+                                    <span class="badge bg-custom-primary fs-6">
                                         <i class="bx bx-time-five me-1"></i>{{ $leaveType->max_days_per_year ?? $leaveType->max_days ?? 0 }} days
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     @if($leaveType->requires_approval ?? true)
-                                        <span class="badge bg-warning"><i class="bx bx-check-circle"></i> Yes</span>
+                                        <span class="badge bg-custom-primary"><i class="bx bx-check-circle"></i> Yes</span>
                                     @else
-                                        <span class="badge bg-secondary"><i class="bx bx-x-circle"></i> No</span>
+                                        <span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> No</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
                                     @if($leaveType->is_paid ?? true)
-                                        <span class="badge bg-success"><i class="bx bx-dollar-circle"></i> Paid</span>
+                                        <span class="badge bg-custom-primary"><i class="bx bx-dollar-circle"></i> Paid</span>
                                     @else
-                                        <span class="badge bg-danger"><i class="bx bx-x-circle"></i> Unpaid</span>
+                                        <span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> Unpaid</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
                                     @if($leaveType->is_active)
-                                        <span class="badge bg-success"><i class="bx bx-check-circle"></i> Active</span>
+                                        <span class="badge bg-custom-primary"><i class="bx bx-check-circle"></i> Active</span>
                                     @else
-                                        <span class="badge bg-secondary"><i class="bx bx-x-circle"></i> Inactive</span>
+                                        <span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> Inactive</span>
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-primary">
+                                    <span class="badge bg-custom-primary">
                                         <i class="bx bx-file me-1"></i>{{ $leaveType->leave_requests_count ?? $leaveType->leaveRequests()->count() }}
                                     </span>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button type="button" class="btn btn-info" onclick="viewLeaveType({{ $leaveType->id }})" title="View Full Details">
+                                        <button type="button" class="btn btn-custom-primary" onclick="viewLeaveType({{ $leaveType->id }})" title="View Full Details">
                                             <i class="bx bx-show"></i>
                                         </button>
-                                        <button type="button" class="btn btn-warning" onclick="editLeaveType({{ $leaveType->id }})" title="Edit Leave Type">
+                                        <button type="button" class="btn btn-custom-primary" onclick="editLeaveType({{ $leaveType->id }})" title="Edit Leave Type">
                                             <i class="bx bx-edit"></i>
                                         </button>
                                         @if($leaveType->leaveRequests()->count() == 0)
-                                            <button type="button" class="btn btn-danger" onclick="deleteLeaveType({{ $leaveType->id }})" title="Delete Leave Type">
+                                            <button type="button" class="btn btn-custom-primary" onclick="deleteLeaveType({{ $leaveType->id }})" title="Delete Leave Type">
                                                 <i class="bx bx-trash"></i>
                                             </button>
                                         @else
-                                            <button type="button" class="btn btn-secondary" disabled title="Cannot delete - has {{ $leaveType->leaveRequests()->count() }} request(s)">
+                                            <button type="button" class="btn btn-outline-custom" disabled title="Cannot delete - has {{ $leaveType->leaveRequests()->count() }} request(s)">
                                                 <i class="bx bx-lock"></i>
                                             </button>
                                         @endif
@@ -125,23 +125,23 @@
 <div class="modal fade" id="viewLeaveTypeModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-custom-primary text-white">
                 <h5 class="modal-title text-white">
-                    <i class="bx bx-info-circle me-2"></i>Leave Type Details
+                    <i class="bx bx-info-circle me-2"></i>LEAVE TYPE DETAILS
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="viewLeaveTypeContent">
                 <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
+                    <div class="spinner-border text-custom-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="mt-3 text-muted">Loading leave type details...</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="editFromViewBtn" style="display: none;">
+                <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-custom-primary" id="editFromViewBtn" style="display: none;">
                     <i class="bx bx-edit me-1"></i>Edit Leave Type
                 </button>
             </div>
@@ -154,7 +154,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="leaveTypeModalTitle">Add New Leave Type</h5>
+                <h5 class="modal-title" id="leaveTypeModalTitle">ADD NEW LEAVE TYPE</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="leaveTypeForm">
@@ -199,8 +199,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">Save Leave Type</button>
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary" id="submitBtn">Save Leave Type</button>
                 </div>
             </form>
         </div>
@@ -211,9 +211,16 @@
 @push('styles')
 <style>
     .leave-type-detail-card {
-        border-left: 4px solid #4e73df;
+        border-left: 4px solid #940000;
         margin-bottom: 1rem;
     }
+    .bg-custom-primary { background-color: #940000 !important; color: white !important; }
+    .btn-custom-primary { background-color: #940000 !important; border-color: #940000 !important; color: white !important; }
+    .btn-custom-primary:hover { background-color: #7a0000 !important; border-color: #7a0000 !important; color: white !important; }
+    .btn-outline-custom { border-color: #940000 !important; color: #940000 !important; background-color: white !important; }
+    .btn-outline-custom:hover { background-color: #940000 !important; color: white !important; }
+    .text-custom-primary { color: #940000 !important; }
+    .badge.bg-custom-primary { background-color: #940000 !important; color: white !important; }
     .detail-item {
         padding: 0.75rem;
         border-bottom: 1px solid #e3e6f0;
@@ -257,7 +264,7 @@ function viewLeaveType(id) {
     $('#viewLeaveTypeModal').modal('show');
     $('#viewLeaveTypeContent').html(`
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border text-custom-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
             <p class="mt-3 text-muted">Loading leave type details...</p>
@@ -285,7 +292,7 @@ function viewLeaveType(id) {
                             <div class="row mb-4">
                                 <div class="col-md-12 text-center">
                                     <h4 class="mb-2">
-                                        <i class="bx bx-calendar-check text-primary me-2"></i>${lt.name}
+                                        <i class="bx bx-calendar-check text-custom-primary me-2"></i>${lt.name}
                                     </h4>
                                     <p class="text-muted mb-0">Leave Type Information</p>
                                 </div>
@@ -295,7 +302,7 @@ function viewLeaveType(id) {
                                 <div class="col-md-6">
                                     <div class="detail-item">
                                         <div class="detail-label">
-                                            <i class="bx bx-info-circle text-primary me-1"></i>Description
+                                            <i class="bx bx-info-circle text-custom-primary me-1"></i>Description
                                         </div>
                                         <div class="detail-value">
                                             ${lt.description ? lt.description : '<em class="text-muted">No description provided</em>'}
@@ -305,10 +312,10 @@ function viewLeaveType(id) {
                                 <div class="col-md-6">
                                     <div class="detail-item">
                                         <div class="detail-label">
-                                            <i class="bx bx-time-five text-info me-1"></i>Maximum Days Per Year
+                                            <i class="bx bx-time-five text-custom-primary me-1"></i>Maximum Days Per Year
                                         </div>
                                         <div class="detail-value">
-                                            <span class="badge bg-info stat-badge">${lt.max_days_per_year || lt.max_days || 0} days</span>
+                                            <span class="badge bg-custom-primary stat-badge">${lt.max_days_per_year || lt.max_days || 0} days</span>
                                         </div>
                                     </div>
                                 </div>
@@ -318,36 +325,36 @@ function viewLeaveType(id) {
                                 <div class="col-md-4">
                                     <div class="detail-item">
                                         <div class="detail-label">
-                                            <i class="bx bx-check-circle text-warning me-1"></i>Requires Approval
+                                            <i class="bx bx-check-circle text-custom-primary me-1"></i>Requires Approval
                                         </div>
                                         <div class="detail-value">
                                             ${lt.requires_approval !== false ? 
-                                                '<span class="badge bg-warning"><i class="bx bx-check-circle"></i> Yes - Approval Required</span>' : 
-                                                '<span class="badge bg-secondary"><i class="bx bx-x-circle"></i> No - Auto Approved</span>'}
+                                                '<span class="badge bg-custom-primary"><i class="bx bx-check-circle"></i> Yes - Approval Required</span>' : 
+                                                '<span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> No - Auto Approved</span>'}
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="detail-item">
                                         <div class="detail-label">
-                                            <i class="bx bx-dollar-circle text-success me-1"></i>Payment Status
+                                            <i class="bx bx-dollar-circle text-custom-primary me-1"></i>Payment Status
                                         </div>
                                         <div class="detail-value">
                                             ${lt.is_paid !== false ? 
-                                                '<span class="badge bg-success"><i class="bx bx-dollar-circle"></i> Paid Leave</span>' : 
-                                                '<span class="badge bg-danger"><i class="bx bx-x-circle"></i> Unpaid Leave</span>'}
+                                                '<span class="badge bg-custom-primary"><i class="bx bx-dollar-circle"></i> Paid Leave</span>' : 
+                                                '<span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> Unpaid Leave</span>'}
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="detail-item">
                                         <div class="detail-label">
-                                            <i class="bx bx-toggle-right text-primary me-1"></i>Status
+                                            <i class="bx bx-toggle-right text-custom-primary me-1"></i>Status
                                         </div>
                                         <div class="detail-value">
                                             ${lt.is_active ? 
-                                                '<span class="badge bg-success"><i class="bx bx-check-circle"></i> Active</span>' : 
-                                                '<span class="badge bg-secondary"><i class="bx bx-x-circle"></i> Inactive</span>'}
+                                                '<span class="badge bg-custom-primary"><i class="bx bx-check-circle"></i> Active</span>' : 
+                                                '<span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> Inactive</span>'}
                                         </div>
                                     </div>
                                 </div>
@@ -358,14 +365,14 @@ function viewLeaveType(id) {
                                     <div class="card bg-light">
                                         <div class="card-body">
                                             <h6 class="card-title mb-3">
-                                                <i class="bx bx-bar-chart-alt-2 text-primary me-2"></i>Statistics
+                                                <i class="bx bx-bar-chart-alt-2 text-custom-primary me-2"></i>Statistics
                                             </h6>
                                             <div class="row text-center">
                                                 <div class="col-md-6">
                                                     <div class="mb-2">
                                                         <div class="detail-label">Total Leave Requests</div>
                                                         <div>
-                                                            <span class="badge bg-primary stat-badge">
+                                                            <span class="badge bg-custom-primary stat-badge">
                                                                 <i class="bx bx-file me-1"></i>${requestCount} request${requestCount !== 1 ? 's' : ''}
                                                             </span>
                                                         </div>
@@ -431,7 +438,7 @@ $('#editFromViewBtn').on('click', function() {
 
 $('#new-leave-type-btn').on('click', function() {
     currentLeaveTypeId = null;
-    $('#leaveTypeModalTitle').text('Add New Leave Type');
+                $('#leaveTypeModalTitle').text('ADD NEW LEAVE TYPE');
     $('#submitBtn').text('Save Leave Type');
     $('#leaveTypeForm')[0].reset();
     $('#leaveTypeId').val('');
@@ -452,7 +459,7 @@ function editLeaveType(id) {
         .then(data => {
             if (data.success) {
                 const lt = data.leaveType;
-                $('#leaveTypeModalTitle').text('Edit Leave Type');
+                $('#leaveTypeModalTitle').text('EDIT LEAVE TYPE');
                 $('#submitBtn').text('Update Leave Type');
                 $('#leaveTypeId').val(lt.id);
                 $('#name').val(lt.name);

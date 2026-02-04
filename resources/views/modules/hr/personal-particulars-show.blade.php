@@ -201,6 +201,7 @@
                                         <tr><th>Marital Status:</th><td>{{ $employee->marital_status ?? 'N/A' }}</td></tr>
                                         <tr><th>Nationality:</th><td>{{ $employee->nationality ?? 'N/A' }}</td></tr>
                                         <tr><th>Address:</th><td>{{ $employee->address ?? 'N/A' }}</td></tr>
+                                        <tr><th>Place of Domicile:</th><td>{{ $employee->place_of_domicile ?? 'N/A' }}</td></tr>
                                         <tr><th>Hire Date:</th><td>{{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('d M Y') : 'N/A' }}</td></tr>
                                         @if($employee->roles && $employee->roles->count() > 0)
                                         <tr><th>Roles:</th><td>

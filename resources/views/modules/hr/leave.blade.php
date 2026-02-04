@@ -7,14 +7,14 @@
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary text-white">
+            <div class="card" style="background-color: #940000; color: white;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="card-title text-white mb-1">
-                <i class="bx bx-calendar me-2"></i>Leave Management
+                <i class="bx bx-calendar me-2"></i>LEAVE MANAGEMENT
                             </h4>
-                            <p class="card-text text-white-50 mb-0">Manage employee leave requests and approvals</p>
+                            <p class="card-text text-white-50 mb-0">manage employee leave requests and approvals</p>
                         </div>
                     </div>
                 </div>
@@ -28,7 +28,7 @@
             <div class="card">
                 <div class="card-header">
                     <h6 class="card-title mb-0">
-                        <i class="bx bx-filter-alt me-2"></i>Search & Filters
+                        <i class="bx bx-filter-alt me-2"></i>SEARCH & FILTERS
                     </h6>
                 </div>
                 <div class="card-body">
@@ -79,7 +79,7 @@
                             <div class="input-group">
                                 <input type="date" class="form-control" id="filter-date-from" placeholder="From">
                                 <input type="date" class="form-control" id="filter-date-to" placeholder="To">
-                                <button class="btn btn-outline-secondary" type="button" id="clear-filters" title="Clear Filters">
+                                <button class="btn btn-outline-custom" type="button" id="clear-filters" title="Clear Filters">
                                     <i class="bx bx-x"></i>
                                 </button>
                             </div>
@@ -99,30 +99,30 @@
                         <!-- Dashboard Tab -->
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
-                                <i class="bx bx-bar-chart-alt-2 me-1"></i>Dashboard
+                                <i class="bx bx-bar-chart-alt-2 me-1"></i>DASHBOARD
                             </button>
                         </li>
                         
                         <!-- Request Management Tabs -->
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="my-requests-tab" data-bs-toggle="tab" data-bs-target="#my-requests" type="button" role="tab">
-                                <i class="bx bx-history me-1"></i>My Requests
-                                <span class="badge bg-primary ms-2" id="my-requests-count">{{ $myRequests->count() }}</span>
+                                <i class="bx bx-history me-1"></i>MY REQUESTS
+                                <span class="badge bg-custom-primary ms-2" id="my-requests-count">{{ $myRequests->count() }}</span>
                             </button>
                         </li>
                         
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="awaiting-tab" data-bs-toggle="tab" data-bs-target="#awaiting" type="button" role="tab">
-                                <i class="bx bx-time me-1"></i>Awaiting Action
-                                <span class="badge bg-warning ms-2" id="awaiting-count">{{ $isManager ? $awaitingMyAction->count() : 0 }}</span>
+                                <i class="bx bx-time me-1"></i>AWAITING ACTION
+                                <span class="badge bg-custom-primary ms-2" id="awaiting-count">{{ $isManager ? $awaitingMyAction->count() : 0 }}</span>
                             </button>
                         </li>
                         
                         @if($isManager)
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="all-requests-tab" data-bs-toggle="tab" data-bs-target="#all-requests" type="button" role="tab">
-                                <i class="bx bx-globe me-1"></i>All Requests
-                                <span class="badge bg-info ms-2" id="all-requests-count">{{ $allOtherRequests->count() }}</span>
+                                <i class="bx bx-globe me-1"></i>ALL REQUESTS
+                                <span class="badge bg-custom-primary ms-2" id="all-requests-count">{{ $allOtherRequests->count() }}</span>
                             </button>
                         </li>
                         @endif
@@ -130,21 +130,21 @@
                         <!-- Management Tabs -->
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="pending-docs-tab" data-bs-toggle="tab" data-bs-target="#pending-docs" type="button" role="tab">
-                                <i class="bx bx-file me-1"></i>Pending Documents
-                                <span class="badge bg-secondary ms-2" id="pending-docs-count">{{ $stats['total_pending_docs'] ?? 0 }}</span>
+                                <i class="bx bx-file me-1"></i>PENDING DOCUMENTS
+                                <span class="badge bg-custom-primary ms-2" id="pending-docs-count">{{ $stats['total_pending_docs'] ?? 0 }}</span>
                             </button>
                         </li>
                         
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="overdue-tab" data-bs-toggle="tab" data-bs-target="#overdue" type="button" role="tab">
-                                <i class="bx bx-calendar-x me-1"></i>Overdue
-                                <span class="badge bg-danger ms-2" id="overdue-count">0</span>
+                                <i class="bx bx-calendar-x me-1"></i>OVERDUE
+                                <span class="badge bg-custom-primary ms-2" id="overdue-count">0</span>
                             </button>
                         </li>
                         
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab">
-                                <i class="bx bx-list-ul me-1"></i>All Records
+                                <i class="bx bx-list-ul me-1"></i>ALL RECORDS
                             </button>
                         </li>
                     </ul>
@@ -157,132 +157,132 @@
                             <div class="row mb-4">
         @if($isManager)
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending HR Review</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_pending_hr'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">PENDING HR REVIEW</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_pending_hr'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-time-five fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-time-five fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-info shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Pending HOD</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_pending_hod'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">PENDING HOD</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_pending_hod'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-user-check fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-user-check fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Pending CEO</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_pending_ceo'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">PENDING CEO</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_pending_ceo'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-check-circle fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-check-circle fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Currently on Leave</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_on_leave'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">CURRENTLY ON LEAVE</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_on_leave'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-calendar-check fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-calendar-check fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-secondary shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Pending Documents</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_pending_docs'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">PENDING DOCUMENTS</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_pending_docs'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-file fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-file fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">This Month</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_this_month'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">This Month</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_this_month'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-calendar fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-calendar fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         @else
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">My Pending</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['my_pending'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">My Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['my_pending'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-time-five fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-time-five fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">My Approved</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['my_approved'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">My Approved</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['my_approved'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-check-circle fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-check-circle fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-info shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">On Leave</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['my_on_leave'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">On Leave</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['my_on_leave'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-calendar-check fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-calendar-check fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-left-secondary shadow h-100 py-2">
+            <div class="card border-left-custom shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Total Requests</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_requests'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">TOTAL REQUESTS</div>
+                            <div class="h5 mb-0 font-weight-bold text-dark">{{ $stats['total_requests'] ?? 0 }}</div>
                         </div>
-                        <div class="col-auto"><i class="bx bx-list-ul fa-2x text-gray-300"></i></div>
+                        <div class="col-auto"><i class="bx bx-list-ul fa-2x text-muted"></i></div>
                     </div>
                 </div>
             </div>
@@ -294,7 +294,7 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <div class="card">
-                                        <div class="card-header bg-light">
+                                        <div class="card-header bg-white">
                                             <h6 class="card-title mb-0">
                                                 <i class="bx bx-menu me-2"></i>Quick Actions
                                             </h6>
@@ -302,33 +302,33 @@
                                         <div class="card-body">
                                             <div class="row g-3">
                                                 <div class="col-md-3 col-sm-6">
-                                                    <button class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="openNewLeaveRequestModal()" style="min-height: 120px;">
+                                                    <button class="btn btn-custom-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="openNewLeaveRequestModal()" style="min-height: 120px;">
                                                         <i class="bx bx-plus-circle" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-                                                        <span class="fw-bold">New Request</span>
+                                                        <span class="fw-bold">NEW REQUEST</span>
                                                     </button>
                                                 </div>
                                                 <div class="col-md-3 col-sm-6">
-                                                    <button class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showBalanceManagement()" style="min-height: 120px;">
+                                                    <button class="btn btn-custom-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showBalanceManagement()" style="min-height: 120px;">
                                                         <i class="bx bx-calculator" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-                                                        <span class="fw-bold">Balance Management</span>
+                                                        <span class="fw-bold">BALANCE MANAGEMENT</span>
                                                     </button>
                                                 </div>
                                                 <div class="col-md-3 col-sm-6">
-                                                    <button class="btn btn-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showRecommendationsManagement()" style="min-height: 120px;">
+                                                    <button class="btn btn-custom-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showRecommendationsManagement()" style="min-height: 120px;">
                                                         <i class="bx bx-calendar-check" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-                                                        <span class="fw-bold">Recommendations</span>
+                                                        <span class="fw-bold">RECOMMENDATIONS</span>
                                                     </button>
                                                 </div>
                                                 <div class="col-md-3 col-sm-6">
-                                                    <button class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showLeaveTypesManagement()" style="min-height: 120px;">
+                                                    <button class="btn btn-custom-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showLeaveTypesManagement()" style="min-height: 120px;">
                                                         <i class="bx bx-cog" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-                                                        <span class="fw-bold">Leave Types 2</span>
+                                                        <span class="fw-bold">LEAVE TYPES</span>
                                                     </button>
                                                 </div>
                                                 <div class="col-md-3 col-sm-6">
-                                                    <button class="btn btn-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showAnalytics()" style="min-height: 120px;">
+                                                    <button class="btn btn-outline-custom w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3" onclick="showAnalytics()" style="min-height: 120px;">
                                                         <i class="bx bx-bar-chart-alt-2" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
-                                                        <span class="fw-bold">Analytics</span>
+                                                        <span class="fw-bold">ANALYTICS</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -345,10 +345,10 @@
                         <!-- New Request Tab -->
                         <div class="tab-pane fade" id="new-request" role="tabpanel">
                             <div class="text-center py-5">
-                                <i class="bx bx-plus-circle" style="font-size: 4rem; color: #6c757d;"></i>
-                                <h4 class="mt-3">Create New Leave Request</h4>
+                                <i class="bx bx-plus-circle" style="font-size: 4rem; color: #940000;"></i>
+                                <h4 class="mt-3">CREATE NEW LEAVE REQUEST</h4>
                                 <p class="text-muted">Click the button below to start a new leave request</p>
-                                <button class="btn btn-primary btn-lg mt-3" id="new-leave-request-btn">
+                                <button class="btn btn-custom-primary btn-lg mt-3" id="new-leave-request-btn">
                                     <i class="bx bx-plus-circle me-2"></i>Request Leave
                                 </button>
                             </div>
@@ -359,18 +359,18 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">Requests Requiring Your Action</h6>
                                 <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="refreshTab('awaiting')">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="refreshTab('awaiting')">
                                         <i class="bx bx-refresh"></i> Refresh
                                     </button>
                                     @if($isHR || $isAdmin || $isManager)
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        <button type="button" class="btn btn-sm btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown">
                                             <i class="bx bx-check-double"></i> Bulk Actions
                                     </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" onclick="bulkApprove('awaiting'); return false;"><i class="bx bx-check text-success"></i> Approve Selected</a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="bulkReject('awaiting'); return false;"><i class="bx bx-x text-danger"></i> Reject Selected</a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="bulkProcess('awaiting'); return false;"><i class="bx bx-file text-info"></i> Process Documents</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkApprove('awaiting'); return false;"><i class="bx bx-check text-custom-primary"></i> Approve Selected</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkReject('awaiting'); return false;"><i class="bx bx-x text-custom-primary"></i> Reject Selected</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkProcess('awaiting'); return false;"><i class="bx bx-file text-custom-primary"></i> Process Documents</a></li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item" href="#" onclick="selectAllRequests('awaiting'); return false;"><i class="bx bx-check-square"></i> Select All</a></li>
                                             <li><a class="dropdown-item" href="#" onclick="deselectAllRequests('awaiting'); return false;"><i class="bx bx-square"></i> Deselect All</a></li>
@@ -413,7 +413,7 @@
                         <div class="tab-pane fade" id="my-requests" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">My Leave Request History</h6>
-                                <button class="btn btn-sm btn-outline-primary" onclick="refreshTab('my-requests')">
+                                <button class="btn btn-sm btn-outline-custom" onclick="refreshTab('my-requests')">
                                     <i class="bx bx-refresh"></i> Refresh
                                 </button>
                 </div>
@@ -442,21 +442,21 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">All Employee Leave Requests</h6>
                                 <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="refreshTab('all-requests')">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="refreshTab('all-requests')">
                                         <i class="bx bx-refresh"></i> Refresh
                                     </button>
                                     <button class="btn btn-sm btn-outline-success" onclick="exportTab('all-requests')">
                                         <i class="bx bx-export"></i> Export
                                     </button>
                                     <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        <button type="button" class="btn btn-sm btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown">
                                             <i class="bx bx-check-double"></i> Bulk Actions
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" href="#" onclick="bulkApprove('all-requests'); return false;"><i class="bx bx-check text-success"></i> Approve Selected</a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="bulkReject('all-requests'); return false;"><i class="bx bx-x text-danger"></i> Reject Selected</a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="bulkProcess('all-requests'); return false;"><i class="bx bx-file text-info"></i> Process Documents</a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="bulkCancel('all-requests'); return false;"><i class="bx bx-x-circle text-warning"></i> Cancel Selected</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkApprove('all-requests'); return false;"><i class="bx bx-check text-custom-primary"></i> Approve Selected</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkReject('all-requests'); return false;"><i class="bx bx-x text-custom-primary"></i> Reject Selected</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkProcess('all-requests'); return false;"><i class="bx bx-file text-custom-primary"></i> Process Documents</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="bulkCancel('all-requests'); return false;"><i class="bx bx-x-circle text-custom-primary"></i> Cancel Selected</a></li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item" href="#" onclick="selectAllRequests('all-requests'); return false;"><i class="bx bx-check-square"></i> Select All</a></li>
                                             <li><a class="dropdown-item" href="#" onclick="deselectAllRequests('all-requests'); return false;"><i class="bx bx-square"></i> Deselect All</a></li>
@@ -502,7 +502,7 @@
                             </div>
                             <div id="issues-list" style="max-height: 70vh; overflow-y: auto;">
                                 <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border text-custom-primary" role="status">
                                         <span class="visually-hidden">Loading issues...</span>
                                     </div>
                                     <p class="mt-2 text-muted">Loading issues and alerts...</p>
@@ -514,13 +514,13 @@
                         <div class="tab-pane fade" id="pending-docs" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">Leave Requests Pending Document Processing</h6>
-                                <button class="btn btn-sm btn-outline-primary" onclick="refreshTab('pending-docs')">
+                                <button class="btn btn-sm btn-outline-custom" onclick="refreshTab('pending-docs')">
                                     <i class="bx bx-refresh"></i> Refresh
                                 </button>
                             </div>
                             <div id="pending-docs-list" style="max-height: 70vh; overflow-y: auto;">
                                 <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border text-custom-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="mt-2 text-muted">Loading pending documents...</p>
@@ -531,14 +531,14 @@
                         <!-- Overdue Tab -->
                         <div class="tab-pane fade" id="overdue" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Overdue Leave Requests & Pending Actions</h6>
+                                <h6 class="mb-0">OVERDUE LEAVE REQUESTS & PENDING ACTIONS</h6>
                                 <button class="btn btn-sm btn-outline-danger" onclick="refreshTab('overdue')">
                                     <i class="bx bx-refresh"></i> Refresh
                                 </button>
                             </div>
                             <div id="overdue-list" style="max-height: 70vh; overflow-y: auto;">
                                 <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border text-custom-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="mt-2 text-muted">Loading overdue requests...</p>
@@ -549,12 +549,12 @@
                         <!-- Analytics Tab -->
                         <div class="tab-pane fade" id="analytics" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0">Leave Analytics Dashboard</h6>
+                                <h6 class="mb-0">LEAVE ANALYTICS DASHBOARD</h6>
                                 <div>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="exportAnalytics()">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="exportAnalytics()">
                                         <i class="bx bx-download"></i> Export
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="refreshAnalytics()">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="refreshAnalytics()">
                                         <i class="bx bx-refresh"></i> Refresh
                                     </button>
                                 </div>
@@ -566,7 +566,7 @@
                         <div class="tab-pane fade" id="records" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">All Leave Records</h6>
-                                <button class="btn btn-sm btn-outline-primary" onclick="exportRecords()">
+                                <button class="btn btn-sm btn-outline-custom" onclick="exportRecords()">
                                     <i class="bx bx-download"></i> Export CSV
                                 </button>
                             </div>
@@ -606,30 +606,30 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <button class="btn btn-primary btn-sm w-100" onclick="applyRecordsFilters()">
+                                    <button class="btn btn-custom-primary btn-sm w-100" onclick="applyRecordsFilters()">
                                         <i class="bx bx-filter"></i> Apply Filters
                                     </button>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="selectAllRecords()">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="selectAllRecords()">
                                         <i class="bx bx-check-square"></i> Select All
                                     </button>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="deselectAllRecords()">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="deselectAllRecords()">
                                         <i class="bx bx-square"></i> Deselect All
                                     </button>
                                     <span class="ms-2 text-muted" id="selected-count">0 selected</span>
                                 </div>
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <button type="button" class="btn btn-sm btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown">
                                         <i class="bx bx-check-double"></i> Bulk Actions
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="bulkApprove('records'); return false;"><i class="bx bx-check text-success"></i> Approve Selected</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="bulkReject('records'); return false;"><i class="bx bx-x text-danger"></i> Reject Selected</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="bulkProcess('records'); return false;"><i class="bx bx-file text-info"></i> Process Documents</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="bulkExport('records'); return false;"><i class="bx bx-download text-primary"></i> Export Selected</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkApprove('records'); return false;"><i class="bx bx-check text-custom-primary"></i> Approve Selected</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkReject('records'); return false;"><i class="bx bx-x text-custom-primary"></i> Reject Selected</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkProcess('records'); return false;"><i class="bx bx-file text-custom-primary"></i> Process Documents</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkExport('records'); return false;"><i class="bx bx-download text-custom-primary"></i> Export Selected</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -661,8 +661,8 @@
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0">Employee Leave Balance Management</h6>
-                                        <button class="btn btn-sm btn-primary" onclick="showBalanceModal()">
+                                        <h6 class="mb-0">EMPLOYEE LEAVE BALANCE MANAGEMENT</h6>
+                                        <button class="btn btn-sm btn-custom-primary" onclick="showBalanceModal()">
                                             <i class="bx bx-plus"></i> Manage Balance
                                         </button>
                                     </div>
@@ -695,22 +695,22 @@
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div>
-                                            <button class="btn btn-sm btn-outline-primary" onclick="selectAllBalances()">
+                                            <button class="btn btn-sm btn-outline-custom" onclick="selectAllBalances()">
                                                 <i class="bx bx-check-square"></i> Select All
                                             </button>
-                                            <button class="btn btn-sm btn-outline-secondary" onclick="deselectAllBalances()">
+                                            <button class="btn btn-sm btn-outline-custom" onclick="deselectAllBalances()">
                                                 <i class="bx bx-square"></i> Deselect All
                                             </button>
                                             <span class="ms-2 text-muted" id="selected-balances-count">0 selected</span>
                                         </div>
                                         <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                            <button type="button" class="btn btn-sm btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown">
                                                 <i class="bx bx-check-double"></i> Bulk Actions
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" onclick="bulkUpdateBalance(); return false;"><i class="bx bx-edit text-primary"></i> Update Selected Balances</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="bulkResetBalance(); return false;"><i class="bx bx-reset text-warning"></i> Reset Selected</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="bulkExportBalance(); return false;"><i class="bx bx-download text-info"></i> Export Selected</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="bulkUpdateBalance(); return false;"><i class="bx bx-edit text-custom-primary"></i> Update Selected Balances</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="bulkResetBalance(); return false;"><i class="bx bx-reset text-custom-primary"></i> Reset Selected</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="bulkExportBalance(); return false;"><i class="bx bx-download text-custom-primary"></i> Export Selected</a></li>
                                             </ul>
                                         </div>
                                     </div>
@@ -733,7 +733,7 @@
                                             <tbody id="balance-table-body">
                                                 <tr>
                                                     <td colspan="8" class="text-center py-4">
-                                                        <div class="spinner-border text-primary" role="status">
+                                                        <div class="spinner-border text-custom-primary" role="status">
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                         <p class="mt-2 text-muted">Loading balances...</p>
@@ -751,8 +751,8 @@
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0">Leave Recommendations Management</h6>
-                                        <button class="btn btn-sm btn-primary" onclick="showRecommendationModal()">
+                                        <h6 class="mb-0">LEAVE RECOMMENDATIONS MANAGEMENT</h6>
+                                        <button class="btn btn-sm btn-custom-primary" onclick="showRecommendationModal()">
                                             <i class="bx bx-plus"></i> Add Recommendation
                                         </button>
                                     </div>
@@ -788,25 +788,25 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="selectAllRecommendations()">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="selectAllRecommendations()">
                                         <i class="bx bx-check-square"></i> Select All
                                     </button>
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="deselectAllRecommendations()">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="deselectAllRecommendations()">
                                         <i class="bx bx-square"></i> Deselect All
                                     </button>
                                     <span class="ms-2 text-muted" id="selected-recommendations-count">0 selected</span>
                                 </div>
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-success" onclick="autoAssignRecommendations()">
+                                    <button type="button" class="btn btn-sm btn-custom-primary" onclick="autoAssignRecommendations()">
                                         <i class="bx bx-calendar-check"></i> Auto-Assign Dates
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                    <button type="button" class="btn btn-sm btn-outline-custom dropdown-toggle" data-bs-toggle="dropdown">
                                         <i class="bx bx-check-double"></i> Bulk Actions
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="bulkCreateLeaveFromRecommendations(); return false;"><i class="bx bx-plus-circle text-success"></i> Create Leave Requests</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="bulkDeleteRecommendations(); return false;"><i class="bx bx-trash text-danger"></i> Delete Selected</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="bulkExportRecommendations(); return false;"><i class="bx bx-download text-info"></i> Export Selected</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkCreateLeaveFromRecommendations(); return false;"><i class="bx bx-plus-circle text-custom-primary"></i> Create Leave Requests</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkDeleteRecommendations(); return false;"><i class="bx bx-trash text-custom-primary"></i> Delete Selected</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="bulkExportRecommendations(); return false;"><i class="bx bx-download text-custom-primary"></i> Export Selected</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -814,7 +814,7 @@
                                 <div class="card-body">
                                     <div id="recommendations-content">
                                         <div class="text-center py-4">
-                                            <div class="spinner-border text-primary" role="status">
+                                            <div class="spinner-border text-custom-primary" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
                                             <p class="mt-2 text-muted">Loading recommendations...</p>
@@ -830,7 +830,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">Completed Leave Requests</h6>
                                 <div>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="refreshTab('completed')">
+                                    <button class="btn btn-sm btn-outline-custom" onclick="refreshTab('completed')">
                                         <i class="bx bx-refresh"></i> Refresh
                                     </button>
                                     <button class="btn btn-sm btn-outline-success" onclick="exportTab('completed')">
@@ -840,7 +840,7 @@
                             </div>
                             <div id="completed-list" style="max-height: 70vh; overflow-y: auto;">
                                 <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border text-custom-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="mt-2 text-muted">Loading completed requests...</p>
@@ -852,13 +852,13 @@
                         <div class="tab-pane fade" id="rejected" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0">Rejected and Cancelled Requests</h6>
-                                <button class="btn btn-sm btn-outline-primary" onclick="refreshTab('rejected')">
+                                <button class="btn btn-sm btn-outline-custom" onclick="refreshTab('rejected')">
                                     <i class="bx bx-refresh"></i> Refresh
                                 </button>
                             </div>
                             <div id="rejected-list" style="max-height: 70vh; overflow-y: auto;">
                                 <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border text-custom-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
                                     <p class="mt-2 text-muted">Loading rejected/cancelled requests...</p>
@@ -870,8 +870,8 @@
                         <!-- Leave Types Management Tab -->
                         <div class="tab-pane fade" id="leave-types" role="tabpanel">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="mb-0"><i class="bx bx-cog me-2"></i>Leave Types Management</h6>
-                                <button class="btn btn-sm btn-primary" onclick="showAddLeaveTypeModal()">
+                                <h6 class="mb-0"><i class="bx bx-cog me-2"></i>LEAVE TYPES MANAGEMENT</h6>
+                                <button class="btn btn-sm btn-custom-primary" onclick="showAddLeaveTypeModal()">
                                     <i class="bx bx-plus"></i> Add Leave Type
                                 </button>
                             </div>
@@ -904,7 +904,7 @@
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">&nbsp;</label>
-                                            <button class="btn btn-sm btn-outline-secondary w-100" onclick="resetLeaveTypesFilters()">
+                                            <button class="btn btn-sm btn-outline-custom w-100" onclick="resetLeaveTypesFilters()">
                                                 <i class="bx bx-refresh"></i> Reset
                                             </button>
                                         </div>
@@ -943,35 +943,35 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge bg-primary">{{ $type->max_days_per_year ?? $type->max_days ?? 'N/A' }}</span>
+                                                <span class="badge bg-custom-primary">{{ $type->max_days_per_year ?? $type->max_days ?? 'N/A' }}</span>
                                             </td>
                                             <td>
                                                 @if($type->requires_approval)
-                                                    <span class="badge bg-info"><i class="bx bx-check-circle"></i> Yes</span>
+                                                    <span class="badge bg-custom-primary"><i class="bx bx-check-circle"></i> Yes</span>
                                                 @else
-                                                    <span class="badge bg-secondary"><i class="bx bx-x-circle"></i> No</span>
+                                                    <span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> No</span>
                                                 @endif
                                             </td>
                                             <td>
                                                 @if($type->is_paid ?? true)
-                                                    <span class="badge bg-success"><i class="bx bx-coin"></i> Paid</span>
+                                                    <span class="badge bg-custom-primary"><i class="bx bx-coin"></i> Paid</span>
                                                 @else
-                                                    <span class="badge bg-warning"><i class="bx bx-coin-stack"></i> Unpaid</span>
+                                                    <span class="badge bg-custom-primary"><i class="bx bx-coin-stack"></i> Unpaid</span>
                                                 @endif
                                             </td>
                                             <td>
                                                 @if($type->is_active)
-                                                    <span class="badge bg-success"><i class="bx bx-check"></i> Active</span>
+                                                    <span class="badge bg-custom-primary"><i class="bx bx-check"></i> Active</span>
                                                 @else
-                                                    <span class="badge bg-danger"><i class="bx bx-x"></i> Inactive</span>
+                                                    <span class="badge bg-custom-primary"><i class="bx bx-x"></i> Inactive</span>
                                                 @endif
                                             </td>
                                             <td>
-                                                <span class="badge bg-primary">{{ $type->leave_requests_count ?? $type->leaveRequests()->count() }}</span>
+                                                <span class="badge bg-custom-primary">{{ $type->leave_requests_count ?? $type->leaveRequests()->count() }}</span>
                                             </td>
                                             <td>
                                                 <div class="btn-group" role="group">
-                                                    <button class="btn btn-sm btn-outline-primary" onclick="editLeaveType({{ $type->id }})" 
+                                                    <button class="btn btn-sm btn-outline-custom" onclick="editLeaveType({{ $type->id }})" 
                                                             data-bs-toggle="tooltip" title="Edit Leave Type">
                                                         <i class="bx bx-edit"></i>
                                                 </button>
@@ -981,7 +981,7 @@
                                                         <i class="bx bx-trash"></i>
                                                 </button>
                                                 @else
-                                                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleLeaveTypeStatus({{ $type->id }})" 
+                                                    <button class="btn btn-sm btn-outline-custom" onclick="toggleLeaveTypeStatus({{ $type->id }})" 
                                                             data-bs-toggle="tooltip" title="{{ $type->is_active ? 'Deactivate' : 'Activate' }} Leave Type">
                                                         <i class="bx bx-{{ $type->is_active ? 'pause' : 'play' }}"></i>
                                                 </button>
@@ -1010,8 +1010,8 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <form id="requestLeaveForm" enctype="multipart/form-data">
-                <div class="modal-header bg-primary">
-                    <h5 class="modal-title text-white" id="requestModalTitle">New Leave Request</h5>
+                <div class="modal-header bg-custom-primary">
+                    <h5 class="modal-title text-white" id="requestModalTitle">NEW LEAVE REQUEST</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -1020,7 +1020,7 @@
                     <input type="hidden" name="request_id" id="request_id" value="">
                     
                     <h6>Employee Details</h6>
-                    <div class="row bg-light p-3 rounded mb-4">
+                    <div class="row bg-white p-3 rounded mb-4">
                         <div class="col-md-4"><strong>Name:</strong> {{ auth()->user()->name }}</div>
                         <div class="col-md-4"><strong>Department:</strong> {{ auth()->user()->primaryDepartment->name ?? 'N/A' }}</div>
                         <div class="col-md-4"><strong>Position:</strong> {{ auth()->user()->employee->position ?? 'N/A' }}</div>
@@ -1029,22 +1029,22 @@
                     <!-- Annual Leave Balance Display -->
                     <div class="row mb-4">
                         <div class="col-12">
-                            <div class="card border-left-primary shadow h-100 py-2">
+                            <div class="card border-left-custom shadow h-100 py-2">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">
                                                 Annual Leave Balance ({{ date('Y') }})
                                             </div>
                                             <div class="row no-gutters align-items-center">
                                                 <div class="col-auto">
-                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" id="annual-balance-display">
+                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-dark" id="annual-balance-display">
                                                         Loading...
                                                     </div>
                                                 </div>
                                                 <div class="col">
                                                     <div class="progress progress-sm mr-2">
-                                                        <div id="annual-balance-progress" class="progress-bar bg-primary" 
+                                                        <div id="annual-balance-progress" class="progress-bar bg-custom-primary" 
                                                              role="progressbar" style="width: 0%"></div>
                                                     </div>
                                                 </div>
@@ -1054,7 +1054,7 @@
                                             </div>
                                         </div>
                                         <div class="col-auto">
-                                            <i class="bx bx-calendar-check fa-2x text-gray-300"></i>
+                                            <i class="bx bx-calendar-check fa-2x text-muted"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -1065,17 +1065,17 @@
                     <!-- Leave Recommendations Section -->
                     <div class="row mb-4" id="recommendations-section" style="display: none;">
                         <div class="col-12">
-                            <div class="card border-left-success shadow">
-                                <div class="card-header bg-success text-white py-2">
+                            <div class="card border-left-custom shadow">
+                                <div class="card-header bg-custom-primary text-white py-2">
                                     <h6 class="m-0 font-weight-bold"><i class="bx bx-lightbulb"></i> Recommended Leave Periods</h6>
                                 </div>
                                 <div class="card-body">
                                     <div id="personal-recommendations" class="mb-3">
-                                        <h6 class="text-success"><i class="bx bx-user-check"></i> Your Personal Recommendations</h6>
+                                        <h6 class="text-custom-primary"><i class="bx bx-user-check"></i> Your Personal Recommendations</h6>
                                         <div id="personal-rec-list"></div>
                                     </div>
                                     <div id="optimal-periods">
-                                        <h6 class="text-info"><i class="bx bx-trending-up"></i> Optimal Periods for Your Department</h6>
+                                        <h6 class="text-custom-primary"><i class="bx bx-trending-up"></i> Optimal Periods for Your Department</h6>
                                         <div id="optimal-periods-list"></div>
                                     </div>
                                     <small class="text-muted"><i class="bx bx-info-circle"></i> These recommendations help maintain office staffing levels</small>
@@ -1126,11 +1126,11 @@
                         <small><i class="bx bx-info-circle"></i> Add dependents who will be traveling with you for fare calculation purposes.</small>
                     </div>
                     <div id="dependents-container"></div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="add-dependent-btn">+ Add Dependent</button>
+                    <button type="button" class="btn btn-sm btn-outline-custom" id="add-dependent-btn">+ Add Dependent</button>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">Submit Request</button>
                 </div>
             </form>
         </div>
@@ -1141,7 +1141,7 @@
 <div class="modal fade" id="reviewModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-custom-primary text-white">
                 <h5 class="modal-title">
                     <i class="bx bx-file-blank me-2"></i>Review Leave Request
                 </h5>
@@ -1149,15 +1149,15 @@
             </div>
             <div class="modal-body" id="review-modal-body">
                 <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
+                    <div class="spinner-border text-custom-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="mt-2">Loading request details...</p>
                 </div>
             </div>
             <div class="modal-footer" id="review-modal-footer" style="display: none;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="btn-approve-review">
+                <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-custom-primary" id="btn-approve-review">
                     <i class="bx bx-check"></i> Approve
                 </button>
                 <button type="button" class="btn btn-danger" id="btn-reject-review">
@@ -1173,7 +1173,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="hodReviewForm">
-                <div class="modal-header bg-info text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title">
                         <i class="bx bx-user-check me-2"></i>HOD Review
                     </h5>
@@ -1205,8 +1205,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">
                         <i class="bx bx-send me-1"></i> Submit Review
                     </button>
                 </div>
@@ -1220,7 +1220,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="ceoReviewForm">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title">
                         <i class="bx bx-check-circle me-2"></i>CEO Final Approval
                     </h5>
@@ -1252,8 +1252,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">
                         <i class="bx bx-send me-1"></i> Submit Final Decision
                     </button>
                 </div>
@@ -1266,7 +1266,7 @@
 <div class="modal fade" id="viewDetailsModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-custom-primary text-white">
                 <h5 class="modal-title text-white">
                     <i class="bx bx-info-circle me-2"></i>Leave Request Details
                 </h5>
@@ -1274,15 +1274,15 @@
             </div>
             <div class="modal-body" id="view-details-body">
                 <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
+                    <div class="spinner-border text-custom-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     <p class="mt-2">Loading request details...</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-outline-primary" id="btn-download-summary-pdf" style="display: none;">
+                <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-custom" id="btn-download-summary-pdf" style="display: none;">
                     <i class="bx bx-download"></i> Download Summary PDF
                 </button>
             </div>
@@ -1295,7 +1295,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <form id="advancedDocumentsForm">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title">
                         <i class="bx bx-file-contract"></i> Process Leave Documents - Internal System
                     </h5>
@@ -1324,7 +1324,7 @@
                         <!-- Leave Approval Information -->
                         <div class="col-md-6">
                             <div class="card mb-4">
-                                <div class="card-header bg-primary text-white">
+                                <div class="card-header bg-custom-primary text-white">
                                     <h6 class="mb-0">Leave Approval Details</h6>
                                 </div>
                                 <div class="card-body">
@@ -1353,7 +1353,7 @@
                         <!-- Fare Payment Information -->
                         <div class="col-md-6">
                             <div class="card mb-4">
-                                <div class="card-header bg-warning">
+                                <div class="card-header bg-custom-primary">
                                     <h6 class="mb-0">Fare Payment Details</h6>
                                 </div>
                                 <div class="card-body">
@@ -1406,35 +1406,35 @@
                     
                     <!-- Document Preview Section -->
                     <div class="card">
-                        <div class="card-header bg-secondary text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0">Document Preview</h6>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-12 mb-2">
-                                    <button type="button" class="btn btn-outline-primary w-100" id="preview-combined-cert">
+                                    <button type="button" class="btn btn-outline-custom w-100" id="preview-combined-cert">
                                         <i class="bx bx-show"></i> Preview Combined Certificate (Leave + Fare)
                                     </button>
                                 </div>
                                 <div class="col-md-6">
-                                    <button type="button" class="btn btn-outline-secondary w-100 mb-2" id="preview-leave-cert">
+                                    <button type="button" class="btn btn-outline-custom w-100 mb-2" id="preview-leave-cert">
                                         <i class="bx bx-show"></i> Preview Leave Certificate Only
                                     </button>
                                 </div>
                                 <div class="col-md-6">
-                                    <button type="button" class="btn btn-outline-secondary w-100 mb-2" id="preview-fare-cert">
+                                    <button type="button" class="btn btn-outline-custom w-100 mb-2" id="preview-fare-cert">
                                         <i class="bx bx-show"></i> Preview Fare Certificate Only
                                     </button>
                                 </div>
                             </div>
                             <div id="document-preview" class="mt-3" style="display: none;">
-                                <div class="border rounded p-3 bg-light">
+                                <div class="border rounded p-3 bg-white">
                                     <div id="preview-content"></div>
                                     <div class="text-center mt-3">
-                                        <button type="button" class="btn btn-success" id="print-preview">
+                                        <button type="button" class="btn btn-custom-primary" id="print-preview">
                                             <i class="bx bx-printer"></i> Print Document
                                         </button>
-                                        <button type="button" class="btn btn-secondary" id="close-preview">
+                                        <button type="button" class="btn btn-outline-custom" id="close-preview">
                                             Close Preview
                                         </button>
                                     </div>
@@ -1444,8 +1444,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">
                         <i class="bx bx-check-circle"></i> Process & Generate Documents
                     </button>
                 </div>
@@ -1459,7 +1459,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="returnForm" enctype="multipart/form-data">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title">
                         <i class="bx bx-log-in me-2"></i>Return from Leave Form
                     </h5>
@@ -1476,13 +1476,13 @@
                     
                     <div id="return-request-details" class="mb-4">
                         <div class="text-center py-3">
-                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                            <div class="spinner-border spinner-border-sm text-custom-primary"></div>
                             <p class="mt-2 mb-0 text-muted">Loading leave details...</p>
                         </div>
                     </div>
                     
                     <div class="card mb-3 border-primary">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0"><i class="bx bx-calendar me-2"></i>Return Information</h6>
                         </div>
                         <div class="card-body">
@@ -1529,7 +1529,7 @@
                     </div>
                     
                     <div class="card mb-3 border-info">
-                        <div class="card-header bg-info text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0"><i class="bx bx-file me-2"></i>Documentation</h6>
                         </div>
                         <div class="card-body">
@@ -1564,10 +1564,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">
                         <i class="bx bx-x me-1"></i> Cancel
                     </button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-custom-primary">
                         <i class="bx bx-check-circle me-1"></i> Submit Return Form
                     </button>
                 </div>
@@ -1621,8 +1621,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Balance</button>
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">Update Balance</button>
                 </div>
             </form>
         </div>
@@ -1634,7 +1634,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="recommendationForm">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title">Add Leave Recommendation</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1680,8 +1680,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Recommendation</button>
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">Save Recommendation</button>
                 </div>
             </form>
         </div>
@@ -1693,7 +1693,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="leaveTypeForm">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title" id="leaveTypeModalTitle">
                         <i class="bx bx-plus-circle me-2"></i>Add Leave Type
                     </h5>
@@ -1709,7 +1709,7 @@
                     </div>
                     
                     <div class="card mb-3 border-primary">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0"><i class="bx bx-edit me-2"></i>Basic Information</h6>
                         </div>
                         <div class="card-body">
@@ -1740,7 +1740,7 @@
                     </div>
                     
                     <div class="card mb-3 border-info">
-                        <div class="card-header bg-info text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0"><i class="bx bx-calendar me-2"></i>Leave Configuration</h6>
                         </div>
                         <div class="card-body">
@@ -1758,7 +1758,7 @@
                     </div>
                     
                     <div class="card mb-3 border-success">
-                        <div class="card-header bg-success text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0"><i class="bx bx-cog me-2"></i>Settings & Options</h6>
                         </div>
                         <div class="card-body">
@@ -1816,10 +1816,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">
                         <i class="bx bx-x me-1"></i> Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-custom-primary">
                         <i class="bx bx-save me-1"></i> Save Leave Type
                     </button>
                 </div>
@@ -1832,12 +1832,23 @@
 
 @push('styles')
 <style>
+/* Custom Color Scheme - Only White and #940000 */
+.bg-custom-primary { background-color: #940000 !important; color: white !important; }
+.btn-custom-primary { background-color: #940000 !important; border-color: #940000 !important; color: white !important; }
+.btn-custom-primary:hover { background-color: #7a0000 !important; border-color: #7a0000 !important; color: white !important; }
+.btn-outline-custom { border-color: #940000 !important; color: #940000 !important; background-color: white !important; }
+.btn-outline-custom:hover { background-color: #940000 !important; color: white !important; }
+.text-custom-primary { color: #940000 !important; }
+.border-left-custom { border-left: 4px solid #940000 !important; }
+.badge.bg-custom-primary { background-color: #940000 !important; color: white !important; }
+
+/* Advanced Styling */
 .dependent-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
 .dependent-row input, .dependent-row select { flex-grow: 1; }
 .balance-box { font-size: 0.85rem; text-align: center; }
 .balance-box strong { display: block; font-size: 1.1rem; }
-.analytics-card { border-left: 4px solid #4e73df; }
-.stats-number { font-size: 2rem; font-weight: bold; color: #4e73df; }
+.analytics-card { border-left: 4px solid #940000; }
+.stats-number { font-size: 2rem; font-weight: bold; color: #940000; }
 .table-responsive { max-height: 500px; }
 .chart-container { position: relative; height: 300px; }
 .loading-overlay { 
@@ -1850,13 +1861,17 @@
     z-index: 1000; 
 }
 .fare-input-group { max-width: 200px; }
-.return-form-section { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+.return-form-section { background: white; padding: 15px; border-radius: 5px; margin: 10px 0; border: 1px solid #940000; }
 .status-badge { font-size: 0.8rem; }
-.recommendation-card { border-left: 4px solid #28a745; margin-bottom: 10px; }
-.optimal-period-card { border-left: 4px solid #17a2b8; margin-bottom: 10px; }
+.recommendation-card { border-left: 4px solid #940000; margin-bottom: 10px; }
+.optimal-period-card { border-left: 4px solid #940000; margin-bottom: 10px; }
 .recommendation-badge { font-size: 0.7rem; }
-.document-preview { max-height: 600px; overflow-y: auto; border: 1px solid #dee2e6; padding: 20px; background: white; }
-.certificate-watermark { opacity: 0.1; position: absolute; font-size: 120px; transform: rotate(-45deg); top: 30%; left: 10%; }
+.document-preview { max-height: 600px; overflow-y: auto; border: 1px solid #940000; padding: 20px; background: white; }
+.certificate-watermark { opacity: 0.1; position: absolute; font-size: 120px; transform: rotate(-45deg); top: 30%; left: 10%; color: #940000; }
+
+/* Text Casing - Headings Uppercase, Body Lowercase */
+h1, h2, h3, h4, h5, h6, .card-title, .modal-title { text-transform: uppercase; }
+.card-text, p, label, .form-label, .text-muted, small { text-transform: none; }
 </style>
 @endpush
 
@@ -2363,11 +2378,11 @@ $(document).ready(function() {
                 
                 // Update progress bar color based on usage
                 if (percentage > 80) {
-                    $('#annual-balance-progress').removeClass('bg-primary bg-warning').addClass('bg-danger');
+                    $('#annual-balance-progress').removeClass('bg-custom-primary bg-custom-primary').addClass('bg-custom-primary');
                 } else if (percentage > 50) {
-                    $('#annual-balance-progress').removeClass('bg-primary bg-danger').addClass('bg-warning');
+                    $('#annual-balance-progress').removeClass('bg-custom-primary bg-custom-primary').addClass('bg-custom-primary');
                 } else {
-                    $('#annual-balance-progress').removeClass('bg-warning bg-danger').addClass('bg-primary');
+                    $('#annual-balance-progress').removeClass('bg-custom-primary bg-custom-primary').addClass('bg-custom-primary');
                 }
             } else {
                 // Show default values on error
@@ -2690,7 +2705,7 @@ $(document).ready(function() {
         // Show loading state
         $('#view-details-body').html(`
             <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
+                <div class="spinner-border text-custom-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <p class="mt-2">Loading request details...</p>
@@ -2717,15 +2732,15 @@ $(document).ready(function() {
                 
                 // Status badge
                 const statusColors = {
-                    'pending_hr_review': 'warning',
-                    'pending_hod_approval': 'info',
-                    'pending_ceo_approval': 'primary',
-                    'approved_pending_docs': 'success',
-                    'on_leave': 'success',
-                    'completed': 'dark',
-                    'rejected': 'danger',
-                    'rejected_for_edit': 'danger',
-                    'cancelled': 'secondary'
+                    'pending_hr_review': 'custom-primary',
+                    'pending_hod_approval': 'custom-primary',
+                    'pending_ceo_approval': 'custom-primary',
+                    'approved_pending_docs': 'custom-primary',
+                    'on_leave': 'custom-primary',
+                    'completed': 'custom-primary',
+                    'rejected': 'custom-primary',
+                    'rejected_for_edit': 'custom-primary',
+                    'cancelled': 'custom-primary'
                 };
                 
                 const statusText = {
@@ -2747,7 +2762,7 @@ $(document).ready(function() {
                 if (dependents.length > 0) {
                     dependentsHtml = `
                         <div class="card mt-3">
-                            <div class="card-header bg-light">
+                            <div class="card-header bg-white">
                                 <h6 class="mb-0"><i class="bx bx-group me-2"></i>Dependents (${dependents.length})</h6>
                             </div>
                             <div class="card-body">
@@ -2769,7 +2784,7 @@ $(document).ready(function() {
                                 <td><strong>${dep.name || 'N/A'}</strong></td>
                                 <td>${dep.relationship || 'N/A'}</td>
                                 <td class="text-end">${dep.fare_amount ? parseFloat(dep.fare_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'} TZS</td>
-                                <td>${dep.certificate_path ? '<a href="/storage/' + dep.certificate_path + '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bx bx-file"></i> View</a>' : 'N/A'}</td>
+                                <td>${dep.certificate_path ? '<a href="/storage/' + dep.certificate_path + '" target="_blank" class="btn btn-sm btn-outline-custom"><i class="bx bx-file"></i> View</a>' : 'N/A'}</td>
                             </tr>
                         `;
                     });
@@ -2786,14 +2801,14 @@ $(document).ready(function() {
                 let timelineHtml = '';
                 timelineHtml += `
                     <div class="card mt-3">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-white">
                             <h6 class="mb-0"><i class="bx bx-history me-2"></i>Processing Timeline</h6>
                         </div>
                         <div class="card-body">
                             <div class="timeline">
                                 <div class="timeline-item mb-3">
                                     <div class="d-flex align-items-center">
-                                        <div class="timeline-marker bg-primary rounded-circle me-3" style="width: 12px; height: 12px;"></div>
+                                        <div class="timeline-marker bg-custom-primary rounded-circle me-3" style="width: 12px; height: 12px;"></div>
                                         <div>
                                             <strong>Request Submitted</strong>
                                             <div class="text-muted small">${createdDate}</div>
@@ -2810,7 +2825,7 @@ $(document).ready(function() {
                     timelineHtml += `
                         <div class="timeline-item mb-3">
                             <div class="d-flex align-items-center">
-                                <div class="timeline-marker bg-info rounded-circle me-3" style="width: 12px; height: 12px;"></div>
+                                <div class="timeline-marker bg-custom-primary rounded-circle me-3" style="width: 12px; height: 12px;"></div>
                                 <div>
                                     <strong>Reviewed</strong>
                                     <div class="text-muted small">${reviewedDate}</div>
@@ -2828,7 +2843,7 @@ $(document).ready(function() {
                     timelineHtml += `
                         <div class="timeline-item mb-3">
                             <div class="d-flex align-items-center">
-                                <div class="timeline-marker bg-success rounded-circle me-3" style="width: 12px; height: 12px;"></div>
+                                <div class="timeline-marker bg-custom-primary rounded-circle me-3" style="width: 12px; height: 12px;"></div>
                                 <div>
                                     <strong>Documents Processed</strong>
                                     <div class="text-muted small">${processedDate}</div>
@@ -2846,7 +2861,7 @@ $(document).ready(function() {
                     timelineHtml += `
                         <div class="timeline-item mb-3">
                             <div class="d-flex align-items-center">
-                                <div class="timeline-marker bg-dark rounded-circle me-3" style="width: 12px; height: 12px;"></div>
+                                <div class="timeline-marker bg-custom-primary rounded-circle me-3" style="width: 12px; height: 12px;"></div>
                                 <div>
                                     <strong>Return Form Submitted</strong>
                                     <div class="text-muted small">${returnDate}</div>
@@ -2867,7 +2882,7 @@ $(document).ready(function() {
                 if (details.hr_officer_comments || details.comments) {
                     commentsHtml = `
                         <div class="card mt-3">
-                            <div class="card-header bg-light">
+                            <div class="card-header bg-white">
                                 <h6 class="mb-0"><i class="bx bx-message-square-detail me-2"></i>Review Comments</h6>
                             </div>
                             <div class="card-body">
@@ -2899,7 +2914,7 @@ $(document).ready(function() {
                 if (details.approval_letter_number || details.leave_certificate_number || details.fare_certificate_number) {
                     documentsHtml = `
                         <div class="card mt-3">
-                            <div class="card-header bg-light">
+                            <div class="card-header bg-white">
                                 <h6 class="mb-0"><i class="bx bx-file-blank me-2"></i>Document Information</h6>
                             </div>
                             <div class="card-body">
@@ -2909,9 +2924,9 @@ $(document).ready(function() {
                         documentsHtml += `
                             <div class="col-md-6 mb-2">
                                 <strong>Approval Letter Number:</strong><br>
-                                <span class="text-primary">${details.approval_letter_number}</span>
+                                <span class="text-custom-primary">${details.approval_letter_number}</span>
                                 ${details.approval_date ? '<br><small class="text-muted">Date: ' + new Date(details.approval_date).toLocaleDateString() + '</small>' : ''}
-                                <br><a href="/leave/${details.id}/pdf/approval-letter" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                <br><a href="/leave/${details.id}/pdf/approval-letter" target="_blank" class="btn btn-sm btn-outline-custom mt-2">
                                     <i class="bx bx-download"></i> Download Approval Letter PDF
                                 </a>
                             </div>
@@ -2921,7 +2936,7 @@ $(document).ready(function() {
                         documentsHtml += `
                             <div class="col-md-6 mb-2">
                                 <strong>Leave Certificate Number:</strong><br>
-                                <span class="text-success">${details.leave_certificate_number}</span>
+                                <span class="text-custom-primary">${details.leave_certificate_number}</span>
                             </div>
                         `;
                     }
@@ -2929,7 +2944,7 @@ $(document).ready(function() {
                         documentsHtml += `
                             <div class="col-md-6 mb-2">
                                 <strong>Fare Certificate Number:</strong><br>
-                                <span class="text-warning">${details.fare_certificate_number}</span>
+                                <span class="text-custom-primary">${details.fare_certificate_number}</span>
                             </div>
                         `;
                     }
@@ -2937,7 +2952,7 @@ $(document).ready(function() {
                         documentsHtml += `
                             <div class="col-md-6 mb-2">
                                 <strong>Payment Voucher Number:</strong><br>
-                                <span class="text-info">${details.payment_voucher_number}</span>
+                                <span class="text-custom-primary">${details.payment_voucher_number}</span>
                                 ${details.payment_date ? '<br><small class="text-muted">Date: ' + new Date(details.payment_date).toLocaleDateString() + '</small>' : ''}
                             </div>
                         `;
@@ -2947,7 +2962,7 @@ $(document).ready(function() {
                                 <div class="row mt-3">
                                     <div class="col-12">
                                         <div class="btn-group" role="group">
-                                            <a href="/leave/${details.id}/pdf/approval-letter" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <a href="/leave/${details.id}/pdf/approval-letter" target="_blank" class="btn btn-sm btn-outline-custom">
                                                 <i class="bx bx-file"></i> Approval Letter PDF
                                             </a>
                                             <a href="/leave/${details.id}/pdf/certificate" target="_blank" class="btn btn-sm btn-outline-success">
@@ -2987,7 +3002,7 @@ $(document).ready(function() {
                     
                     returnHtml = `
                         <div class="card mt-3 border-success">
-                            <div class="card-header bg-success text-white">
+                            <div class="card-header bg-custom-primary text-white">
                                 <h6 class="mb-0"><i class="bx bx-log-in me-2"></i>Return Information</h6>
                             </div>
                             <div class="card-body">
@@ -3001,13 +3016,13 @@ $(document).ready(function() {
                                     ${details.health_status ? `
                                     <div class="col-md-4 mb-2">
                                         <strong>Health Status:</strong><br>
-                                        <span class="badge bg-success">${healthStatus[details.health_status] || details.health_status}</span>
+                                        <span class="badge bg-custom-primary">${healthStatus[details.health_status] || details.health_status}</span>
                                     </div>
                                     ` : ''}
                                     ${details.work_readiness ? `
                                     <div class="col-md-4 mb-2">
                                         <strong>Work Readiness:</strong><br>
-                                        <span class="badge bg-info">${workReadiness[details.work_readiness] || details.work_readiness}</span>
+                                        <span class="badge bg-custom-primary">${workReadiness[details.work_readiness] || details.work_readiness}</span>
                                     </div>
                                     ` : ''}
                                 </div>
@@ -3027,7 +3042,7 @@ $(document).ready(function() {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header bg-primary text-white">
+                                <div class="card-header bg-custom-primary text-white">
                                     <h6 class="mb-0 text-white"><i class="bx bx-user me-2"></i>Employee Information</h6>
                                 </div>
                                 <div class="card-body">
@@ -3058,7 +3073,7 @@ $(document).ready(function() {
                         </div>
                         <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header bg-info text-white">
+                                <div class="card-header bg-custom-primary text-white">
                                     <h6 class="mb-0"><i class="bx bx-calendar me-2"></i>Leave Details</h6>
                                 </div>
                                 <div class="card-body">
@@ -3098,7 +3113,7 @@ $(document).ready(function() {
                     </div>
                     
                     <div class="card mt-3">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-white">
                             <h6 class="mb-0"><i class="bx bx-file-blank me-2"></i>Reason for Leave</h6>
                         </div>
                         <div class="card-body">
@@ -3110,19 +3125,19 @@ $(document).ready(function() {
                     
                     ${details.total_fare_approved > 0 ? `
                     <div class="card mt-3 border-warning">
-                        <div class="card-header bg-warning">
+                        <div class="card-header bg-custom-primary">
                             <h6 class="mb-0"><i class="bx bx-dollar me-2"></i>Fare Information</h6>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6">
                                     <strong>Total Fare Approved:</strong><br>
-                                    <span class="h5 text-success">${parseFloat(details.total_fare_approved).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TZS</span>
+                                    <span class="h5 text-custom-primary">${parseFloat(details.total_fare_approved).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TZS</span>
                                 </div>
                                 ${details.fare_approved_amount > 0 ? `
                                 <div class="col-md-6">
                                     <strong>Fare Approved Amount:</strong><br>
-                                    <span class="h5 text-primary">${parseFloat(details.fare_approved_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TZS</span>
+                                    <span class="h5 text-custom-primary">${parseFloat(details.fare_approved_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TZS</span>
                                 </div>
                                 ` : ''}
                             </div>
@@ -3191,7 +3206,7 @@ $(document).ready(function() {
         // Show loading state
         $('#review-modal-body').html(`
             <div class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
+                <div class="spinner-border text-custom-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <p class="mt-2">Loading request details...</p>
@@ -3217,7 +3232,7 @@ $(document).ready(function() {
                 if (dependents.length > 0) {
                     dependentsHtml = `
                         <div class="card mt-3">
-                            <div class="card-header bg-light">
+                            <div class="card-header bg-white">
                                 <h6 class="mb-0"><i class="bx bx-group me-2"></i>Dependents (${dependents.length})</h6>
                     </div>
                             <div class="card-body">
@@ -3264,7 +3279,7 @@ $(document).ready(function() {
                         <div class="row">
                             <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header bg-primary text-white">
+                                <div class="card-header bg-custom-primary text-white">
                                     <h6 class="mb-0"><i class="bx bx-user me-2"></i>Employee Information</h6>
                                 </div>
                                 <div class="card-body">
@@ -3291,7 +3306,7 @@ $(document).ready(function() {
                             </div>
                             <div class="col-md-6">
                             <div class="card">
-                                <div class="card-header bg-info text-white">
+                                <div class="card-header bg-custom-primary text-white">
                                     <h6 class="mb-0"><i class="bx bx-calendar me-2"></i>Leave Details</h6>
                                 </div>
                                 <div class="card-body">
@@ -3323,7 +3338,7 @@ $(document).ready(function() {
                         </div>
                         
                     <div class="card mt-3">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-white">
                             <h6 class="mb-0"><i class="bx bx-file-blank me-2"></i>Reason for Leave</h6>
                         </div>
                         <div class="card-body">
@@ -3334,7 +3349,7 @@ $(document).ready(function() {
                     ${dependentsHtml}
                     
                     <div class="card mt-3 border-warning">
-                        <div class="card-header bg-warning">
+                        <div class="card-header bg-custom-primary">
                             <h6 class="mb-0"><i class="bx bx-edit me-2"></i>Your Review</h6>
                         </div>
                         <div class="card-body">
@@ -3665,7 +3680,7 @@ $(document).ready(function() {
     function loadPendingDocuments() {
         $('#pending-docs-list').html(`
             <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
+                <div class="spinner-border text-custom-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <p class="mt-2 text-muted">Loading pending documents...</p>
@@ -3687,14 +3702,14 @@ $(document).ready(function() {
                     });
                     
                     html += `
-                        <div class="card mb-3 shadow-sm border-left-success">
+                        <div class="card mb-3 shadow-sm border-left-custom">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col-md-8">
                                         <div class="d-flex align-items-center mb-2">
-                                            <i class="bx bx-file-doc me-2 text-success"></i>
+                                            <i class="bx bx-file-doc me-2 text-custom-primary"></i>
                                             <h6 class="mb-0 fw-bold">${request.leave_type_name || 'Leave Request'}</h6>
-                                            <span class="badge bg-success ms-2">Pending Document Processing</span>
+                                            <span class="badge bg-custom-primary ms-2">Pending Document Processing</span>
                                         </div>
                                         <div class="row text-sm mt-2">
                                             <div class="col-md-6">
@@ -3729,10 +3744,10 @@ $(document).ready(function() {
                                     </div>
                                     <div class="col-md-4 text-end">
                                         <div class="btn-group-vertical d-grid gap-2" role="group">
-                                            <button class="btn btn-sm btn-outline-primary btn-view-details" data-id="${request.id}">
+                                            <button class="btn btn-sm btn-outline-custom btn-view-details" data-id="${request.id}">
                                                 <i class="bx bx-show"></i> View Details
                                             </button>
-                                            <button class="btn btn-sm btn-success btn-process-docs" data-id="${request.id}">
+                                            <button class="btn btn-sm btn-custom-primary btn-process-docs" data-id="${request.id}">
                                                 <i class="bx bx-file-doc"></i> Process Documents
                                             </button>
                                         </div>
@@ -3751,7 +3766,7 @@ $(document).ready(function() {
             } else {
                 $('#pending-docs-list').html(`
                     <div class="text-center py-5">
-                        <i class="bx bx-check-circle text-success" style="font-size: 48px;"></i>
+                        <i class="bx bx-check-circle text-custom-primary" style="font-size: 48px;"></i>
                         <p class="mt-3 text-muted">No documents pending processing. All requests are up to date! ✅</p>
                     </div>
                 `);
@@ -4016,7 +4031,7 @@ $(document).ready(function() {
         
         // Show loading state
         $('#document-preview').show();
-        $('#preview-content').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading combined certificate preview...</p></div>');
+        $('#preview-content').html('<div class="text-center py-5"><div class="spinner-border text-custom-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading combined certificate preview...</p></div>');
         
         // Fetch preview HTML
         $.ajax({
@@ -4051,7 +4066,7 @@ $(document).ready(function() {
         
         // Show loading state
         $('#document-preview').show();
-        $('#preview-content').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading leave certificate preview...</p></div>');
+        $('#preview-content').html('<div class="text-center py-5"><div class="spinner-border text-custom-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading leave certificate preview...</p></div>');
         
         // Fetch preview HTML
         $.ajax({
@@ -4086,7 +4101,7 @@ $(document).ready(function() {
         
         // Show loading state
         $('#document-preview').show();
-        $('#preview-content').html('<div class="text-center py-5"><div class="spinner-border text-warning" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading fare certificate preview...</p></div>');
+        $('#preview-content').html('<div class="text-center py-5"><div class="spinner-border text-custom-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted">Loading fare certificate preview...</p></div>');
         
         // Fetch preview HTML
         $.ajax({
@@ -4154,7 +4169,7 @@ $(document).ready(function() {
         // Reset form first
         $('#returnForm')[0].reset();
         $('#return_request_id').val(requestId);
-        $('#return-request-details').html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div> <p class="mt-2 mb-0 text-muted">Loading leave details...</p></div>');
+        $('#return-request-details').html('<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-custom-primary"></div> <p class="mt-2 mb-0 text-muted">Loading leave details...</p></div>');
         
         // Load request details
         $.get(`/leave/${requestId}`, function(response) {
@@ -4172,7 +4187,7 @@ $(document).ready(function() {
                 // Populate summary
                 let summaryHtml = `
                     <div class="card border-success">
-                        <div class="card-header bg-success text-white">
+                        <div class="card-header bg-custom-primary text-white">
                             <h6 class="mb-0"><i class="bx bx-info-circle me-2"></i>Leave Request Summary</h6>
                         </div>
                         <div class="card-body">
@@ -4205,7 +4220,7 @@ $(document).ready(function() {
                                         </tr>
                                         <tr>
                                             <th>Status:</th>
-                                            <td><span class="badge bg-success">On Leave</span></td>
+                                            <td><span class="badge bg-custom-primary">On Leave</span></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -4378,7 +4393,7 @@ $(document).ready(function() {
     }
 
     function refreshIssues() {
-        $('#issues-list').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading issues...</p></div>');
+        $('#issues-list').html('<div class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2">Loading issues...</p></div>');
         // Load issues logic will be implemented
         setTimeout(() => {
             $('#issues-list').html('<p class="text-center text-muted py-4">No issues found. All systems operational! ✅</p>');
@@ -4413,7 +4428,7 @@ $(document).ready(function() {
         const year = $('#balance-year-filter').val();
         const deptId = $('#balance-dept-filter').val();
         
-        $('#balance-table-body').html('<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></td></tr>');
+        $('#balance-table-body').html('<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2">Loading...</p></td></tr>');
         
         $.post('{{ route("leave.hr.balance-data") }}', {
             _token: csrfToken,
@@ -4430,7 +4445,7 @@ $(document).ready(function() {
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
             }
-            $('#balance-table-body').html(`<tr><td colspan="7" class="text-center py-4 text-danger">${errorMsg}</td></tr>`);
+            $('#balance-table-body').html(`<tr><td colspan="7" class="text-center py-4 text-custom-primary">${errorMsg}</td></tr>`);
         });
     }
 
@@ -4449,10 +4464,10 @@ $(document).ready(function() {
                         <td>${balance.department_name || 'N/A'}</td>
                         <td><strong>${balance.total_days_allotted || 0}</strong></td>
                         <td>${balance.days_taken || 0}</td>
-                        <td><span class="badge bg-success">${remainingDays}</span></td>
+                        <td><span class="badge bg-custom-primary">${remainingDays}</span></td>
                         <td>${balance.carry_forward_days || 0}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editBalance(${balance.employee_id}, ${financialYear})">
+                            <button class="btn btn-sm btn-outline-custom" onclick="editBalance(${balance.employee_id}, ${financialYear})">
                                 <i class="bx bx-edit"></i> Edit
                             </button>
                         </td>
@@ -4529,7 +4544,7 @@ $(document).ready(function() {
         const employeeId = $('#recommendation-employee-filter').val();
         const deptId = $('#recommendation-dept-filter').val();
         
-        $('#recommendations-content').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>');
+        $('#recommendations-content').html('<div class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2">Loading...</p></div>');
         
         $.post('{{ route("leave.hr.manage-recommendations") }}', {
             _token: csrfToken,
@@ -4544,7 +4559,7 @@ $(document).ready(function() {
                 $('#recommendations-content').html('<p class="text-center text-muted py-4">No recommendations found. Click "Add Recommendation" to create new ones.</p>');
             }
         }).fail(function() {
-            $('#recommendations-content').html('<p class="text-center text-danger py-4">Failed to load recommendations.</p>');
+            $('#recommendations-content').html('<p class="text-center text-custom-primary py-4">Failed to load recommendations.</p>');
         });
     }
 
@@ -4565,8 +4580,8 @@ $(document).ready(function() {
                         <td>${rec.employee_name || 'N/A'}</td>
                         <td>${rec.department_name || 'N/A'}</td>
                         <td>${startDate} - ${endDate}</td>
-                        <td><span class="badge bg-info">${days} days</span></td>
-                        <td><span class="badge bg-success">Active</span></td>
+                        <td><span class="badge bg-custom-primary">${days} days</span></td>
+                        <td><span class="badge bg-custom-primary">Active</span></td>
                         <td>
                             <button class="btn btn-sm btn-outline-success me-1" onclick="createLeaveFromRecommendation(${rec.id})" title="Create Leave Request">
                                 <i class="bx bx-plus-circle"></i> Create Leave
@@ -4593,7 +4608,7 @@ $(document).ready(function() {
             text: "This action cannot be undone.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
+            confirmButtonColor: '#940000',
             confirmButtonText: 'Yes, remove it!'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -4671,15 +4686,15 @@ $(document).ready(function() {
                 } else {
                     response.requests.forEach(request => {
                         const statusColors = {
-                            'pending_hr_review': 'warning',
-                            'pending_hod_approval': 'info', 
-                            'pending_ceo_approval': 'primary',
-                            'approved_pending_docs': 'success',
-                            'on_leave': 'success',
-                            'completed': 'dark',
-                            'rejected': 'danger',
-                            'rejected_for_edit': 'danger',
-                            'cancelled': 'secondary'
+                            'pending_hr_review': 'custom-primary',
+                            'pending_hod_approval': 'custom-primary', 
+                            'pending_ceo_approval': 'custom-primary',
+                            'approved_pending_docs': 'custom-primary',
+                            'on_leave': 'custom-primary',
+                            'completed': 'custom-primary',
+                            'rejected': 'custom-primary',
+                            'rejected_for_edit': 'custom-primary',
+                            'cancelled': 'custom-primary'
                         };
                         const statusText = {
                             'pending_hr_review': 'Pending HR',
@@ -4706,7 +4721,7 @@ $(document).ready(function() {
                             <td>${new Date(request.created_at).toLocaleDateString()}</td>
                             <td>${request.reviewed_by_name || 'N/A'}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary btn-view-details" data-id="${request.id}">View</button>
+                                <button class="btn btn-sm btn-outline-custom btn-view-details" data-id="${request.id}">View</button>
                                 ${request.status === 'pending_hr_review' ? `<button class="btn btn-sm btn-outline-warning btn-review" data-id="${request.id}">Review</button>` : ''}
                                 ${request.status === 'approved_pending_docs' ? `<button class="btn btn-sm btn-outline-success btn-process-docs" data-id="${request.id}">Process Docs</button>` : ''}
                             </td>
@@ -5176,60 +5191,60 @@ $(document).ready(function() {
                 let analyticsHtml = `
                     <div class="row mb-4">
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
+                            <div class="card border-left-custom shadow h-100 py-2">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Requests</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">${stats.total_requests}</div>
+                                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Total Requests</div>
+                                            <div class="h5 mb-0 font-weight-bold text-dark">${stats.total_requests}</div>
                                         </div>
                                         <div class="col-auto">
-                                            <i class="bx bx-calendar fa-2x text-gray-300"></i>
+                                            <i class="bx bx-calendar fa-2x text-muted"></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
+                            <div class="card border-left-custom shadow h-100 py-2">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">${stats.completed_requests}</div>
+                                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Completed</div>
+                                            <div class="h5 mb-0 font-weight-bold text-dark">${stats.completed_requests}</div>
                                         </div>
                                         <div class="col-auto">
-                                            <i class="bx bx-check-circle fa-2x text-gray-300"></i>
+                                            <i class="bx bx-check-circle fa-2x text-muted"></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2">
+                            <div class="card border-left-custom shadow h-100 py-2">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Active Requests</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">${stats.active_requests}</div>
+                                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Active Requests</div>
+                                            <div class="h5 mb-0 font-weight-bold text-dark">${stats.active_requests}</div>
                                         </div>
                                         <div class="col-auto">
-                                            <i class="bx bx-sync fa-2x text-gray-300"></i>
+                                            <i class="bx bx-sync fa-2x text-muted"></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
+                            <div class="card border-left-custom shadow h-100 py-2">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Avg. Leave Days</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">${parseFloat(stats.avg_leave_days || 0).toFixed(1)}</div>
+                                            <div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Avg. Leave Days</div>
+                                            <div class="h5 mb-0 font-weight-bold text-dark">${parseFloat(stats.avg_leave_days || 0).toFixed(1)}</div>
                                         </div>
                                         <div class="col-auto">
-                                            <i class="bx bx-bar-chart-alt-2 fa-2x text-gray-300"></i>
+                                            <i class="bx bx-bar-chart-alt-2 fa-2x text-muted"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -5241,7 +5256,7 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Monthly Trend</h6>
+                                    <h6 class="m-0 font-weight-bold text-custom-primary">Monthly Trend</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-container">
@@ -5253,7 +5268,7 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Department Distribution</h6>
+                                    <h6 class="m-0 font-weight-bold text-custom-primary">Department Distribution</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-container">
@@ -5268,7 +5283,7 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Leave Type Distribution</h6>
+                                    <h6 class="m-0 font-weight-bold text-custom-primary">Leave Type Distribution</h6>
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-sm">
@@ -5295,7 +5310,7 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Status Distribution</h6>
+                                    <h6 class="m-0 font-weight-bold text-custom-primary">Status Distribution</h6>
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-sm">
@@ -5308,7 +5323,7 @@ $(document).ready(function() {
                                         <tbody>
                                             ${status_stats.map(status => `
                                                 <tr>
-                                                    <td><span class="badge bg-secondary">${status.status}</span></td>
+                                                    <td><span class="badge bg-custom-primary">${status.status}</span></td>
                                                     <td>${status.count}</td>
                                                 </tr>
                                             `).join('')}
@@ -5352,14 +5367,14 @@ $(document).ready(function() {
                 datasets: [{
                     label: 'Requests',
                     data: requests,
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderColor: '#940000',
+                    backgroundColor: 'rgba(148, 0, 0, 0.1)',
                     fill: true
                 }, {
                     label: 'Days Taken',
                     data: days,
-                    borderColor: '#1cc88a',
-                    backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                    borderColor: '#940000',
+                    backgroundColor: 'rgba(148, 0, 0, 0.1)',
                     fill: true
                 }]
             },
@@ -5397,8 +5412,8 @@ $(document).ready(function() {
                 datasets: [{
                     label: 'Requests',
                     data: requests,
-                    backgroundColor: '#4e73df',
-                    borderColor: '#2e59d9',
+                    backgroundColor: '#940000',
+                    borderColor: '#7a0000',
                     borderWidth: 1
                 }]
             },
@@ -5679,7 +5694,7 @@ $(document).ready(function() {
         // Show loading indicator
         const tableBody = $('#leave-types-table-body');
         const originalHtml = tableBody.html();
-        tableBody.html('<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 mb-0 text-muted">Refreshing leave types...</p></td></tr>');
+        tableBody.html('<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2 mb-0 text-muted">Refreshing leave types...</p></td></tr>');
         
         // Reload leave types via AJAX
                 $.ajax({
@@ -5713,26 +5728,26 @@ $(document).ready(function() {
                                             ${escapeHtml((type.description || 'N/A').substring(0, 50))}${(type.description || '').length > 50 ? '...' : ''}
                                         </span>
                                     </td>
-                                    <td><span class="badge bg-primary">${type.max_days_per_year || type.max_days || 'N/A'}</span></td>
+                                    <td><span class="badge bg-custom-primary">${type.max_days_per_year || type.max_days || 'N/A'}</span></td>
                                     <td>
                                         ${type.requires_approval 
-                                            ? '<span class="badge bg-info"><i class="bx bx-check-circle"></i> Yes</span>'
-                                            : '<span class="badge bg-secondary"><i class="bx bx-x-circle"></i> No</span>'}
+                                            ? '<span class="badge bg-custom-primary"><i class="bx bx-check-circle"></i> Yes</span>'
+                                            : '<span class="badge bg-custom-primary"><i class="bx bx-x-circle"></i> No</span>'}
                                     </td>
                                     <td>
                                         ${(type.is_paid !== false) 
-                                            ? '<span class="badge bg-success"><i class="bx bx-coin"></i> Paid</span>'
-                                            : '<span class="badge bg-warning"><i class="bx bx-coin-stack"></i> Unpaid</span>'}
+                                            ? '<span class="badge bg-custom-primary"><i class="bx bx-coin"></i> Paid</span>'
+                                            : '<span class="badge bg-custom-primary"><i class="bx bx-coin-stack"></i> Unpaid</span>'}
                                     </td>
                                     <td>
                                         ${type.is_active 
-                                            ? '<span class="badge bg-success"><i class="bx bx-check"></i> Active</span>'
-                                            : '<span class="badge bg-danger"><i class="bx bx-x"></i> Inactive</span>'}
+                                            ? '<span class="badge bg-custom-primary"><i class="bx bx-check"></i> Active</span>'
+                                            : '<span class="badge bg-custom-primary"><i class="bx bx-x"></i> Inactive</span>'}
                                     </td>
-                                    <td><span class="badge bg-primary">${requestCount}</span></td>
+                                    <td><span class="badge bg-custom-primary">${requestCount}</span></td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="editLeaveType(${type.id})" 
+                                            <button class="btn btn-sm btn-outline-custom" onclick="editLeaveType(${type.id})" 
                                                     data-bs-toggle="tooltip" title="Edit Leave Type">
                                                 <i class="bx bx-edit"></i>
                                             </button>
@@ -5741,7 +5756,7 @@ $(document).ready(function() {
                                                           data-bs-toggle="tooltip" title="Delete Leave Type">
                                                       <i class="bx bx-trash"></i>
                                                    </button>`
-                                                : `<button class="btn btn-sm btn-outline-secondary" onclick="toggleLeaveTypeStatus(${type.id})" 
+                                                : `<button class="btn btn-sm btn-outline-custom" onclick="toggleLeaveTypeStatus(${type.id})" 
                                                           data-bs-toggle="tooltip" title="${type.is_active ? 'Deactivate' : 'Activate'} Leave Type">
                                                       <i class="bx bx-${type.is_active ? 'pause' : 'play'}"></i>
                                                    </button>`}
@@ -5786,7 +5801,7 @@ $(document).ready(function() {
                 showLeaveTypeAlert('Error', errorMessage, 'danger');
                 
                 // Restore original HTML or show error
-                tableBody.html(originalHtml || '<tr><td colspan="9" class="text-center py-4 text-danger">Failed to load leave types. Please refresh the page.</td></tr>');
+                tableBody.html(originalHtml || '<tr><td colspan="9" class="text-center py-4 text-custom-primary">Failed to load leave types. Please refresh the page.</td></tr>');
                     }
                 });
             }

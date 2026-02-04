@@ -11,14 +11,14 @@
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary text-white">
+            <div class="card" style="background-color: #940000; color: white;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="card-title text-white mb-1">
-                                <i class="bx bx-calendar-check me-2"></i>Leave Recommendations Management
+                                <i class="bx bx-calendar-check me-2"></i>LEAVE RECOMMENDATIONS MANAGEMENT
                             </h4>
-                            <p class="card-text text-white-50 mb-0">Manage leave recommendations for employees</p>
+                            <p class="card-text text-white-50 mb-0">manage leave recommendations for employees</p>
                         </div>
                         <div>
                             <a href="{{ route('modules.hr.leave') }}" class="btn btn-light">
@@ -37,8 +37,8 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Leave Recommendations Management</h6>
-                        <button class="btn btn-sm btn-primary" onclick="showRecommendationModal()">
+                        <h6 class="mb-0">LEAVE RECOMMENDATIONS MANAGEMENT</h6>
+                        <button class="btn btn-sm btn-custom-primary" onclick="showRecommendationModal()">
                             <i class="bx bx-plus"></i> Add Recommendation
                         </button>
                     </div>
@@ -103,7 +103,7 @@
                     <!-- Recommendations Content -->
                     <div id="recommendations-content">
                         <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
+                            <div class="spinner-border text-custom-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                             <p class="mt-2 text-muted">Loading recommendations...</p>
@@ -120,7 +120,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="recommendationForm">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-custom-primary text-white">
                     <h5 class="modal-title text-white">Add Leave Recommendation</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -169,8 +169,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Recommendation</button>
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">Save Recommendation</button>
                 </div>
             </form>
         </div>
@@ -221,7 +221,7 @@ function loadRecommendations() {
     const deptId = $('#recommendation-dept-filter').val();
     const token = csrfToken || $('meta[name="csrf-token"]').attr('content');
     
-    $('#recommendations-content').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>');
+    $('#recommendations-content').html('<div class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2">Loading...</p></div>');
     
     $.post('{{ route("leave.hr.manage-recommendations") }}', {
         _token: token,
@@ -247,8 +247,8 @@ function loadRecommendations() {
                                 <td><strong>${rec.employee_name || 'N/A'}</strong></td>
                                 <td>${rec.department_name || 'N/A'}</td>
                                 <td><span class="text-muted"><i class="bx bx-info-circle"></i> No recommendations</span></td>
-                                <td><span class="badge bg-secondary">-</span></td>
-                                <td><span class="badge bg-warning">No Recommendations</span></td>
+                                <td><span class="badge bg-custom-primary">-</span></td>
+                                <td><span class="badge bg-custom-primary">No Recommendations</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-primary" onclick="showRecommendationModalForEmployee(${rec.employee_id})" title="Add Recommendation">
                                         <i class="bx bx-plus"></i> Add
@@ -269,8 +269,8 @@ function loadRecommendations() {
                                 <td>${rec.employee_name || 'N/A'}</td>
                                 <td>${rec.department_name || 'N/A'}</td>
                                 <td>${startDate} - ${endDate}</td>
-                                <td><span class="badge bg-info">${days} days</span></td>
-                                <td><span class="badge bg-success">Active</span></td>
+                                <td><span class="badge bg-custom-primary">${days} days</span></td>
+                                <td><span class="badge bg-custom-primary">Active</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecommendation(${rec.id})" title="View Details">
                                         <i class="bx bx-show"></i> View
@@ -386,10 +386,10 @@ function viewRecommendation(recId) {
                             </div>
                             <div class="mb-3">
                                 <strong>Recommended Period:</strong><br>
-                                <span class="text-primary">${startDate}</span> to <span class="text-primary">${endDate}</span>
+                                <span class="text-custom-primary">${startDate}</span> to <span class="text-custom-primary">${endDate}</span>
                             </div>
                             <div class="mb-3">
-                                <strong>Status:</strong> <span class="badge bg-success">${rec.status || 'Active'}</span>
+                                <strong>Status:</strong> <span class="badge bg-custom-primary">${rec.status || 'Active'}</span>
                             </div>
                             ${rec.notes ? `
                             <div class="mb-3">

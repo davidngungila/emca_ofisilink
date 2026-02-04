@@ -35,8 +35,17 @@
         'cancelled' => 'bx-x'
     ];
 @endphp
+<style>
+.bg-custom-primary { background-color: #940000 !important; color: white !important; }
+.btn-outline-custom { border-color: #940000 !important; color: #940000 !important; background-color: white !important; }
+.btn-outline-custom:hover { background-color: #940000 !important; color: white !important; }
+.text-custom-primary { color: #940000 !important; }
+.border-left-custom { border-left: 4px solid #940000 !important; }
+.badge.bg-custom-primary { background-color: #940000 !important; color: white !important; }
+.alert-custom-primary { background-color: rgba(148, 0, 0, 0.1) !important; border-color: #940000 !important; color: #940000 !important; }
+</style>
 
-<div class="card mb-3 border-left-{{ $statusColors[$request->status] }} shadow-sm">
+<div class="card mb-3 border-left-custom shadow-sm">
     <div class="card-body py-3">
         <div class="row align-items-center">
             <div class="col-md-8">

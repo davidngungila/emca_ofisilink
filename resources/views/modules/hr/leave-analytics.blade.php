@@ -13,11 +13,11 @@
         transform: translateY(-5px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .stat-card.primary { border-left-color: #4e73df; }
-    .stat-card.success { border-left-color: #1cc88a; }
-    .stat-card.warning { border-left-color: #f6c23e; }
-    .stat-card.danger { border-left-color: #e74a3b; }
-    .stat-card.info { border-left-color: #36b9cc; }
+    .stat-card.primary { border-left-color: #940000; }
+    .stat-card.success { border-left-color: #940000; }
+    .stat-card.warning { border-left-color: #940000; }
+    .stat-card.danger { border-left-color: #940000; }
+    .stat-card.info { border-left-color: #940000; }
     .stat-number {
         font-size: 2rem;
         font-weight: bold;
@@ -40,14 +40,21 @@
         cursor: pointer;
     }
     .analytics-tab.active {
-        background: #4e73df;
+        background: #940000;
         color: white;
     }
-    .border-left-primary { border-left: 4px solid #4e73df !important; }
-    .border-left-success { border-left: 4px solid #1cc88a !important; }
-    .border-left-warning { border-left: 4px solid #f6c23e !important; }
-    .border-left-info { border-left: 4px solid #36b9cc !important; }
-    .border-left-danger { border-left: 4px solid #e74a3b !important; }
+    .border-left-primary { border-left: 4px solid #940000 !important; }
+    .border-left-success { border-left: 4px solid #940000 !important; }
+    .border-left-warning { border-left: 4px solid #940000 !important; }
+    .border-left-info { border-left: 4px solid #940000 !important; }
+    .border-left-danger { border-left: 4px solid #940000 !important; }
+    .bg-custom-primary { background-color: #940000 !important; color: white !important; }
+    .btn-custom-primary { background-color: #940000 !important; border-color: #940000 !important; color: white !important; }
+    .btn-custom-primary:hover { background-color: #7a0000 !important; border-color: #7a0000 !important; color: white !important; }
+    .btn-outline-custom { border-color: #940000 !important; color: #940000 !important; background-color: white !important; }
+    .btn-outline-custom:hover { background-color: #940000 !important; color: white !important; }
+    .text-custom-primary { color: #940000 !important; }
+    .badge.bg-custom-primary { background-color: #940000 !important; color: white !important; }
     .sticky-top {
         position: sticky;
         top: 0;
@@ -65,7 +72,7 @@
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary text-white shadow">
+            <div class="card bg-custom-primary text-white shadow">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -118,7 +125,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
-                            <button class="btn btn-primary w-100" onclick="loadAnalytics()">
+                            <button class="btn btn-custom-primary w-100" onclick="loadAnalytics()">
                                 <i class="bx bx-refresh me-1"></i>Apply Filters
                             </button>
                         </div>
@@ -136,9 +143,9 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-uppercase text-muted small mb-1">Total Requests</div>
-                            <div class="stat-number text-primary" id="stat-total">0</div>
+                            <div class="stat-number text-custom-primary" id="stat-total">0</div>
                         </div>
-                        <div class="text-primary">
+                        <div class="text-custom-primary">
                             <i class="bx bx-file" style="font-size: 2.5rem; opacity: 0.3;"></i>
                         </div>
                     </div>
@@ -151,9 +158,9 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-uppercase text-muted small mb-1">Completed</div>
-                            <div class="stat-number text-success" id="stat-completed">0</div>
+                            <div class="stat-number text-custom-primary" id="stat-completed">0</div>
                         </div>
-                        <div class="text-success">
+                        <div class="text-custom-primary">
                             <i class="bx bx-check-circle" style="font-size: 2.5rem; opacity: 0.3;"></i>
                         </div>
                     </div>
@@ -166,9 +173,9 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-uppercase text-muted small mb-1">Active Requests</div>
-                            <div class="stat-number text-warning" id="stat-active">0</div>
+                            <div class="stat-number text-custom-primary" id="stat-active">0</div>
                         </div>
-                        <div class="text-warning">
+                        <div class="text-custom-primary">
                             <i class="bx bx-time" style="font-size: 2.5rem; opacity: 0.3;"></i>
                         </div>
                     </div>
@@ -181,9 +188,9 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="text-uppercase text-muted small mb-1">Avg Days</div>
-                            <div class="stat-number text-info" id="stat-avg-days">0</div>
+                            <div class="stat-number text-custom-primary" id="stat-avg-days">0</div>
                         </div>
-                        <div class="text-info">
+                        <div class="text-custom-primary">
                             <i class="bx bx-calendar" style="font-size: 2.5rem; opacity: 0.3;"></i>
                         </div>
                     </div>
@@ -196,7 +203,7 @@
     <div class="row mb-4">
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-custom-primary text-white">
                     <h6 class="mb-0 text-white"><i class="bx bx-line-chart me-2"></i>Monthly Leave Trends</h6>
                 </div>
                 <div class="card-body">
@@ -208,7 +215,7 @@
         </div>
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-custom-primary text-white">
                     <h6 class="mb-0 text-white"><i class="bx bx-pie-chart me-2"></i>Status Distribution</h6>
                 </div>
                 <div class="card-body">
@@ -223,7 +230,7 @@
     <div class="row mb-4">
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-custom-primary text-white">
                     <h6 class="mb-0 text-white"><i class="bx bx-bar-chart me-2"></i>Department Statistics</h6>
                 </div>
                 <div class="card-body">
@@ -235,7 +242,7 @@
         </div>
         <div class="col-md-6 mb-4">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-custom-primary text-white">
                     <h6 class="mb-0 text-white"><i class="bx bx-bar-chart-alt me-2"></i>Leave Type Usage</h6>
                 </div>
                 <div class="card-body">
@@ -251,7 +258,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div class="card-header bg-custom-primary text-white d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 text-white"><i class="bx bx-table me-2"></i>Detailed Statistics</h6>
                     <div>
                         <button class="btn btn-sm btn-light" onclick="exportAnalytics()">
@@ -262,7 +269,7 @@
                 <div class="card-body">
                     <div id="analytics-content">
                         <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
+                            <div class="spinner-border text-custom-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                             <p class="mt-2 text-muted">Loading analytics...</p>
@@ -307,7 +314,7 @@ function loadAnalytics() {
     const departmentId = $('#filter-department').val();
     const leaveTypeId = $('#filter-leave-type').val();
     
-    $('#analytics-content').html('<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading analytics...</p></div>');
+    $('#analytics-content').html('<div class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2">Loading analytics...</p></div>');
     
         $.ajax({
             url: '{{ route("leave.hr.analytics") }}',
@@ -638,28 +645,28 @@ function updateDetailedStats(response) {
     html += '<div class="col-md-3 mb-3">';
     html += '<div class="card border-left-info h-100">';
     html += '<div class="card-body">';
-    html += '<div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Fare Approved</div>';
+    html += '<div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Total Fare Approved</div>';
     html += `<div class="h5 mb-0 font-weight-bold text-gray-800">${parseFloat(totalFareApproved).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} TZS</div>`;
     html += '</div></div></div>';
     
     html += '<div class="col-md-3 mb-3">';
     html += '<div class="card border-left-warning h-100">';
     html += '<div class="card-body">';
-    html += '<div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Rejected Requests</div>';
+    html += '<div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Rejected Requests</div>';
     html += `<div class="h5 mb-0 font-weight-bold text-gray-800">${rejectedRequests}</div>`;
     html += '</div></div></div>';
     
     html += '<div class="col-md-3 mb-3">';
     html += '<div class="card border-left-success h-100">';
     html += '<div class="card-body">';
-    html += '<div class="text-xs font-weight-bold text-success text-uppercase mb-1">Avg Processing Time</div>';
+    html += '<div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Avg Processing Time</div>';
     html += `<div class="h5 mb-0 font-weight-bold text-gray-800">${parseFloat(avgProcessingDays).toFixed(1)} days</div>`;
     html += '</div></div></div>';
     
     html += '<div class="col-md-3 mb-3">';
     html += '<div class="card border-left-primary h-100">';
     html += '<div class="card-body">';
-    html += '<div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Max Processing Time</div>';
+    html += '<div class="text-xs font-weight-bold text-custom-primary text-uppercase mb-1">Max Processing Time</div>';
     html += `<div class="h5 mb-0 font-weight-bold text-gray-800">${maxProcessingDays} days</div>`;
     html += '</div></div></div>';
     html += '</div>';
@@ -670,7 +677,7 @@ function updateDetailedStats(response) {
     // Department Statistics Table
     html += '<div class="col-md-6 mb-4">';
     html += '<div class="card shadow-sm">';
-    html += '<div class="card-header bg-primary text-white">';
+    html += '<div class="card-header bg-custom-primary text-white">';
     html += '<h6 class="mb-0 text-white"><i class="bx bx-building me-2"></i>Department Statistics</h6>';
     html += '</div>';
     html += '<div class="card-body">';
@@ -687,9 +694,9 @@ function updateDetailedStats(response) {
             const totalDays = requestCount * avgDays;
             html += `<tr>
                 <td><strong>${index + 1}.</strong> ${dept.department || 'Unknown'}</td>
-                <td class="text-center"><span class="badge bg-primary">${requestCount}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${requestCount}</span></td>
                 <td class="text-center">${isNaN(avgDays) ? '0.0' : avgDays.toFixed(1)}</td>
-                <td class="text-center"><span class="badge bg-info">${isNaN(totalDays) ? '0' : totalDays.toFixed(0)}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${isNaN(totalDays) ? '0' : totalDays.toFixed(0)}</span></td>
             </tr>`;
         });
     } else {
@@ -701,7 +708,7 @@ function updateDetailedStats(response) {
     // Leave Type Statistics Table
     html += '<div class="col-md-6 mb-4">';
     html += '<div class="card shadow-sm">';
-    html += '<div class="card-header bg-primary text-white">';
+    html += '<div class="card-header bg-custom-primary text-white">';
     html += '<h6 class="mb-0 text-white"><i class="bx bx-list-ul me-2"></i>Leave Type Statistics</h6>';
     html += '</div>';
     html += '<div class="card-body">';
@@ -718,9 +725,9 @@ function updateDetailedStats(response) {
             const totalDays = requestCount * avgDays;
             html += `<tr>
                 <td><strong>${index + 1}.</strong> ${type.leave_type}</td>
-                <td class="text-center"><span class="badge bg-info">${requestCount}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${requestCount}</span></td>
                 <td class="text-center">${isNaN(avgDays) ? '0.0' : avgDays.toFixed(1)}</td>
-                <td class="text-center"><span class="badge bg-success">${isNaN(totalDays) ? '0' : totalDays.toFixed(0)}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${isNaN(totalDays) ? '0' : totalDays.toFixed(0)}</span></td>
             </tr>`;
         });
     } else {
@@ -736,7 +743,7 @@ function updateDetailedStats(response) {
     // Employee-Level Statistics
     html += '<div class="col-md-6 mb-4">';
     html += '<div class="card shadow-sm">';
-    html += '<div class="card-header bg-primary text-white">';
+    html += '<div class="card-header bg-custom-primary text-white">';
     html += '<h6 class="mb-0 text-white"><i class="bx bx-user me-2"></i>Employee Leave Statistics (Top 20)</h6>';
     html += '</div>';
     html += '<div class="card-body">';
@@ -753,9 +760,9 @@ function updateDetailedStats(response) {
                 <td><strong>${index + 1}</strong></td>
                 <td>${emp.employee_name || 'Unknown'}</td>
                 <td><small class="text-muted">${emp.department_name || 'N/A'}</small></td>
-                <td class="text-center"><span class="badge bg-primary">${parseInt(emp.request_count || 0, 10)}</span></td>
-                <td class="text-center"><span class="badge bg-warning">${isNaN(totalDaysTaken) ? '0' : totalDaysTaken.toFixed(0)}</span></td>
-                <td class="text-center"><span class="badge bg-success">${parseInt(emp.completed_count || 0, 10)}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${parseInt(emp.request_count || 0, 10)}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${isNaN(totalDaysTaken) ? '0' : totalDaysTaken.toFixed(0)}</span></td>
+                <td class="text-center"><span class="badge bg-custom-primary">${parseInt(emp.completed_count || 0, 10)}</span></td>
             </tr>`;
         });
     } else {
@@ -767,7 +774,7 @@ function updateDetailedStats(response) {
     // Status Breakdown Table
     html += '<div class="col-md-6 mb-4">';
     html += '<div class="card shadow-sm">';
-    html += '<div class="card-header bg-primary text-white">';
+    html += '<div class="card-header bg-custom-primary text-white">';
     html += '<h6 class="mb-0 text-white"><i class="bx bx-pie-chart me-2"></i>Status Breakdown</h6>';
     html += '</div>';
     html += '<div class="card-body">';
@@ -783,11 +790,11 @@ function updateDetailedStats(response) {
             const count = parseInt(status.count || 0, 10);
             const percentage = totalRequests > 0 ? ((count / totalRequests) * 100).toFixed(1) : '0.0';
             const statusLabel = (status.status || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            let badgeClass = 'bg-secondary';
-            if (status.status === 'completed') badgeClass = 'bg-success';
-            else if (status.status === 'rejected' || status.status === 'cancelled') badgeClass = 'bg-danger';
-            else if (status.status?.includes('pending')) badgeClass = 'bg-warning';
-            else if (status.status === 'on_leave') badgeClass = 'bg-info';
+            let badgeClass = 'bg-custom-primary';
+            if (status.status === 'completed') badgeClass = 'bg-custom-primary';
+            else if (status.status === 'rejected' || status.status === 'cancelled') badgeClass = 'bg-custom-primary';
+            else if (status.status?.includes('pending')) badgeClass = 'bg-custom-primary';
+            else if (status.status === 'on_leave') badgeClass = 'bg-custom-primary';
             
             html += `<tr>
                 <td><span class="badge ${badgeClass} me-2">${statusLabel}</span></td>
@@ -812,7 +819,7 @@ function updateDetailedStats(response) {
     html += '<div class="row mb-4">';
     html += '<div class="col-12">';
     html += '<div class="card shadow-sm">';
-    html += '<div class="card-header bg-primary text-white">';
+    html += '<div class="card-header bg-custom-primary text-white">';
     html += '<h6 class="mb-0 text-white"><i class="bx bx-calendar me-2"></i>Monthly Status Breakdown</h6>';
     html += '</div>';
     html += '<div class="card-body">';
@@ -828,11 +835,11 @@ function updateDetailedStats(response) {
             const monthLabel = item.month !== currentMonth ? `<strong>${item.month}</strong>` : '';
             currentMonth = item.month;
             const statusLabel = (item.status || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            let badgeClass = 'bg-secondary';
-            if (item.status === 'completed') badgeClass = 'bg-success';
-            else if (item.status === 'rejected' || item.status === 'cancelled') badgeClass = 'bg-danger';
-            else if (item.status?.includes('pending')) badgeClass = 'bg-warning';
-            else if (item.status === 'on_leave') badgeClass = 'bg-info';
+            let badgeClass = 'bg-custom-primary';
+            if (item.status === 'completed') badgeClass = 'bg-custom-primary';
+            else if (item.status === 'rejected' || item.status === 'cancelled') badgeClass = 'bg-custom-primary';
+            else if (item.status?.includes('pending')) badgeClass = 'bg-custom-primary';
+            else if (item.status === 'on_leave') badgeClass = 'bg-custom-primary';
             
             const totalDays = parseFloat(item.total_days || 0);
             html += `<tr>

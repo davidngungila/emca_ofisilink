@@ -11,14 +11,14 @@
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary text-white">
+            <div class="card" style="background-color: #940000; color: white;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="card-title text-white mb-1">
-                                <i class="bx bx-calculator me-2"></i>Leave Balance Management
+                                <i class="bx bx-calculator me-2"></i>LEAVE BALANCE MANAGEMENT
                             </h4>
-                            <p class="card-text text-white-50 mb-0">Manage employee leave balances</p>
+                            <p class="card-text text-white-50 mb-0">manage employee leave balances</p>
                         </div>
                         <div>
                             <a href="{{ route('modules.hr.leave') }}" class="btn btn-light">
@@ -37,8 +37,8 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Employee Leave Balance Management</h6>
-                        <button class="btn btn-sm btn-primary" onclick="showBalanceModal()">
+                        <h6 class="mb-0">EMPLOYEE LEAVE BALANCE MANAGEMENT</h6>
+                        <button class="btn btn-sm btn-custom-primary" onclick="showBalanceModal()">
                             <i class="bx bx-plus"></i> Manage Balance
                         </button>
                     </div>
@@ -85,13 +85,13 @@
                                 <i class="bx bx-check-double"></i> Bulk Actions
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="bulkUpdateBalance(); return false;"><i class="bx bx-edit text-primary"></i> Update Selected Balances</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="bulkUpdateAllStaff(); return false;"><i class="bx bx-check-double text-success"></i> Update All Staff</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkUpdateBalance(); return false;"><i class="bx bx-edit text-custom-primary"></i> Update Selected Balances</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkUpdateAllStaff(); return false;"><i class="bx bx-check-double text-custom-primary"></i> Update All Staff</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="bulkResetBalance(); return false;"><i class="bx bx-reset text-warning"></i> Reset Selected</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="bulkResetAllStaff(); return false;"><i class="bx bx-refresh text-warning"></i> Reset All Staff</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkResetBalance(); return false;"><i class="bx bx-reset text-custom-primary"></i> Reset Selected</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkResetAllStaff(); return false;"><i class="bx bx-refresh text-custom-primary"></i> Reset All Staff</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="bulkExportBalance(); return false;"><i class="bx bx-download text-info"></i> Export Selected</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="bulkExportBalance(); return false;"><i class="bx bx-download text-custom-primary"></i> Export Selected</a></li>
                             </ul>
                         </div>
                     </div>
@@ -114,7 +114,7 @@
                             <tbody id="balance-table-body">
                                 <tr>
                                     <td colspan="8" class="text-center py-4">
-                                        <div class="spinner-border text-primary" role="status">
+                                        <div class="spinner-border text-custom-primary" role="status">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                         <p class="mt-2 text-muted">Loading balances...</p>
@@ -135,7 +135,7 @@
         <div class="modal-content">
             <form id="balanceForm">
                 <div class="modal-header">
-                    <h5 class="modal-title">Manage Employee Leave Balance</h5>
+                    <h5 class="modal-title">MANAGE EMPLOYEE LEAVE BALANCE</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -174,14 +174,26 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Balance</button>
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-custom-primary">Update Balance</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.bg-custom-primary { background-color: #940000 !important; color: white !important; }
+.btn-custom-primary { background-color: #940000 !important; border-color: #940000 !important; color: white !important; }
+.btn-custom-primary:hover { background-color: #7a0000 !important; border-color: #7a0000 !important; color: white !important; }
+.btn-outline-custom { border-color: #940000 !important; color: #940000 !important; background-color: white !important; }
+.btn-outline-custom:hover { background-color: #940000 !important; color: white !important; }
+.text-custom-primary { color: #940000 !important; }
+.badge.bg-custom-primary { background-color: #940000 !important; color: white !important; }
+</style>
+@endpush
 
 @push('scripts')
 <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
@@ -222,7 +234,7 @@ function loadBalanceManagement() {
     const deptId = $('#balance-dept-filter').val();
     const token = csrfToken || $('meta[name="csrf-token"]').attr('content');
     
-    $('#balance-table-body').html('<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></td></tr>');
+    $('#balance-table-body').html('<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-custom-primary"></div><p class="mt-2">Loading...</p></td></tr>');
     
     $.post('{{ route("leave.hr.balance-data") }}', {
         _token: token,
@@ -246,10 +258,10 @@ function loadBalanceManagement() {
                             </td>
                             <td>${balance.employee_name || 'N/A'}</td>
                             <td>${balance.department_name || 'N/A'}</td>
-                            <td><span class="badge bg-primary">${balance.total_days_allotted || 0}</span></td>
-                            <td><span class="badge bg-warning">${balance.days_taken || 0}</span></td>
-                            <td><span class="badge bg-success">${remaining}</span></td>
-                            <td><span class="badge bg-info">${balance.carry_forward_days || 0}</span></td>
+                            <td><span class="badge bg-custom-primary">${balance.total_days_allotted || 0}</span></td>
+                            <td><span class="badge bg-custom-primary">${balance.days_taken || 0}</span></td>
+                            <td><span class="badge bg-custom-primary">${remaining}</span></td>
+                            <td><span class="badge bg-custom-primary">${balance.carry_forward_days || 0}</span></td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" onclick="editBalance(${balance.employee_id}, ${year})" title="Edit Balance">
                                     <i class="bx bx-edit"></i>
@@ -426,7 +438,7 @@ function bulkResetBalance() {
         title: 'Reset Leave Balance?',
         html: `
             <p>You are about to reset <strong>${selectedCount}</strong> employee balance(s).</p>
-            <p class="text-warning"><strong>Warning:</strong> This will set "Days Taken" to 0 for all selected employees. This action cannot be undone.</p>
+            <p class="text-custom-primary"><strong>Warning:</strong> This will set "Days Taken" to 0 for all selected employees. This action cannot be undone.</p>
         `,
         icon: 'warning',
         showCancelButton: true,
