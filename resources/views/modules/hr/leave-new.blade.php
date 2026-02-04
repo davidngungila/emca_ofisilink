@@ -109,7 +109,7 @@
                             <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Please provide a detailed reason for your leave..." required></textarea>
                         </div>
                         
-                        <h6 class="mt-4">DEPENDENTS (IF APPLICABLE FOR FARE/NAULI)</h6>
+                        <h6 class="mt-4">DEPENDENTS (IF APPLICABLE FOR FARE)</h6>
                         <div id="dependents-container" class="mb-3"></div>
                         <button type="button" class="btn btn-sm btn-outline-custom" id="add-dependent-btn">
                             <i class="bx bx-plus me-1"></i>Add Dependent

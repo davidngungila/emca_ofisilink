@@ -1121,7 +1121,7 @@
                         <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Please provide a detailed reason for your leave..." required></textarea>
                     </div>
                     
-                    <h6 class="mt-4">Dependents (if applicable for fare/nauli)</h6>
+                    <h6 class="mt-4">DEPENDENTS (IF APPLICABLE FOR FARE)</h6>
                     <div class="alert alert-info">
                         <small><i class="bx bx-info-circle"></i> Add dependents who will be traveling with you for fare calculation purposes.</small>
                     </div>
