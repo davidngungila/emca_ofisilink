@@ -308,18 +308,38 @@ class AuthController extends Controller
 
             // Send OTP via SMS
             $message = "Your OfisiLink login OTP is: {$otpCode}. Valid for {$otpTimeout} minutes.";
-            $smsSent = $this->notificationService->sendSMS($phone, $message);
+            $smsSent = false;
+            $smsError = null;
             
-            if (!$smsSent) {
-                Log::warning('OTP created but SMS sending failed', [
+            try {
+                $smsSent = $this->notificationService->sendSMS($phone, $message);
+                if ($smsSent) {
+                    Log::info('OTP SMS sent successfully (OTP-only login)', [
+                        'user_id' => $user->id,
+                        'phone' => $phone
+                    ]);
+                } else {
+                    Log::warning('OTP created but SMS sending failed', [
+                        'user_id' => $user->id,
+                        'phone' => $phone,
+                        'otp_code' => $otpCode
+                    ]);
+                    $smsError = 'SMS sending failed. Please check your phone number or contact administrator.';
+                }
+            } catch (\Exception $e) {
+                Log::error('Exception sending OTP SMS', [
                     'user_id' => $user->id,
                     'phone' => $phone,
-                    'otp_code' => $otpCode
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
-                // Continue anyway - user can request resend
+                $smsError = 'SMS sending error: ' . $e->getMessage();
             }
 
             // Send OTP via Email with professional template
+            $emailSent = false;
+            $emailError = null;
+            
             if ($user->email) {
                 try {
                     $emailSubject = 'Login OTP Verification - OfisiLink';
@@ -354,15 +374,60 @@ class AuthController extends Controller
                             'user_id' => $user->id,
                             'email' => $user->email
                         ]);
+                        $emailError = 'Email sending failed. Please check your email configuration.';
                     }
                 } catch (\Exception $e) {
-                    Log::warning('Error sending OTP email', [
+                    Log::error('Exception sending OTP email', [
                         'user_id' => $user->id,
                         'email' => $user->email,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
-                    // Continue anyway - SMS was sent
+                    $emailError = 'Email sending error: ' . $e->getMessage();
                 }
+            } else {
+                $emailError = 'No email address registered.';
+            }
+            
+            // If both SMS and Email failed, return error
+            if (!$smsSent && !$emailSent) {
+                Log::error('Both SMS and Email failed to send OTP', [
+                    'user_id' => $user->id,
+                    'phone' => $phone,
+                    'email' => $user->email,
+                    'sms_error' => $smsError,
+                    'email_error' => $emailError
+                ]);
+                
+                return back()->withErrors([
+                    'email' => 'Failed to send OTP via SMS and Email. ' . 
+                               ($smsError ? 'SMS: ' . $smsError . ' ' : '') . 
+                               ($emailError ? 'Email: ' . $emailError : '') . 
+                               ' Please contact administrator or try again later.',
+                ])->onlyInput('email');
+            }
+            
+            // If at least one succeeded, show warning but continue
+            if (!$smsSent || !$emailSent) {
+                $warningMessage = 'OTP has been sent';
+                if ($smsSent) {
+                    $warningMessage .= ' via SMS';
+                }
+                if ($emailSent) {
+                    $warningMessage .= ($smsSent ? ' and' : '') . ' via Email';
+                }
+                if (!$smsSent) {
+                    $warningMessage .= '. SMS failed: ' . ($smsError ?? 'Unknown error');
+                }
+                if (!$emailSent) {
+                    $warningMessage .= '. Email failed: ' . ($emailError ?? 'Unknown error');
+                }
+                
+                Log::warning('OTP sent partially', [
+                    'user_id' => $user->id,
+                    'sms_sent' => $smsSent,
+                    'email_sent' => $emailSent
+                ]);
             }
 
         } catch (\Illuminate\Database\QueryException $e) {
@@ -952,17 +1017,38 @@ class AuthController extends Controller
             }
 
             // Send OTP via SMS
-            $message = "Your OfisiLink login OTP is: {$otpCode}. Valid for 10 minutes.";
-            $smsSent = $this->notificationService->sendSMS($phone, $message);
+            $message = "Your OfisiLink login OTP is: {$otpCode}. Valid for {$otpTimeout} minutes.";
+            $smsSent = false;
+            $smsError = null;
             
-            if (!$smsSent) {
-                Log::warning('OTP created but SMS sending failed in resend', [
+            try {
+                $smsSent = $this->notificationService->sendSMS($phone, $message);
+                if ($smsSent) {
+                    Log::info('OTP SMS resent successfully', [
+                        'user_id' => $user->id,
+                        'phone' => $phone
+                    ]);
+                } else {
+                    Log::warning('OTP created but SMS sending failed in resend', [
+                        'user_id' => $user->id,
+                        'phone' => $phone
+                    ]);
+                    $smsError = 'SMS sending failed. Please check your phone number or contact administrator.';
+                }
+            } catch (\Exception $e) {
+                Log::error('Exception resending OTP SMS', [
                     'user_id' => $user->id,
-                    'phone' => $phone
+                    'phone' => $phone,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
+                $smsError = 'SMS sending error: ' . $e->getMessage();
             }
 
             // Send OTP via Email with professional template
+            $emailSent = false;
+            $emailError = null;
+            
             if ($user->email) {
                 try {
                     $emailSubject = 'Login OTP Verification - OfisiLink (Resent)';
@@ -992,15 +1078,67 @@ class AuthController extends Controller
                             'user_id' => $user->id,
                             'email' => $user->email
                         ]);
+                    } else {
+                        Log::warning('OTP created but email sending failed in resend', [
+                            'user_id' => $user->id,
+                            'email' => $user->email
+                        ]);
+                        $emailError = 'Email sending failed. Please check your email configuration.';
                     }
                 } catch (\Exception $e) {
-                    Log::warning('Error resending OTP email', [
+                    Log::error('Exception resending OTP email', [
                         'user_id' => $user->id,
                         'email' => $user->email,
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
+                    $emailError = 'Email sending error: ' . $e->getMessage();
                 }
+            } else {
+                $emailError = 'No email address registered.';
             }
+            
+            // If both SMS and Email failed, return error
+            if (!$smsSent && !$emailSent) {
+                Log::error('Both SMS and Email failed to resend OTP', [
+                    'user_id' => $user->id,
+                    'phone' => $phone,
+                    'email' => $user->email,
+                    'sms_error' => $smsError,
+                    'email_error' => $emailError
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send OTP via SMS and Email. ' . 
+                               ($smsError ? 'SMS: ' . $smsError . ' ' : '') . 
+                               ($emailError ? 'Email: ' . $emailError : '') . 
+                               ' Please contact administrator or try again later.',
+                ], 422);
+            }
+            
+            // If at least one succeeded, return success with warning
+            $successMessage = 'OTP has been resent';
+            if ($smsSent && $emailSent) {
+                $successMessage .= ' via SMS and Email';
+            } elseif ($smsSent) {
+                $successMessage .= ' via SMS';
+            } elseif ($emailSent) {
+                $successMessage .= ' via Email';
+            }
+            
+            if (!$smsSent || !$emailSent) {
+                Log::warning('OTP resent partially', [
+                    'user_id' => $user->id,
+                    'sms_sent' => $smsSent,
+                    'email_sent' => $emailSent
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage . '.',
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Fatal error in OTP resend process', [
@@ -1547,5 +1685,7 @@ class AuthController extends Controller
         return str_shuffle($password);
     }
 }
+
+
 
 
