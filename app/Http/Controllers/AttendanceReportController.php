@@ -24,7 +24,13 @@ class AttendanceReportController extends Controller
         $user = Auth::user();
         $canViewAll = $user->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'HOD']);
         
-        return view('modules.hr.attendance-reports', compact('canViewAll'));
+        if (!$canViewAll) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        
+        return view('modules.hr.attendance-reports', compact('canViewAll', 'departments'));
     }
 
     /**

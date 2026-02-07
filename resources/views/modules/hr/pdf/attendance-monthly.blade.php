@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Monthly Attendance Summary - {{ Carbon::parse($dateFrom)->format('M Y') }}</title>
+    <title>Monthly Attendance Summary - {{ \Carbon\Carbon::parse($dateFrom)->format('M Y') }}</title>
     <style>
         @page { margin: 20px 30px 60px 30px; }
         body { 
@@ -92,7 +92,7 @@
         $orgSettings = \App\Models\OrganizationSetting::getSettings();
         $timezone = $orgSettings->timezone ?? config('app.timezone', 'Africa/Dar_es_Salaam');
         $documentDate = now()->setTimezone($timezone)->format($orgSettings->date_format ?? 'd M Y');
-        $documentRef = 'ATT-MONTHLY-' . Carbon::parse($dateFrom)->format('Ym');
+        $documentRef = 'ATT-MONTHLY-' . \Carbon\Carbon::parse($dateFrom)->format('Ym');
     @endphp
     
     @include('components.pdf-header', [
@@ -106,7 +106,7 @@
         
         <div class="summary-box">
             <h2 style="margin-top: 0; margin-bottom: 15px;">
-                Period: {{ Carbon::parse($dateFrom)->format('d M, Y') }} to {{ Carbon::parse($dateTo)->format('d M, Y') }}
+                Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M, Y') }} to {{ \Carbon\Carbon::parse($dateTo)->format('d M, Y') }}
             </h2>
             <div style="text-align: center;">
                 <div class="stat-card">
@@ -187,7 +187,7 @@
                     <td style="width: 50%; text-align: right;">
                         <strong style="color: #500000;">Report Reference:</strong><br>
                         {{ $documentRef }}<br>
-                        Period: {{ Carbon::parse($dateFrom)->format('d M Y') }} - {{ Carbon::parse($dateTo)->format('d M Y') }}
+                        Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}
                     </td>
                 </tr>
             </table>

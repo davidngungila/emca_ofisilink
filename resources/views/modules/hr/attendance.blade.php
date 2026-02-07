@@ -25,8 +25,11 @@
                                 <i class="bx bx-trash me-1"></i>Delete All
                             </button>
                             @endif
+                            <a href="{{ route('modules.hr.attendance.reports') }}" class="btn btn-light btn-primary me-2" title="View All Advanced Reports">
+                                <i class="bx bx-file-blank me-1"></i>Advanced Reports
+                            </a>
                             <a href="{{ route('attendance.export', array_merge(request()->all(), ['format' => 'pdf', 'report_type' => 'timing'])) }}" class="btn btn-light btn-info me-2" target="_blank" title="Generate Timing Report (Early/Late/Early Leave)">
-                                <i class="bx bx-file-blank me-1"></i>Timing Report PDF
+                                <i class="bx bx-time me-1"></i>Timing Report PDF
                             </a>
                             <div class="btn-group">
                                 <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">

@@ -97,7 +97,7 @@
         $orgSettings = \App\Models\OrganizationSetting::getSettings();
         $timezone = $orgSettings->timezone ?? config('app.timezone', 'Africa/Dar_es_Salaam');
         $documentDate = now()->setTimezone($timezone)->format($orgSettings->date_format ?? 'd M Y');
-        $documentRef = 'ATT-LEAVE-' . Carbon::parse($dateFrom)->format('Ym');
+        $documentRef = 'ATT-LEAVE-' . \Carbon\Carbon::parse($dateFrom)->format('Ym');
     @endphp
     
     @include('components.pdf-header', [
@@ -111,7 +111,7 @@
         
         <div class="summary-box">
             <h2 style="margin-top: 0; margin-bottom: 15px;">
-                Period: {{ Carbon::parse($dateFrom)->format('d M, Y') }} to {{ Carbon::parse($dateTo)->format('d M, Y') }}
+                Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M, Y') }} to {{ \Carbon\Carbon::parse($dateTo)->format('d M, Y') }}
             </h2>
             <div style="text-align: center;">
                 <div class="stat-card">
@@ -190,8 +190,8 @@
                         @foreach($employee['leave_requests'] as $leave)
                         <div style="margin-bottom: 5px; font-size: 8pt;">
                             <strong>{{ $leave['leave_type'] }}</strong>: 
-                            {{ Carbon::parse($leave['start_date'])->format('d M') }} - 
-                            {{ Carbon::parse($leave['end_date'])->format('d M') }} 
+                            {{ \Carbon\Carbon::parse($leave['start_date'])->format('d M') }} - 
+                            {{ \Carbon\Carbon::parse($leave['end_date'])->format('d M') }} 
                             ({{ $leave['total_days'] }} days)
                             <span class="status-badge {{ $leave['status'] === 'approved' ? 'badge-approved' : ($leave['status'] === 'pending' ? 'badge-pending' : 'badge-rejected') }}">
                                 {{ ucfirst($leave['status']) }}
@@ -216,7 +216,7 @@
                     <td style="width: 50%; text-align: right;">
                         <strong style="color: #500000;">Report Reference:</strong><br>
                         {{ $documentRef }}<br>
-                        Period: {{ Carbon::parse($dateFrom)->format('d M Y') }} - {{ Carbon::parse($dateTo)->format('d M Y') }}
+                        Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}
                     </td>
                 </tr>
             </table>

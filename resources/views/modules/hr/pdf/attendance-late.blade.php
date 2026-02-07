@@ -95,7 +95,7 @@
         $orgSettings = \App\Models\OrganizationSetting::getSettings();
         $timezone = $orgSettings->timezone ?? config('app.timezone', 'Africa/Dar_es_Salaam');
         $documentDate = now()->setTimezone($timezone)->format($orgSettings->date_format ?? 'd M Y');
-        $documentRef = 'ATT-LATE-' . Carbon::parse($dateFrom)->format('Ymd');
+        $documentRef = 'ATT-LATE-' . \Carbon\Carbon::parse($dateFrom)->format('Ymd');
     @endphp
     
     @include('components.pdf-header', [
@@ -109,7 +109,7 @@
         
         <div class="summary-box">
             <h2 style="margin-top: 0; margin-bottom: 15px;">
-                Period: {{ Carbon::parse($dateFrom)->format('d M, Y') }} to {{ Carbon::parse($dateTo)->format('d M, Y') }}
+                Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M, Y') }} to {{ \Carbon\Carbon::parse($dateTo)->format('d M, Y') }}
             </h2>
             <div style="text-align: center;">
                 <div class="stat-card">
@@ -178,7 +178,7 @@
             <tbody>
                 @foreach($reportData['all_records'] as $record)
                 <tr>
-                    <td>{{ Carbon::parse($record['date'])->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($record['date'])->format('d M Y') }}</td>
                     <td class="employee-name">{{ $record['employee_name'] }}</td>
                     <td>{{ $record['employee_id'] }}</td>
                     <td>{{ $record['department'] }}</td>
@@ -204,7 +204,7 @@
                     <td style="width: 50%; text-align: right;">
                         <strong style="color: #500000;">Report Reference:</strong><br>
                         {{ $documentRef }}<br>
-                        Period: {{ Carbon::parse($dateFrom)->format('d M Y') }} - {{ Carbon::parse($dateTo)->format('d M Y') }}
+                        Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}
                     </td>
                 </tr>
             </table>

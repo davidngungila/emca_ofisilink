@@ -98,7 +98,7 @@
         $orgSettings = \App\Models\OrganizationSetting::getSettings();
         $timezone = $orgSettings->timezone ?? config('app.timezone', 'Africa/Dar_es_Salaam');
         $documentDate = now()->setTimezone($timezone)->format($orgSettings->date_format ?? 'd M Y');
-        $documentRef = 'ATT-EXCEPTION-' . Carbon::parse($dateFrom)->format('Ymd');
+        $documentRef = 'ATT-EXCEPTION-' . \Carbon\Carbon::parse($dateFrom)->format('Ymd');
     @endphp
     
     @include('components.pdf-header', [
@@ -112,7 +112,7 @@
         
         <div class="summary-box">
             <h2 style="margin-top: 0; margin-bottom: 15px;">
-                Period: {{ Carbon::parse($dateFrom)->format('d M, Y') }} to {{ Carbon::parse($dateTo)->format('d M, Y') }}
+                Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M, Y') }} to {{ \Carbon\Carbon::parse($dateTo)->format('d M, Y') }}
             </h2>
             <div style="text-align: center;">
                 <div class="stat-card">
@@ -152,7 +152,7 @@
                 @foreach($reportData['exceptions']['missing_check_ins'] as $index => $exception)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ Carbon::parse($exception['date'])->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($exception['date'])->format('d M Y') }}</td>
                     <td class="employee-name">{{ $exception['employee_name'] }}</td>
                     <td>{{ $exception['employee_id'] }}</td>
                     <td>{{ $exception['department'] }}</td>
@@ -187,7 +187,7 @@
                 @foreach($reportData['exceptions']['missing_check_outs'] as $index => $exception)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ Carbon::parse($exception['date'])->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($exception['date'])->format('d M Y') }}</td>
                     <td class="employee-name">{{ $exception['employee_name'] }}</td>
                     <td>{{ $exception['employee_id'] }}</td>
                     <td>{{ $exception['department'] }}</td>
@@ -221,7 +221,7 @@
                 @foreach($reportData['exceptions']['duplicate_entries'] as $index => $duplicate)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ Carbon::parse($duplicate['date'])->format('d M Y') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($duplicate['date'])->format('d M Y') }}</td>
                     <td class="employee-name">{{ $duplicate['employee_name'] }}</td>
                     <td>{{ $duplicate['employee_id'] }}</td>
                     <td>{{ $duplicate['department'] }}</td>
@@ -300,7 +300,7 @@
                     <td style="width: 50%; text-align: right;">
                         <strong style="color: #500000;">Report Reference:</strong><br>
                         {{ $documentRef }}<br>
-                        Period: {{ Carbon::parse($dateFrom)->format('d M Y') }} - {{ Carbon::parse($dateTo)->format('d M Y') }}
+                        Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}
                     </td>
                 </tr>
             </table>
