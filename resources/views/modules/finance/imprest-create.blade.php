@@ -104,10 +104,10 @@
                     </div>
                 </div>
 
-                <!-- Amount & Priority Section -->
+                <!-- Amount Section -->
                 <div class="form-section">
                     <h5 class="mb-3">
-                        <i class="bx bx-money me-2 text-success"></i>Amount & Priority
+                        <i class="bx bx-money me-2 text-success"></i>Amount
                     </h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -120,18 +120,6 @@
                                 </span>
                                 <input type="number" class="form-control" name="amount" id="amount" step="0.01" min="1" required placeholder="Enter amount">
                             </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">
-                                Priority <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select form-select-lg" name="priority" id="priority" required>
-                                <option value="">Select Priority</option>
-                                <option value="normal" selected>Normal</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
-                            <div class="mt-2" id="priorityPreview"></div>
                         </div>
                     </div>
                 </div>
@@ -174,26 +162,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('imprestCreateForm');
-    const prioritySelect = document.getElementById('priority');
-    const priorityPreview = document.getElementById('priorityPreview');
-    
-    // Priority preview
-    function updatePriorityPreview() {
-        const priority = prioritySelect.value;
-        if (priority) {
-            const labels = {
-                'normal': { text: 'Normal Priority', class: 'priority-normal' },
-                'high': { text: 'High Priority', class: 'priority-high' },
-                'urgent': { text: 'Urgent Priority', class: 'priority-urgent' }
-            };
-            priorityPreview.innerHTML = `<span class="priority-badge ${labels[priority].class}">${labels[priority].text}</span>`;
-        } else {
-            priorityPreview.innerHTML = '';
-        }
-    }
-    
-    prioritySelect.addEventListener('change', updatePriorityPreview);
-    updatePriorityPreview();
     
     // Form submission
     form.addEventListener('submit', function(e) {

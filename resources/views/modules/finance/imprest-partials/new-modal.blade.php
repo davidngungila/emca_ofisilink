@@ -20,7 +20,7 @@
               <i class="bx bx-info-circle"></i> Provide a clear purpose for this imprest request
             </small>
           </div>
-          <div class="row">
+            <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label fw-bold">
                 Amount (TZS) <span class="text-danger">*</span>
@@ -31,17 +31,6 @@
                 </span>
                 <input type="number" class="form-control" name="amount" id="amount" step="0.01" min="1" required placeholder="Enter amount">
               </div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-bold">
-                Priority <span class="text-danger">*</span>
-              </label>
-              <select class="form-select form-select-lg" name="priority" id="priority" required>
-                <option value="">Select Priority</option>
-                <option value="normal" selected>Normal</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
             </div>
           </div>
           <div class="mb-3">

@@ -504,7 +504,7 @@ class ImprestController extends Controller
             'purpose' => 'required|string|max:255',
             'amount' => 'required|numeric|min:1',
             'expected_return_date' => 'nullable|date|after_or_equal:today',
-            'priority' => 'required|in:normal,high,urgent',
+            'priority' => 'nullable|in:normal,high,urgent',
             'description' => 'nullable|string|max:2000'
         ]);
 
@@ -517,7 +517,7 @@ class ImprestController extends Controller
                 'purpose' => $request->purpose,
                 'amount' => $request->amount,
                 'expected_return_date' => $request->expected_return_date,
-                'priority' => $request->priority,
+                'priority' => $request->priority ?? 'normal',
                 'description' => $request->description,
                 'status' => 'pending_hod',
                 'created_by' => Auth::id()
