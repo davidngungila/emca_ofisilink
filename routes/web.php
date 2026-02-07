@@ -304,6 +304,7 @@ Route::middleware(['auth'])->group(function () {
         // Generic {id} routes (must be last to avoid conflicts)
         Route::get('/{pettyCash}/details-ajax', [PettyCashController::class, 'details'])->name('details.ajax')->where('pettyCash', '[0-9]+');
         Route::get('/{pettyCash}/pdf', [PettyCashController::class, 'generatePdf'])->name('pdf')->where('pettyCash', '[0-9]+');
+        Route::get('/export/report', [PettyCashController::class, 'exportReport'])->name('export.report');
         Route::get('/{pettyCash}', [PettyCashController::class, 'show'])->name('show')->where('pettyCash', '[0-9]+');
         Route::delete('/{pettyCash}', [PettyCashController::class, 'destroy'])->name('destroy')->where('pettyCash', '[0-9]+');
     });

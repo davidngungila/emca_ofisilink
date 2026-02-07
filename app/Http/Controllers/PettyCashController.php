@@ -23,6 +23,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class PettyCashController extends Controller
 {
@@ -3141,6 +3146,243 @@ class PettyCashController extends Controller
                 'success' => false,
                 'message' => 'Error loading details: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Export Petty Cash Report
+     * Supports: quarter, 6-month, year
+     * Formats: PDF, Excel
+     */
+    public function exportReport(Request $request)
+    {
+        $period = $request->get('period', 'quarter'); // quarter, 6month, year
+        $format = $request->get('format', 'pdf'); // pdf, excel
+        
+        // Calculate date range based on period
+        $dateRange = $this->calculateDateRange($period);
+        
+        // Build query
+        $query = PettyCashVoucher::with(['creator', 'lines', 'accountant', 'hod', 'ceo', 'paidBy'])
+            ->whereBetween('date', [$dateRange['from'], $dateRange['to']]);
+        
+        // Apply additional filters if provided
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('creator_id')) {
+            $query->where('created_by', $request->creator_id);
+        }
+        
+        $vouchers = $query->orderBy('date', 'desc')->get();
+        
+        // Calculate summary statistics
+        $summary = [
+            'total_vouchers' => $vouchers->count(),
+            'total_amount' => $vouchers->sum('amount'),
+            'by_status' => $vouchers->groupBy('status')->map(function($group) {
+                return [
+                    'count' => $group->count(),
+                    'amount' => $group->sum('amount')
+                ];
+            }),
+            'period' => $period,
+            'date_from' => $dateRange['from'],
+            'date_to' => $dateRange['to'],
+            'period_label' => $dateRange['label']
+        ];
+        
+        if ($format === 'excel') {
+            return $this->exportExcel($vouchers, $summary);
+        } else {
+            return $this->exportPdf($vouchers, $summary);
+        }
+    }
+    
+    /**
+     * Calculate date range based on period type
+     */
+    private function calculateDateRange($period)
+    {
+        $now = now();
+        
+        switch ($period) {
+            case 'quarter':
+                // Current quarter
+                $quarter = ceil($now->month / 3);
+                $from = $now->copy()->month(($quarter - 1) * 3 + 1)->startOfMonth();
+                $to = $now->copy()->month($quarter * 3)->endOfMonth();
+                $label = "Q{$quarter} {$now->year}";
+                break;
+                
+            case '6month':
+                // Last 6 months
+                $from = $now->copy()->subMonths(5)->startOfMonth();
+                $to = $now->copy()->endOfMonth();
+                $label = "6 Months ({$from->format('M Y')} - {$to->format('M Y')})";
+                break;
+                
+            case 'year':
+                // Current year
+                $from = $now->copy()->startOfYear();
+                $to = $now->copy()->endOfYear();
+                $label = "Year {$now->year}";
+                break;
+                
+            default:
+                // Default to current quarter
+                $quarter = ceil($now->month / 3);
+                $from = $now->copy()->month(($quarter - 1) * 3 + 1)->startOfMonth();
+                $to = $now->copy()->month($quarter * 3)->endOfMonth();
+                $label = "Q{$quarter} {$now->year}";
+        }
+        
+        return [
+            'from' => $from->format('Y-m-d'),
+            'to' => $to->format('Y-m-d'),
+            'label' => $label
+        ];
+    }
+    
+    /**
+     * Export to PDF
+     */
+    private function exportPdf($vouchers, $summary)
+    {
+        try {
+            $data = [
+                'vouchers' => $vouchers,
+                'summary' => $summary,
+                'generated_at' => now()->format('d M Y H:i:s'),
+                'generated_by' => Auth::user()->name ?? 'System'
+            ];
+            
+            $pdf = Pdf::loadView('modules.finance.pdf.petty-cash-report', $data);
+            $pdf->setPaper('A4', 'landscape');
+            
+            $filename = 'Petty_Cash_Report_' . str_replace(' ', '_', $summary['period_label']) . '_' . date('Ymd_His') . '.pdf';
+            
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            \Log::error('Petty Cash PDF Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Export to Excel
+     */
+    private function exportExcel($vouchers, $summary)
+    {
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            // Set title
+            $sheet->setCellValue('A1', 'Petty Cash Report - ' . $summary['period_label']);
+            $sheet->mergeCells('A1:J1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            // Summary row
+            $sheet->setCellValue('A2', 'Period: ' . $summary['period_label']);
+            $sheet->setCellValue('A3', 'Total Vouchers: ' . $summary['total_vouchers']);
+            $sheet->setCellValue('A4', 'Total Amount: ' . number_format($summary['total_amount'], 2));
+            $sheet->setCellValue('A5', 'Generated: ' . now()->format('d M Y H:i:s'));
+            $sheet->setCellValue('A6', 'Generated By: ' . (Auth::user()->name ?? 'System'));
+            
+            // Headers
+            $headers = [
+                'A7' => 'Voucher No',
+                'B7' => 'Date',
+                'C7' => 'Payee',
+                'D7' => 'Purpose',
+                'E7' => 'Amount',
+                'F7' => 'Status',
+                'G7' => 'Created By',
+                'H7' => 'Accountant',
+                'I7' => 'HOD',
+                'J7' => 'CEO',
+                'K7' => 'Paid At',
+                'L7' => 'Retired At'
+            ];
+            
+            foreach ($headers as $cell => $header) {
+                $sheet->setCellValue($cell, $header);
+            }
+            
+            // Style headers
+            $headerRange = 'A7:L7';
+            $sheet->getStyle($headerRange)->getFont()->setBold(true);
+            $sheet->getStyle($headerRange)->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('940000');
+            $sheet->getStyle($headerRange)->getFont()->getColor()->setRGB('FFFFFF');
+            $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($headerRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            
+            // Data rows
+            $row = 8;
+            foreach ($vouchers as $voucher) {
+                $sheet->setCellValue('A' . $row, $voucher->voucher_no ?? 'N/A');
+                $sheet->setCellValue('B' . $row, $voucher->date ? $voucher->date->format('Y-m-d') : 'N/A');
+                $sheet->setCellValue('C' . $row, $voucher->payee ?? 'N/A');
+                $sheet->setCellValue('D' . $row, $voucher->purpose ?? 'N/A');
+                $sheet->setCellValue('E' . $row, number_format($voucher->amount ?? 0, 2));
+                $sheet->setCellValue('F' . $row, ucfirst(str_replace('_', ' ', $voucher->status ?? 'N/A')));
+                $sheet->setCellValue('G' . $row, $voucher->creator->name ?? 'N/A');
+                $sheet->setCellValue('H' . $row, $voucher->accountant->name ?? 'N/A');
+                $sheet->setCellValue('I' . $row, $voucher->hod->name ?? 'N/A');
+                $sheet->setCellValue('J' . $row, $voucher->ceo->name ?? 'N/A');
+                $sheet->setCellValue('K' . $row, $voucher->paid_at ? $voucher->paid_at->format('Y-m-d H:i') : 'N/A');
+                $sheet->setCellValue('L' . $row, $voucher->retired_at ? $voucher->retired_at->format('Y-m-d H:i') : 'N/A');
+                
+                // Add borders
+                $sheet->getStyle('A' . $row . ':L' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                
+                $row++;
+            }
+            
+            // Summary by status
+            $row += 2;
+            $sheet->setCellValue('A' . $row, 'Summary by Status');
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'Status');
+            $sheet->setCellValue('B' . $row, 'Count');
+            $sheet->setCellValue('C' . $row, 'Total Amount');
+            $sheet->getStyle('A' . $row . ':C' . $row)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $row . ':C' . $row)->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('E0E0E0');
+            $row++;
+            
+            foreach ($summary['by_status'] as $status => $data) {
+                $sheet->setCellValue('A' . $row, ucfirst(str_replace('_', ' ', $status)));
+                $sheet->setCellValue('B' . $row, $data['count']);
+                $sheet->setCellValue('C' . $row, number_format($data['amount'], 2));
+                $row++;
+            }
+            
+            // Auto-size columns
+            foreach (range('A', 'L') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+            
+            // Write file
+            $writer = new Xlsx($spreadsheet);
+            $tempFile = tempnam(sys_get_temp_dir(), 'petty_cash_export');
+            $writer->save($tempFile);
+            
+            $filename = 'Petty_Cash_Report_' . str_replace(' ', '_', $summary['period_label']) . '_' . date('Ymd_His') . '.xlsx';
+            
+            return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+            
+        } catch (\Exception $e) {
+            \Log::error('Petty Cash Excel Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
         }
     }
 }

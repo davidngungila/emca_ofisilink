@@ -238,6 +238,66 @@
         </div>
     </div>
 
+    <!-- Export Reports Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bx bx-download me-2"></i>Export Reports
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-3">Quarter Report</h6>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('petty-cash.export.report', ['period' => 'quarter', 'format' => 'pdf']) }}" class="btn btn-sm btn-outline-danger">
+                            <i class="bx bx-file-blank me-1"></i>Export PDF
+                        </a>
+                        <a href="{{ route('petty-cash.export.report', ['period' => 'quarter', 'format' => 'excel']) }}" class="btn btn-sm btn-outline-success">
+                            <i class="bx bx-spreadsheet me-1"></i>Export Excel
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-3">6 Months Report</h6>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('petty-cash.export.report', ['period' => '6month', 'format' => 'pdf']) }}" class="btn btn-sm btn-outline-danger">
+                            <i class="bx bx-file-blank me-1"></i>Export PDF
+                        </a>
+                        <a href="{{ route('petty-cash.export.report', ['period' => '6month', 'format' => 'excel']) }}" class="btn btn-sm btn-outline-success">
+                            <i class="bx bx-spreadsheet me-1"></i>Export Excel
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted mb-3">Year Report</h6>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('petty-cash.export.report', ['period' => 'year', 'format' => 'pdf']) }}" class="btn btn-sm btn-outline-danger">
+                            <i class="bx bx-file-blank me-1"></i>Export PDF
+                        </a>
+                        <a href="{{ route('petty-cash.export.report', ['period' => 'year', 'format' => 'excel']) }}" class="btn btn-sm btn-outline-success">
+                            <i class="bx bx-spreadsheet me-1"></i>Export Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vouchers Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            @include('modules.finance.petty-cash-partials.table', [
+                'vouchers' => $vouchers,
+                'showActions' => true
+            ])
+        </div>
+    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Vouchers Table -->
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
