@@ -149,9 +149,9 @@
                     $isAccountant = auth()->user()->hasRole('Accountant') || auth()->user()->hasRole('System Admin');
                 @endphp
                 @if($isAccountant)
-                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#newImprestModal">
+                <a href="{{ route('imprest.create') }}" class="btn btn-light btn-sm">
                     <i class="bx bx-plus-circle me-1"></i>New Request
-                </button>
+                </a>
                 @endif
             </div>
         </div>
