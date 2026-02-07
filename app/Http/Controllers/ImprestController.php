@@ -2613,7 +2613,7 @@ class ImprestController extends Controller
         if ($format === 'excel') {
             return $this->exportExcel($requests, $summary);
         } else {
-            return $this->exportPdf($requests, $summary);
+            return $this->exportPdfReport($requests, $summary);
         }
     }
     
@@ -2663,9 +2663,9 @@ class ImprestController extends Controller
     }
     
     /**
-     * Export to PDF
+     * Export to PDF (Report)
      */
-    private function exportPdf($requests, $summary)
+    private function exportPdfReport($requests, $summary)
     {
         try {
             $data = [
