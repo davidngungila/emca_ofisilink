@@ -750,11 +750,19 @@ class ImprestController extends Controller
 
             DB::beginTransaction();
 
-            $imprestRequest->update([
-                'status' => 'pending_ceo',
+            // Update HOD approval fields
+            $updateData = [
                 'hod_approved_at' => now(),
                 'hod_approved_by' => Auth::id()
-            ]);
+            ];
+            
+            // Only update status to pending_ceo if it hasn't progressed beyond that
+            // System Admin can approve HOD level even if status has progressed, but don't regress status
+            if (!in_array($imprestRequest->status, ['pending_ceo', 'approved', 'assigned', 'paid', 'pending_receipt_verification', 'completed'])) {
+                $updateData['status'] = 'pending_ceo';
+            }
+            
+            $imprestRequest->update($updateData);
 
             DB::commit();
 
@@ -817,11 +825,19 @@ class ImprestController extends Controller
 
             DB::beginTransaction();
 
-            $imprestRequest->update([
-                'status' => 'approved',
+            // Update CEO approval fields
+            $updateData = [
                 'ceo_approved_at' => now(),
                 'ceo_approved_by' => Auth::id()
-            ]);
+            ];
+            
+            // Only update status to approved if it hasn't progressed beyond that
+            // System Admin can approve CEO level even if status has progressed, but don't regress status
+            if (!in_array($imprestRequest->status, ['approved', 'assigned', 'paid', 'pending_receipt_verification', 'completed'])) {
+                $updateData['status'] = 'approved';
+            }
+            
+            $imprestRequest->update($updateData);
 
             DB::commit();
 

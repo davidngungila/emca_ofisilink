@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RefundController extends Controller
 {
@@ -592,6 +593,35 @@ class RefundController extends Controller
             return redirect()->back()
                 ->with('error', 'Failed to mark as paid: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generate PDF for refund request
+     */
+    public function generatePDF($id)
+    {
+        $user = Auth::user();
+        $isManager = $user->hasAnyRole(['System Admin', 'HOD', 'Accountant', 'CEO', 'Director', 'HR Officer']);
+        
+        $refundRequest = RefundRequest::with([
+            'staff',
+            'attachments.uploader',
+            'hodApproval',
+            'accountantVerification',
+            'ceoApproval',
+            'paidBy',
+            'rejectedBy',
+            'creator'
+        ])->findOrFail($id);
+        
+        // Check permissions
+        if (!$isManager && $refundRequest->staff_id !== $user->id) {
+            abort(403, 'You do not have permission to view this refund request');
+        }
+        
+        $pdf = Pdf::loadView('modules.refunds.refund-pdf', compact('refundRequest'));
+        
+        return $pdf->download('refund_request_' . $refundRequest->request_no . '.pdf');
     }
 
     /**

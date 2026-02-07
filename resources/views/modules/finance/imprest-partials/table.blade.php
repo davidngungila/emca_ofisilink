@@ -68,15 +68,75 @@
               @if($showActions ?? false)
               <td>
                 @php
+                  $isSystemAdmin = auth()->user()->hasRole('System Admin');
                   $isHOD = auth()->user()->hasAnyRole(['HOD', 'System Admin']);
                   $isCEO = auth()->user()->hasAnyRole(['CEO', 'Director', 'System Admin']);
                   $isAccountant = auth()->user()->hasAnyRole(['Accountant', 'System Admin']);
                   
-                  $canHodApprove = $isHOD && ($actionType ?? '') === 'hod' && $req->status === 'pending_hod';
-                  $canCeoApprove = $isCEO && ($actionType ?? '') === 'ceo' && $req->status === 'pending_ceo';
-                  $canAssignStaff = $isAccountant && ($actionType ?? '') === 'assign' && $req->status === 'approved';
-                  $canProcessPayment = $isAccountant && ($actionType ?? '') === 'payment' && $req->status === 'assigned';
-                  $canVerifyReceipts = $isAccountant && ($actionType ?? '') === 'verify' && $req->status === 'pending_receipt_verification';
+                  // Check if actions have already been performed
+                  $hodAlreadyApproved = !is_null($req->hod_approved_at);
+                  $ceoAlreadyApproved = !is_null($req->ceo_approved_at);
+                  $hasAssignments = $req->assignments->count() > 0;
+                  $paymentAlreadyProcessed = !is_null($req->paid_at);
+                  
+                  // System Admin can approve at any level regardless of status or actionType
+                  // But only if the action hasn't been performed yet
+                  $canHodApprove = false;
+                  if (!$hodAlreadyApproved) {
+                      if ($isSystemAdmin) {
+                          // System Admin can approve HOD and CEO levels at any status (except completed)
+                          $canHodApprove = !in_array($req->status, ['completed']);
+                      } else {
+                          // Regular users follow normal flow based on actionType and status
+                          $canHodApprove = $isHOD && (($actionType ?? '') === 'hod' || ($actionType ?? '') === 'all') && $req->status === 'pending_hod';
+                      }
+                      
+                      // Accountant can also approve HOD level if status hasn't progressed
+                      if (!$canHodApprove && $isAccountant && !$isSystemAdmin) {
+                          if (in_array($req->status, ['pending_hod', 'pending_ceo']) && (($actionType ?? '') === 'hod' || ($actionType ?? '') === 'all')) {
+                              $canHodApprove = true;
+                          }
+                      }
+                  }
+                  
+                  $canCeoApprove = false;
+                  if (!$ceoAlreadyApproved) {
+                      if ($isSystemAdmin) {
+                          $canCeoApprove = !in_array($req->status, ['completed']);
+                      } else {
+                          $canCeoApprove = $isCEO && (($actionType ?? '') === 'ceo' || ($actionType ?? '') === 'all') && $req->status === 'pending_ceo';
+                      }
+                  }
+                  
+                  $canAssignStaff = false;
+                  if (!$hasAssignments) {
+                      $canAssignStaff = $isAccountant && (($actionType ?? '') === 'assign' || ($actionType ?? '') === 'all') && $req->status === 'approved';
+                  }
+                  
+                  $canProcessPayment = false;
+                  if (!$paymentAlreadyProcessed) {
+                      $canProcessPayment = $isAccountant && (($actionType ?? '') === 'payment' || ($actionType ?? '') === 'all') && $req->status === 'assigned';
+                  }
+                  
+                  // Check for unverified receipts
+                  $hasUnverifiedReceipts = false;
+                  if ($req->assignments) {
+                      foreach ($req->assignments as $assignment) {
+                          if ($assignment->receipts) {
+                              foreach ($assignment->receipts as $receipt) {
+                                  if (!$receipt->is_verified) {
+                                      $hasUnverifiedReceipts = true;
+                                      break 2;
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  
+                  $canVerifyReceipts = false;
+                  if ($hasUnverifiedReceipts || $req->status === 'pending_receipt_verification') {
+                      $canVerifyReceipts = $isAccountant && (($actionType ?? '') === 'verify' || ($actionType ?? '') === 'all') && $req->status === 'pending_receipt_verification';
+                  }
                 @endphp
                 <div class="btn-group btn-group-sm" role="group">
                   <a href="{{ route('imprest.show', $req->id) }}" class="btn btn-outline-primary" title="View Details">

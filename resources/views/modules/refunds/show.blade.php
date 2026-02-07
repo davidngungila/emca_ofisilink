@@ -65,10 +65,13 @@
 
 @section('content')
 <div class="container-fluid px-4 py-3">
-    <!-- Back Button -->
-    <div class="mb-3">
+    <!-- Back Button and PDF Download -->
+    <div class="mb-3 d-flex justify-content-between align-items-center">
         <a href="{{ route('refunds.index') }}" class="btn btn-secondary btn-sm">
             <i class="bx bx-arrow-back me-1"></i>Back to Refunds
+        </a>
+        <a href="{{ route('refunds.pdf', $refundRequest->id) }}" class="btn btn-sm" style="background-color: #940000; color: white; border-color: #940000;" target="_blank">
+            <i class="bx bx-file-blank me-1"></i>Download PDF
         </a>
     </div>
 
@@ -86,7 +89,7 @@
 
     <!-- Action Buttons -->
     @if($canHodApprove || $canAccountantVerify || $canCeoApprove || $canMarkPaid)
-    <div class="card border-0 shadow-sm mb-4 bg-primary">
+    <div class="card border-0 shadow-sm mb-4" style="background-color: #940000;">
         <div class="card-body text-white">
             <h5 class="text-white mb-3"><i class="bx bx-cog me-2"></i>Available Actions</h5>
             <div class="d-flex flex-wrap gap-2">

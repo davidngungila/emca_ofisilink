@@ -51,6 +51,85 @@
     .priority-normal { background: #e3f2fd; color: #1976d2; }
     .priority-high { background: #fff3e0; color: #f57c00; }
     .priority-urgent { background: #ffebee; color: #d32f2f; }
+    
+    /* Hover Info Tooltip Styles */
+    .hover-info-tooltip {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        cursor: help;
+        z-index: 10;
+    }
+    
+    .hover-info-tooltip i {
+        font-size: 1.1rem;
+        color: #940000;
+        transition: color 0.2s;
+    }
+    
+    .hover-info-tooltip:hover i {
+        color: #7a0000;
+    }
+    
+    .hover-info-text {
+        visibility: hidden;
+        opacity: 0;
+        position: absolute;
+        bottom: 125%;
+        right: 0;
+        background-color: #940000;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: opacity 0.3s, visibility 0.3s;
+        z-index: 1000;
+        pointer-events: none;
+        min-width: 200px;
+    }
+    
+    .hover-info-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        right: 15px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #940000 transparent transparent transparent;
+    }
+    
+    .hover-info-tooltip:hover .hover-info-text {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    /* For inline tooltips */
+    .position-relative.d-inline-block .hover-info-tooltip {
+        position: relative;
+        display: inline-block;
+        top: auto;
+        right: auto;
+        transform: none;
+        margin-left: 5px;
+    }
+    
+    .position-relative.d-inline-block .hover-info-text {
+        bottom: auto;
+        top: 125%;
+        right: auto;
+        left: 0;
+    }
+    
+    .position-relative.d-inline-block .hover-info-text::after {
+        top: auto;
+        bottom: 100%;
+        right: auto;
+        left: 15px;
+        border-color: transparent transparent #940000 transparent;
+    }
 </style>
 @endpush
 
@@ -90,17 +169,23 @@
                         <label class="form-label">
                             Purpose <span class="text-danger">*</span>
                         </label>
-                        <input type="text" class="form-control form-control-lg" name="purpose" id="purpose" required placeholder="e.g., Training, Field Work, Conference">
-                        <small class="text-muted">
-                            <i class="bx bx-info-circle"></i> Provide a clear purpose for this imprest request
-                        </small>
+                        <div class="position-relative">
+                            <input type="text" class="form-control form-control-lg" name="purpose" id="purpose" required placeholder="e.g., Training, Field Work, Conference">
+                            <div class="hover-info-tooltip">
+                                <i class="bx bx-info-circle"></i>
+                                <span class="hover-info-text">Provide a clear purpose for this imprest request</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" id="description" rows="4" placeholder="Additional details about this imprest request..."></textarea>
-                        <small class="text-muted">
-                            <i class="bx bx-info-circle"></i> Provide any additional information that might be helpful
-                        </small>
+                        <div class="position-relative">
+                            <textarea class="form-control" name="description" id="description" rows="4" placeholder="Additional details about this imprest request..."></textarea>
+                            <div class="hover-info-tooltip" style="top: 10px; transform: none;">
+                                <i class="bx bx-info-circle"></i>
+                                <span class="hover-info-text">Provide any additional information that might be helpful</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -131,15 +216,20 @@
                     </h5>
                     <div class="mb-3">
                         <label class="form-label">Expected Return Date</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-light">
-                                <i class="bx bx-calendar text-primary"></i>
-                            </span>
-                            <input type="date" class="form-control" name="expected_return_date" id="expected_return_date" min="{{ date('Y-m-d') }}">
+                        <div class="position-relative">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light">
+                                    <i class="bx bx-calendar text-primary"></i>
+                                </span>
+                                <input type="date" class="form-control" name="expected_return_date" id="expected_return_date" min="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="position-relative d-inline-block mt-1">
+                                <div class="hover-info-tooltip">
+                                    <i class="bx bx-info-circle"></i>
+                                    <span class="hover-info-text">Optional: When do you expect to return/receive this amount?</span>
+                                </div>
+                            </div>
                         </div>
-                        <small class="text-muted">
-                            <i class="bx bx-info-circle"></i> Optional: When do you expect to return/receive this amount?
-                        </small>
                     </div>
                 </div>
 

@@ -28,7 +28,7 @@
 @section('content')
 <div class="container-fluid px-4 py-3">
     <!-- Header -->
-    <div class="card border-0 shadow-sm mb-4 bg-danger">
+    <div class="card border-0 shadow-sm mb-4" style="background-color: #940000;">
         <div class="card-body text-white">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div>
@@ -57,8 +57,8 @@
                             <h6 class="text-muted mb-1">All Requests</h6>
                             <h3 class="mb-0 fw-bold">{{ $stats['all'] }}</h3>
                         </div>
-                        <div class="bg-danger bg-opacity-10 p-3 rounded-circle">
-                            <i class="bx bx-list-ul fs-2 text-danger"></i>
+                        <div class="p-3 rounded-circle" style="background-color: rgba(148, 0, 0, 0.1);">
+                            <i class="bx bx-list-ul fs-2" style="color: #940000;"></i>
                         </div>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
                     <input type="text" name="search" class="form-control" placeholder="Request No, Purpose..." value="{{ request('search') }}">
                 </div>
                 <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn" style="background-color: #940000; color: white; border-color: #940000;">
                         <i class="bx bx-search me-1"></i>Filter
                     </button>
                     <a href="{{ route('refunds.index') }}" class="btn btn-secondary">
@@ -209,7 +209,7 @@
                             </td>
                             <td>{{ $refund->created_at->format('M d, Y') }}</td>
                             <td>
-                                <a href="{{ route('refunds.show', $refund->id) }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('refunds.show', $refund->id) }}" class="btn btn-sm" style="background-color: #940000; color: white; border-color: #940000;">
                                     <i class="bx bx-show"></i> View
                                 </a>
                             </td>
@@ -226,7 +226,7 @@
             <div class="text-center py-5">
                 <i class="bx bx-money-withdraw fs-1 text-muted mb-3"></i>
                 <p class="text-muted">No refund requests found.</p>
-                <a href="{{ route('refunds.create') }}" class="btn btn-danger">
+                <a href="{{ route('refunds.create') }}" class="btn" style="background-color: #940000; color: white; border-color: #940000;">
                     <i class="bx bx-plus me-1"></i>Create Your First Refund Request
                 </a>
             </div>

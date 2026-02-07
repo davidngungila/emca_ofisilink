@@ -252,21 +252,25 @@ function deleteDepartment(id) {
 $('#departmentForm').on('submit', function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
     const id = $('#departmentId').val();
     const url = id ? `{{ route('departments.update', ':id') }}`.replace(':id', id) : '{{ route('departments.store') }}';
     const method = id ? 'PUT' : 'POST';
     
-    // Add checkbox value
+    // Build form data manually to ensure all fields are included
+    const formData = new FormData();
+    formData.append('name', $('#name').val());
+    formData.append('code', $('#code').val() || '');
+    formData.append('description', $('#description').val() || '');
+    formData.append('head_id', $('#head_id').val() || '');
     formData.append('is_active', $('#is_active').is(':checked') ? 1 : 0);
     
-    // Remove _method if PUT
+    // Add _method for PUT requests
     if (method === 'PUT') {
         formData.append('_method', 'PUT');
     }
 
     fetch(url, {
-        method: method,
+        method: 'POST', // Always use POST, Laravel will handle PUT via _method
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'

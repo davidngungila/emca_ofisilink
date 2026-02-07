@@ -43,66 +43,108 @@
         $isSystemAdmin = auth()->user()->hasRole('System Admin');
         $user = auth()->user();
         
-        // Determine role-based permissions strictly
-        // HOD can only approve when status is pending_hod (unless System Admin/Accountant override)
+        // System Admin can approve at any level (HOD and CEO) regardless of status
+        // But only if the action hasn't been performed yet
+        // HOD can only approve when status is pending_hod
         $canHodApprove = false;
-        if ($isHOD) {
-            // HOD can approve when status is pending_hod
-            if ($imprestRequest->status === 'pending_hod') {
-                $canHodApprove = true;
-            } 
-            // System Admin and Accountant can approve HOD level even if status has progressed
-            elseif (($isSystemAdmin || $isAccountant) && in_array($imprestRequest->status, ['pending_hod', 'pending_ceo', 'approved', 'assigned', 'paid'])) {
-                $canHodApprove = true;
+        // Check if HOD approval has already been performed
+        $hodAlreadyApproved = !is_null($imprestRequest->hod_approved_at);
+        
+        if (!$hodAlreadyApproved) {
+            if ($isSystemAdmin) {
+                // System Admin can approve HOD level at any status (except completed)
+                if (!in_array($imprestRequest->status, ['completed'])) {
+                    $canHodApprove = true;
+                }
+            } elseif ($isHOD) {
+                // Regular HOD can approve when status is pending_hod
+                if ($imprestRequest->status === 'pending_hod') {
+                    $canHodApprove = true;
+                }
+            } elseif ($isAccountant) {
+                // Accountant can approve HOD level if status hasn't been approved yet
+                if (in_array($imprestRequest->status, ['pending_hod', 'pending_ceo'])) {
+                    $canHodApprove = true;
+                }
             }
         }
         
-        // Also allow HOD role specifically (not just through $isHOD which includes System Admin/Accountant)
-        if (!$canHodApprove && $user->hasRole('HOD') && $imprestRequest->status === 'pending_hod') {
-            $canHodApprove = true;
-        }
-        
-        // CEO can only approve when status is pending_ceo (unless System Admin/Accountant override)
+        // CEO can only approve when status is pending_ceo (unless System Admin override)
+        // But only if the action hasn't been performed yet
         $canCeoApprove = false;
-        if ($isCEO) {
-            if ($imprestRequest->status === 'pending_ceo') {
-                $canCeoApprove = true;
-            } elseif (($isSystemAdmin || $isAccountant) && in_array($imprestRequest->status, ['pending_ceo', 'approved', 'assigned', 'paid'])) {
-                // System Admin and Accountant can approve CEO level even if status has progressed
-                $canCeoApprove = true;
+        // Check if CEO approval has already been performed
+        $ceoAlreadyApproved = !is_null($imprestRequest->ceo_approved_at);
+        
+        if (!$ceoAlreadyApproved) {
+            if ($isSystemAdmin) {
+                // System Admin can approve CEO level at any status (except completed)
+                if (!in_array($imprestRequest->status, ['completed'])) {
+                    $canCeoApprove = true;
+                }
+            } elseif ($isCEO) {
+                // Regular CEO can approve when status is pending_ceo
+                if ($imprestRequest->status === 'pending_ceo') {
+                    $canCeoApprove = true;
+                }
             }
         }
         
         // Accountant can only assign staff when status is approved and no assignments exist
         $canAssignStaff = false;
-        if ($isAccountant) {
-            if ($imprestRequest->status === 'approved' && $imprestRequest->assignments->count() == 0) {
-                $canAssignStaff = true;
-            } elseif ($isSystemAdmin && in_array($imprestRequest->status, ['approved', 'assigned', 'paid']) && $imprestRequest->assignments->count() == 0) {
-                // System Admin can also assign
-                $canAssignStaff = true;
+        $hasAssignments = $imprestRequest->assignments->count() > 0;
+        
+        if (!$hasAssignments) {
+            if ($isAccountant) {
+                if ($imprestRequest->status === 'approved') {
+                    $canAssignStaff = true;
+                } elseif ($isSystemAdmin && in_array($imprestRequest->status, ['approved', 'assigned', 'paid'])) {
+                    // System Admin can also assign
+                    $canAssignStaff = true;
+                }
             }
         }
         
         // Accountant can only process payment when status is assigned
+        // But only if payment hasn't been processed yet
         $canProcessPayment = false;
-        if ($isAccountant) {
-            if ($imprestRequest->status === 'assigned') {
-                $canProcessPayment = true;
-            } elseif ($isSystemAdmin && in_array($imprestRequest->status, ['assigned', 'paid'])) {
-                // System Admin can also process payment
-                $canProcessPayment = true;
+        $paymentAlreadyProcessed = !is_null($imprestRequest->paid_at);
+        
+        if (!$paymentAlreadyProcessed) {
+            if ($isAccountant) {
+                if ($imprestRequest->status === 'assigned') {
+                    $canProcessPayment = true;
+                } elseif ($isSystemAdmin && in_array($imprestRequest->status, ['assigned', 'paid'])) {
+                    // System Admin can also process payment
+                    $canProcessPayment = true;
+                }
             }
         }
         
         // Accountant can only verify receipts when status is pending_receipt_verification
+        // Check if there are unverified receipts
         $canVerifyReceipts = false;
-        if ($isAccountant) {
-            if ($imprestRequest->status === 'pending_receipt_verification') {
-                $canVerifyReceipts = true;
-            } elseif ($isSystemAdmin && in_array($imprestRequest->status, ['paid', 'pending_receipt_verification'])) {
-                // System Admin can also verify receipts
-                $canVerifyReceipts = true;
+        $hasUnverifiedReceipts = false;
+        if ($imprestRequest->assignments) {
+            foreach ($imprestRequest->assignments as $assignment) {
+                if ($assignment->receipts) {
+                    foreach ($assignment->receipts as $receipt) {
+                        if (!$receipt->is_verified) {
+                            $hasUnverifiedReceipts = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if ($hasUnverifiedReceipts || $imprestRequest->status === 'pending_receipt_verification') {
+            if ($isAccountant) {
+                if ($imprestRequest->status === 'pending_receipt_verification') {
+                    $canVerifyReceipts = true;
+                } elseif ($isSystemAdmin && in_array($imprestRequest->status, ['paid', 'pending_receipt_verification'])) {
+                    // System Admin can also verify receipts
+                    $canVerifyReceipts = true;
+                }
             }
         }
         

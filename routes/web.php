@@ -181,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [RefundController::class, 'index'])->name('index');
         Route::get('/create', [RefundController::class, 'create'])->name('create');
         Route::post('/', [RefundController::class, 'store'])->name('store');
+        Route::get('/{id}/pdf', [RefundController::class, 'generatePDF'])->name('pdf')->where('id', '[0-9]+');
         Route::get('/{id}', [RefundController::class, 'show'])->name('show')->where('id', '[0-9]+');
         Route::post('/{id}/hod-approve', [RefundController::class, 'hodApprove'])->name('hod-approve')->where('id', '[0-9]+');
         Route::post('/{id}/accountant-verify', [RefundController::class, 'accountantVerify'])->name('accountant-verify')->where('id', '[0-9]+');
