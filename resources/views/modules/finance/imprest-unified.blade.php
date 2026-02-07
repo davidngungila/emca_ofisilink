@@ -368,37 +368,170 @@
 @include('modules.finance.imprest-partials.scripts')
 
 @push('scripts')
+<script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.js') }}"></script>
 <script>
-function loadRequests(filter) {
-    // Update active button
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.closest('.filter-btn').classList.add('active');
-    
-    // Show loading
-    document.getElementById('requests-container').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div></div>';
-    
-    // Load requests
-    fetch(`{{ route('imprest.index') }}?filter=${filter}`, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
+// Ensure jQuery is loaded before scripts
+$(document).ready(function() {
+    // Load requests function
+    window.loadRequests = function(filter) {
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const clickedBtn = event ? event.target.closest('.filter-btn') : document.querySelector(`.filter-btn[onclick*="${filter}"]`);
+        if (clickedBtn) {
+            clickedBtn.classList.add('active');
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById('requests-container').innerHTML = data.html;
-            // Update URL without reload
-            window.history.pushState({}, '', `{{ route('imprest.index') }}?filter=${filter}`);
+        
+        // Show loading
+        document.getElementById('requests-container').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading...</p></div>';
+        
+        // Load requests
+        fetch(`{{ route('imprest.index') }}?filter=${filter}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('requests-container').innerHTML = data.html;
+                // Update URL without reload
+                window.history.pushState({}, '', `{{ route('imprest.index') }}?filter=${filter}`);
+            } else {
+                document.getElementById('requests-container').innerHTML = '<div class="alert alert-warning">No data available.</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('requests-container').innerHTML = '<div class="alert alert-danger">Error loading requests. Please refresh the page.</div>';
+        });
+    };
+    
+    // Make sure new imprest modal works
+    $('#newImprestModal').on('hidden.bs.modal', function() {
+        const form = document.getElementById('newImprestForm');
+        if (form) {
+            form.reset();
+            // Clear any validation errors
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+            
+            const submitBtn = form.querySelector('#submitImprestBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bx bx-check-circle me-1"></i>Submit Request';
+            }
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('requests-container').innerHTML = '<div class="alert alert-danger">Error loading requests. Please refresh the page.</div>';
     });
-}
+    
+    // Override submitNewImprest to reload page after success
+    if (typeof window.submitNewImprest === 'function') {
+        const originalSubmit = window.submitNewImprest;
+        window.submitNewImprest = function() {
+            const form = document.getElementById('newImprestForm');
+            if (!form) {
+                console.error('Form not found');
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Disable submit button
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+            }
+
+            fetch('{{ route("imprest.store") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || formData.get('_token'),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Imprest request created successfully!', 'success');
+                    } else {
+                        alert(data.message || 'Imprest request created successfully!');
+                    }
+                    
+                    // Close modal
+                    const modalEl = document.getElementById('newImprestModal');
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    }
+                    
+                    // Reload page after short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    if (typeof showToast === 'function') {
+                        showToast(data.message || 'Error creating imprest request', 'error');
+                    } else {
+                        alert(data.message || 'Error creating imprest request');
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bx bx-check-circle me-1"></i>Submit Request';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                let errorMsg = 'Error creating imprest request. Please try again.';
+                
+                if (error.message) {
+                    errorMsg = error.message;
+                } else if (error.error) {
+                    errorMsg = error.error;
+                } else if (typeof error === 'object' && error.errors) {
+                    const errors = Object.values(error.errors).flat();
+                    errorMsg = errors.join(', ');
+                }
+                
+                if (typeof showToast === 'function') {
+                    showToast(errorMsg, 'error');
+                } else {
+                    alert(errorMsg);
+                }
+                
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bx bx-check-circle me-1"></i>Submit Request';
+                }
+            });
+        };
+    }
+    
+    // Ensure form submission works
+    $(document).on('submit', '#newImprestForm', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof window.submitNewImprest === 'function') {
+            window.submitNewImprest();
+        } else {
+            console.error('submitNewImprest function not available');
+            alert('Form submission error. Please refresh the page.');
+        }
+        return false;
+    });
+});
 </script>
 @endpush
 @endsection

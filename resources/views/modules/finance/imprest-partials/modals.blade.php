@@ -1,3 +1,6 @@
+<!-- New Imprest Request Modal -->
+@include('modules.finance.imprest-partials.new-modal')
+
 <!-- Assign Staff Modal -->
 @php
     $staffMembers = $staffMembers ?? collect();
