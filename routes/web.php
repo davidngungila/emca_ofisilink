@@ -475,6 +475,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/attendance-and-time/reports/my', [App\Http\Controllers\AttendanceReportController::class, 'myReport'])->name('modules.hr.attendance.reports.my');
     Route::post('/modules/hr/attendance-and-time/reports/general', [App\Http\Controllers\AttendanceReportController::class, 'generalReport'])->name('modules.hr.attendance.reports.general');
     Route::get('/modules/hr/attendance-and-time/reports/timing-pdf', [App\Http\Controllers\AttendanceReportController::class, 'timingReportPdf'])->name('modules.hr.attendance.reports.timing-pdf');
+    Route::get('/modules/hr/attendance-and-time/reports/advanced', [App\Http\Controllers\AttendanceReportController::class, 'advancedReport'])->name('modules.hr.attendance.reports.advanced');
     Route::get('/modules/hr/attendance-and-time/settings', [App\Http\Controllers\AttendanceSettingsController::class, 'index'])->name('modules.hr.attendance.settings')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance-and-time/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance-and-time/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
