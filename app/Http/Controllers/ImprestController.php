@@ -36,18 +36,6 @@ class ImprestController extends Controller
      */
     public function index(Request $request)
     {
-        // Calculate statistics
-        $stats = [
-            'all' => ImprestRequest::count(),
-            'pending_hod' => ImprestRequest::where('status', 'pending_hod')->count(),
-            'pending_ceo' => ImprestRequest::where('status', 'pending_ceo')->count(),
-            'approved' => ImprestRequest::where('status', 'approved')->count(),
-            'assigned' => ImprestRequest::where('status', 'assigned')->count(),
-            'paid' => ImprestRequest::where('status', 'paid')->count(),
-            'pending_receipt_verification' => ImprestRequest::where('status', 'pending_receipt_verification')->count(),
-            'completed' => ImprestRequest::where('status', 'completed')->count(),
-        ];
-
         $user = Auth::user();
         $isStaff = $user->hasAnyRole(['Staff', 'Employee']) && !$user->hasAnyRole(['System Admin', 'Accountant', 'HOD', 'CEO', 'Director']);
         
@@ -56,13 +44,146 @@ class ImprestController extends Controller
             return redirect()->route('imprest.my-assignments');
         }
         
-        // Get my assignments count for staff (for dashboard card)
-        $myAssignmentsCount = 0;
-        if ($user->hasAnyRole(['Staff', 'Employee'])) {
-            $myAssignmentsCount = ImprestAssignment::where('staff_id', auth()->id())->count();
+        // Use unified view for all other users
+        return $this->unified($request);
+    }
+
+    /**
+     * Unified Imprest Management Page
+     * Shows only relevant items based on user role
+     */
+    public function unified(Request $request)
+    {
+        $user = Auth::user();
+        $isAccountant = $user->hasAnyRole(['Accountant', 'System Admin']);
+        $isHOD = $user->hasAnyRole(['HOD', 'System Admin']);
+        $isCEO = $user->hasAnyRole(['CEO', 'Director', 'System Admin']);
+        
+        // Get filter - default to what needs user's action
+        $filter = $request->get('filter', 'my_action');
+        
+        // Build query based on filter
+        $query = ImprestRequest::with(['accountant', 'assignments.staff', 'assignments.receipts', 'hodApproval', 'ceoApproval']);
+        
+        // Determine what to show based on filter and user role
+        switch ($filter) {
+            case 'my_action':
+                // Show what needs action from current user
+                if ($isHOD) {
+                    $query->where('status', 'pending_hod');
+                } elseif ($isCEO) {
+                    $query->where('status', 'pending_ceo');
+                } elseif ($isAccountant) {
+                    // Accountant sees: approved (for assignment), assigned (for payment), pending verification
+                    $query->whereIn('status', ['approved', 'assigned', 'pending_receipt_verification']);
+                } else {
+                    $query->where('status', 'pending_hod'); // Default
+                }
+                break;
+                
+            case 'pending_hod':
+                if ($isHOD || $isAccountant) {
+                    $query->where('status', 'pending_hod');
+                }
+                break;
+                
+            case 'pending_ceo':
+                if ($isCEO || $isAccountant || $isHOD) {
+                    $query->where('status', 'pending_ceo');
+                }
+                break;
+                
+            case 'approved':
+                if ($isAccountant) {
+                    $query->where('status', 'approved');
+                }
+                break;
+                
+            case 'assigned':
+                if ($isAccountant) {
+                    $query->where('status', 'assigned');
+                }
+                break;
+                
+            case 'paid':
+                if ($isAccountant) {
+                    $query->where('status', 'paid');
+                }
+                break;
+                
+            case 'pending_verification':
+                if ($isAccountant) {
+                    $query->where('status', 'pending_receipt_verification');
+                }
+                break;
+                
+            case 'completed':
+                $query->where('status', 'completed');
+                break;
+                
+            case 'all':
+                // Show all
+                break;
+                
+            default:
+                // Default to my_action
+                if ($isHOD) {
+                    $query->where('status', 'pending_hod');
+                } elseif ($isCEO) {
+                    $query->where('status', 'pending_ceo');
+                } elseif ($isAccountant) {
+                    $query->whereIn('status', ['approved', 'assigned', 'pending_receipt_verification']);
+                }
         }
         
-        return view('modules.finance.imprest-dashboard', compact('stats', 'myAssignmentsCount'));
+        // Order by
+        $query->orderBy('created_at', 'desc');
+        
+        // Get requests
+        $requests = $query->paginate(20)->appends($request->query());
+        
+        // Calculate counts for badges
+        $counts = [
+            'pending_hod' => ImprestRequest::where('status', 'pending_hod')->count(),
+            'pending_ceo' => ImprestRequest::where('status', 'pending_ceo')->count(),
+            'approved' => ImprestRequest::where('status', 'approved')->count(),
+            'assigned' => ImprestRequest::where('status', 'assigned')->count(),
+            'paid' => ImprestRequest::where('status', 'paid')->count(),
+            'pending_receipt_verification' => ImprestRequest::where('status', 'pending_receipt_verification')->count(),
+            'completed' => ImprestRequest::where('status', 'completed')->count(),
+            'all' => ImprestRequest::count(),
+        ];
+        
+        // Calculate my_action count based on role
+        if ($isHOD) {
+            $counts['my_action'] = $counts['pending_hod'];
+        } elseif ($isCEO) {
+            $counts['my_action'] = $counts['pending_ceo'];
+        } elseif ($isAccountant) {
+            $counts['my_action'] = $counts['approved'] + $counts['assigned'] + $counts['pending_receipt_verification'];
+        } else {
+            $counts['my_action'] = 0;
+        }
+        
+        // If AJAX request, return JSON with HTML
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('modules.finance.imprest-partials.table', [
+                'requests' => $requests,
+                'showActions' => true
+            ])->render();
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'counts' => $counts
+            ]);
+        }
+        
+        // Regular request - return full page
+        return view('modules.finance.imprest-unified', [
+            'requests' => $requests,
+            'counts' => $counts,
+            'filter' => $filter
+        ]);
     }
 
     /**
