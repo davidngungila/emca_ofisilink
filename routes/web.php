@@ -164,6 +164,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/assignment/{assignmentId}/payment', [ImprestController::class, 'processIndividualPayment'])->name('individual-payment')->where('id', '[0-9]+')->where('assignmentId', '[0-9]+');
         Route::get('/verification', [ImprestController::class, 'verificationPage'])->name('verification');
         Route::get('/export/pdf', [ImprestController::class, 'exportPDF'])->name('export-pdf');
+        Route::get('/export/report', [ImprestController::class, 'exportReport'])->name('export.report');
         
         // Generic {id} routes (must be last to avoid conflicts)
         Route::get('/{id}/assign-staff', [ImprestController::class, 'assignStaffPage'])->name('assign-staff.page')->where('id', '[0-9]+');

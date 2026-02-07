@@ -75,6 +75,94 @@ $isStaff = auth()->user()->hasRole('Staff') || auth()->user()->hasRole('Employee
   </div>
 </div>
 
+<!-- Export Reports Section -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);">
+    <div class="card-header" style="background: linear-gradient(135deg, #940000 0%, #7a0000 100%); color: white; padding: 1rem 1.5rem; border: none;">
+        <h5 class="mb-0" style="color: white; font-weight: 600;">
+            <i class="bx bx-download me-2"></i>Export Reports
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 2px solid transparent; height: 100%;" 
+                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(148, 0, 0, 0.15)'; this.style.borderColor='#940000';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'; this.style.borderColor='transparent';">
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #940000; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bx bx-calendar me-2"></i>Quarter Report
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('imprest.export.report', ['period' => 'quarter', 'format' => 'pdf']) }}" 
+                           class="btn btn-sm flex-fill" 
+                           style="border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; border: 2px solid #dc3545; color: #dc3545; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#dc3545'; this.style.color='white'; this.style.transform='translateY(-2px)';"
+                           onmouseout="this.style.background='transparent'; this.style.color='#dc3545'; this.style.transform='translateY(0)';">
+                            <i class="bx bx-file-blank me-1"></i>PDF
+                        </a>
+                        <a href="{{ route('imprest.export.report', ['period' => 'quarter', 'format' => 'excel']) }}" 
+                           class="btn btn-sm flex-fill" 
+                           style="border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; border: 2px solid #28a745; color: #28a745; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#28a745'; this.style.color='white'; this.style.transform='translateY(-2px)';"
+                           onmouseout="this.style.background='transparent'; this.style.color='#28a745'; this.style.transform='translateY(0)';">
+                            <i class="bx bx-spreadsheet me-1"></i>Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 2px solid transparent; height: 100%;" 
+                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(148, 0, 0, 0.15)'; this.style.borderColor='#940000';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'; this.style.borderColor='transparent';">
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #940000; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bx bx-calendar-check me-2"></i>6 Months Report
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('imprest.export.report', ['period' => '6month', 'format' => 'pdf']) }}" 
+                           class="btn btn-sm flex-fill" 
+                           style="border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; border: 2px solid #dc3545; color: #dc3545; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#dc3545'; this.style.color='white'; this.style.transform='translateY(-2px)';"
+                           onmouseout="this.style.background='transparent'; this.style.color='#dc3545'; this.style.transform='translateY(0)';">
+                            <i class="bx bx-file-blank me-1"></i>PDF
+                        </a>
+                        <a href="{{ route('imprest.export.report', ['period' => '6month', 'format' => 'excel']) }}" 
+                           class="btn btn-sm flex-fill" 
+                           style="border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; border: 2px solid #28a745; color: #28a745; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#28a745'; this.style.color='white'; this.style.transform='translateY(-2px)';"
+                           onmouseout="this.style.background='transparent'; this.style.color='#28a745'; this.style.transform='translateY(0)';">
+                            <i class="bx bx-spreadsheet me-1"></i>Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 2px solid transparent; height: 100%;" 
+                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(148, 0, 0, 0.15)'; this.style.borderColor='#940000';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)'; this.style.borderColor='transparent';">
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #940000; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="bx bx-calendar-event me-2"></i>Year Report
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('imprest.export.report', ['period' => 'year', 'format' => 'pdf']) }}" 
+                           class="btn btn-sm flex-fill" 
+                           style="border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; border: 2px solid #dc3545; color: #dc3545; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#dc3545'; this.style.color='white'; this.style.transform='translateY(-2px)';"
+                           onmouseout="this.style.background='transparent'; this.style.color='#dc3545'; this.style.transform='translateY(0)';">
+                            <i class="bx bx-file-blank me-1"></i>PDF
+                        </a>
+                        <a href="{{ route('imprest.export.report', ['period' => 'year', 'format' => 'excel']) }}" 
+                           class="btn btn-sm flex-fill" 
+                           style="border-radius: 8px; font-weight: 500; padding: 0.5rem 1rem; border: 2px solid #28a745; color: #28a745; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#28a745'; this.style.color='white'; this.style.transform='translateY(-2px)';"
+                           onmouseout="this.style.background='transparent'; this.style.color='#28a745'; this.style.transform='translateY(0)';">
+                            <i class="bx bx-spreadsheet me-1"></i>Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Tabs Navigation -->
 <ul class="nav nav-tabs mb-3" role="tablist">
   <li class="nav-item">

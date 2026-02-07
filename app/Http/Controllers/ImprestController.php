@@ -17,6 +17,11 @@ use App\Models\CashBox;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\NotificationService;
 use App\Services\ActivityLogService;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class ImprestController extends Controller
 {
@@ -2558,6 +2563,243 @@ class ImprestController extends Controller
                 'success' => false,
                 'message' => 'Error processing payment: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Export Imprest Report
+     * Supports: quarter, 6-month, year
+     * Formats: PDF, Excel
+     */
+    public function exportReport(Request $request)
+    {
+        $period = $request->get('period', 'quarter'); // quarter, 6month, year
+        $format = $request->get('format', 'pdf'); // pdf, excel
+        
+        // Calculate date range based on period
+        $dateRange = $this->calculateDateRange($period);
+        
+        // Build query
+        $query = ImprestRequest::with(['accountant', 'assignments.staff', 'assignments.receipts', 'hodApproval', 'ceoApproval'])
+            ->whereBetween('created_at', [$dateRange['from'], $dateRange['to']]);
+        
+        // Apply additional filters if provided
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        if ($request->filled('accountant_id')) {
+            $query->where('accountant_id', $request->accountant_id);
+        }
+        
+        $requests = $query->orderBy('created_at', 'desc')->get();
+        
+        // Calculate summary statistics
+        $summary = [
+            'total_requests' => $requests->count(),
+            'total_amount' => $requests->sum('amount'),
+            'by_status' => $requests->groupBy('status')->map(function($group) {
+                return [
+                    'count' => $group->count(),
+                    'amount' => $group->sum('amount')
+                ];
+            }),
+            'period' => $period,
+            'date_from' => $dateRange['from'],
+            'date_to' => $dateRange['to'],
+            'period_label' => $dateRange['label']
+        ];
+        
+        if ($format === 'excel') {
+            return $this->exportExcel($requests, $summary);
+        } else {
+            return $this->exportPdf($requests, $summary);
+        }
+    }
+    
+    /**
+     * Calculate date range based on period type
+     */
+    private function calculateDateRange($period)
+    {
+        $now = now();
+        
+        switch ($period) {
+            case 'quarter':
+                // Current quarter
+                $quarter = ceil($now->month / 3);
+                $from = $now->copy()->month(($quarter - 1) * 3 + 1)->startOfMonth();
+                $to = $now->copy()->month($quarter * 3)->endOfMonth();
+                $label = "Q{$quarter} {$now->year}";
+                break;
+                
+            case '6month':
+                // Last 6 months
+                $from = $now->copy()->subMonths(5)->startOfMonth();
+                $to = $now->copy()->endOfMonth();
+                $label = "6 Months ({$from->format('M Y')} - {$to->format('M Y')})";
+                break;
+                
+            case 'year':
+                // Current year
+                $from = $now->copy()->startOfYear();
+                $to = $now->copy()->endOfYear();
+                $label = "Year {$now->year}";
+                break;
+                
+            default:
+                // Default to current quarter
+                $quarter = ceil($now->month / 3);
+                $from = $now->copy()->month(($quarter - 1) * 3 + 1)->startOfMonth();
+                $to = $now->copy()->month($quarter * 3)->endOfMonth();
+                $label = "Q{$quarter} {$now->year}";
+        }
+        
+        return [
+            'from' => $from->format('Y-m-d'),
+            'to' => $to->format('Y-m-d'),
+            'label' => $label
+        ];
+    }
+    
+    /**
+     * Export to PDF
+     */
+    private function exportPdf($requests, $summary)
+    {
+        try {
+            $data = [
+                'requests' => $requests,
+                'summary' => $summary,
+                'generated_at' => now()->format('d M Y H:i:s'),
+                'generated_by' => Auth::user()->name ?? 'System'
+            ];
+            
+            $pdf = Pdf::loadView('modules.finance.pdf.imprest-report', $data);
+            $pdf->setPaper('A4', 'landscape');
+            
+            $filename = 'Imprest_Report_' . str_replace(' ', '_', $summary['period_label']) . '_' . date('Ymd_His') . '.pdf';
+            
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            \Log::error('Imprest PDF Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Export to Excel
+     */
+    private function exportExcel($requests, $summary)
+    {
+        try {
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            // Set title
+            $sheet->setCellValue('A1', 'Imprest Report - ' . $summary['period_label']);
+            $sheet->mergeCells('A1:J1');
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            // Summary row
+            $sheet->setCellValue('A2', 'Period: ' . $summary['period_label']);
+            $sheet->setCellValue('A3', 'Total Requests: ' . $summary['total_requests']);
+            $sheet->setCellValue('A4', 'Total Amount: ' . number_format($summary['total_amount'], 2));
+            $sheet->setCellValue('A5', 'Generated: ' . now()->format('d M Y H:i:s'));
+            $sheet->setCellValue('A6', 'Generated By: ' . (Auth::user()->name ?? 'System'));
+            
+            // Headers
+            $headers = [
+                'A7' => 'Request No',
+                'B7' => 'Date',
+                'C7' => 'Purpose',
+                'D7' => 'Amount',
+                'E7' => 'Status',
+                'F7' => 'Accountant',
+                'G7' => 'HOD Approved',
+                'H7' => 'CEO Approved',
+                'I7' => 'Assigned Staff',
+                'J7' => 'Paid At',
+                'K7' => 'Completed At'
+            ];
+            
+            foreach ($headers as $cell => $header) {
+                $sheet->setCellValue($cell, $header);
+            }
+            
+            // Style headers
+            $headerRange = 'A7:K7';
+            $sheet->getStyle($headerRange)->getFont()->setBold(true);
+            $sheet->getStyle($headerRange)->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('940000');
+            $sheet->getStyle($headerRange)->getFont()->getColor()->setRGB('FFFFFF');
+            $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($headerRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            
+            // Data rows
+            $row = 8;
+            foreach ($requests as $request) {
+                $assignedStaff = $request->assignments->pluck('staff.name')->filter()->implode(', ') ?: 'N/A';
+                
+                $sheet->setCellValue('A' . $row, $request->request_no ?? 'N/A');
+                $sheet->setCellValue('B' . $row, $request->created_at ? $request->created_at->format('Y-m-d') : 'N/A');
+                $sheet->setCellValue('C' . $row, $request->purpose ?? 'N/A');
+                $sheet->setCellValue('D' . $row, number_format($request->amount ?? 0, 2));
+                $sheet->setCellValue('E' . $row, ucfirst(str_replace('_', ' ', $request->status ?? 'N/A')));
+                $sheet->setCellValue('F' . $row, $request->accountant->name ?? 'N/A');
+                $sheet->setCellValue('G' . $row, $request->hodApproval->name ?? 'N/A');
+                $sheet->setCellValue('H' . $row, $request->ceoApproval->name ?? 'N/A');
+                $sheet->setCellValue('I' . $row, $assignedStaff);
+                $sheet->setCellValue('J' . $row, $request->paid_at ? $request->paid_at->format('Y-m-d H:i') : 'N/A');
+                $sheet->setCellValue('K' . $row, $request->completed_at ? $request->completed_at->format('Y-m-d H:i') : 'N/A');
+                
+                // Add borders
+                $sheet->getStyle('A' . $row . ':K' . $row)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                
+                $row++;
+            }
+            
+            // Summary by status
+            $row += 2;
+            $sheet->setCellValue('A' . $row, 'Summary by Status');
+            $sheet->getStyle('A' . $row)->getFont()->setBold(true);
+            $row++;
+            
+            $sheet->setCellValue('A' . $row, 'Status');
+            $sheet->setCellValue('B' . $row, 'Count');
+            $sheet->setCellValue('C' . $row, 'Total Amount');
+            $sheet->getStyle('A' . $row . ':C' . $row)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $row . ':C' . $row)->getFill()
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('E0E0E0');
+            $row++;
+            
+            foreach ($summary['by_status'] as $status => $data) {
+                $sheet->setCellValue('A' . $row, ucfirst(str_replace('_', ' ', $status)));
+                $sheet->setCellValue('B' . $row, $data['count']);
+                $sheet->setCellValue('C' . $row, number_format($data['amount'], 2));
+                $row++;
+            }
+            
+            // Auto-size columns
+            foreach (range('A', 'K') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+            
+            // Write file
+            $writer = new Xlsx($spreadsheet);
+            $tempFile = tempnam(sys_get_temp_dir(), 'imprest_export');
+            $writer->save($tempFile);
+            
+            $filename = 'Imprest_Report_' . str_replace(' ', '_', $summary['period_label']) . '_' . date('Ymd_His') . '.xlsx';
+            
+            return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+            
+        } catch (\Exception $e) {
+            \Log::error('Imprest Excel Export Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
         }
     }
 }
