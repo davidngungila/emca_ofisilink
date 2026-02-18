@@ -428,10 +428,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/modules/tasks/{id}', [App\Http\Controllers\TaskController::class, 'show'])->name('modules.tasks.show');
     Route::get('/modules/tasks/reports/{id}', [App\Http\Controllers\TaskController::class, 'showReport'])->name('modules.tasks.reports.show');
     
-    // Performance Management Module Routes
-    Route::get('/modules/performance-management-module', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.performance_management_module');
-    Route::post('/modules/performance-management-module/action', [App\Http\Controllers\AssessmentController::class, 'action'])->name('modules.performance_management_module.action');
-    Route::get('/modules/performance-management-module/pdf', [App\Http\Controllers\AssessmentController::class, 'pdf'])->name('modules.performance_management_module.pdf');
     
 // HR Module Routes (authenticated users)
 Route::middleware('auth')->group(function () {
@@ -455,9 +451,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/modules/reports/generate', [App\Http\Controllers\ReportController::class, 'generate'])->name('modules.reports.generate');
     Route::get('/modules/hr/payroll', [PayrollController::class, 'index'])->name('modules.hr.payroll');
     Route::get('/modules/hr/sick-sheets', [App\Http\Controllers\SickSheetController::class, 'index'])->name('modules.hr.sick-sheets');
-    Route::get('/modules/hr/performance-management-module', [App\Http\Controllers\AssessmentController::class, 'index'])->name('modules.hr.performance_management_module');
-    Route::get('/modules/hr/performance-management', [App\Http\Controllers\PerformanceManagementController::class, 'index'])->name('modules.hr.performance-management');
-    Route::post('/modules/hr/performance-management/handle', [App\Http\Controllers\PerformanceManagementController::class, 'handleRequest'])->name('modules.hr.performance-management.handle');
     Route::get('/modules/hr/departments', [App\Http\Controllers\DepartmentController::class, 'index'])->name('modules.hr.departments');
     Route::get('/modules/hr/positions', [App\Http\Controllers\PositionController::class, 'index'])->name('modules.hr.positions');
     Route::apiResource('/modules/hr/salary-structures', App\Http\Controllers\SalaryStructureController::class)
@@ -480,7 +473,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/modules/hr/attendance-and-time/settings/devices', [App\Http\Controllers\AttendanceSettingsController::class, 'devices'])->name('modules.hr.attendance.settings.devices')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance-and-time/settings/enrollment', [App\Http\Controllers\AttendanceSettingsController::class, 'enrollment'])->name('modules.hr.attendance.settings.enrollment')->middleware('role:HR Officer,System Admin');
     Route::get('/modules/hr/attendance-and-time/settings/schedules', [App\Http\Controllers\AttendanceSettingsController::class, 'schedules'])->name('modules.hr.attendance.settings.schedules')->middleware('role:HR Officer,System Admin');
-    Route::get('/modules/hr/attendance-and-time/settings/policies', [App\Http\Controllers\AttendanceSettingsController::class, 'policies'])->name('modules.hr.attendance.settings.policies')->middleware('role:HR Officer,System Admin');
+    Route::get('/modules/hr/attendance-and-time/settings/locations', [App\Http\Controllers\AttendanceSettingsController::class, 'locations'])->name('modules.hr.attendance.settings.locations')->middleware('role:HR Officer,System Admin');
     Route::post('/modules/hr/attendance-and-time/settings/general', [App\Http\Controllers\AttendanceSettingsController::class, 'saveGeneralSettings'])->name('modules.hr.attendance.settings.general')->middleware('role:HR Officer,System Admin');
     
     // ZKTeco Individual Pages
@@ -570,39 +563,49 @@ Route::prefix('sick-sheets')->name('sick-sheets.')->group(function () {
     Route::post('/{sickSheet}/hr-verification', [App\Http\Controllers\SickSheetController::class, 'hrFinalVerification'])->name('hr-verification')->middleware('role:HR Officer,System Admin');
 });
 
-// Assessment Routes
-Route::prefix('performance-management-module')->name('performance_management_module.')->group(function () {
-    // Page routes (GET)
-    Route::get('/create', [App\Http\Controllers\AssessmentController::class, 'create'])->name('create');
-    Route::get('/{assessment}/edit', [App\Http\Controllers\AssessmentController::class, 'edit'])->name('edit')->middleware('role:System Admin,HR Officer');
-    Route::get('/{assessment}/approve', [App\Http\Controllers\AssessmentController::class, 'approvePage'])->name('approve')->middleware('role:HOD,System Admin,HR Officer');
-    Route::get('/{assessment}/reject', [App\Http\Controllers\AssessmentController::class, 'rejectPage'])->name('reject')->middleware('role:HOD,System Admin,HR Officer');
-    Route::get('/activities/{activity}/reports', [App\Http\Controllers\AssessmentController::class, 'activityReportsPage'])->name('activities.reports');
-    Route::get('/activities/{activity}/progress/create', [App\Http\Controllers\AssessmentController::class, 'progressCreatePage'])->name('progress.create');
-    Route::get('/analytics', [App\Http\Controllers\AssessmentController::class, 'analyticsPage'])->name('analytics.page')->middleware('role:System Admin,HR Officer,HOD');
-    Route::get('/analytics/data', [App\Http\Controllers\AssessmentController::class, 'getAnalytics'])->name('analytics.data')->middleware('role:System Admin,HR Officer,HOD');
+// Performance Management Module
+Route::middleware(['auth'])->prefix('modules/performance-management-module')->name('modules.performance_management_module')->group(function () {
+    Route::get('/', [App\Http\Controllers\AssessmentController::class, 'index'])->name('');
+    Route::post('/action', [App\Http\Controllers\AssessmentController::class, 'action'])->name('.action');
+    Route::get('/pdf', [App\Http\Controllers\AssessmentController::class, 'pdf'])->name('.pdf');
     
-    // API/Action routes
-    Route::post('/', [App\Http\Controllers\AssessmentController::class, 'store'])->name('store');
-    Route::post('/{assessment}/hod-approve', [App\Http\Controllers\AssessmentController::class, 'hodApprove'])->name('hod-approve')->middleware('role:HOD,System Admin,HR Officer');
-    Route::post('/activities/{activity}/progress-report', [App\Http\Controllers\AssessmentController::class, 'submitProgressReport'])->name('progress-report');
-    Route::post('/progress-reports/{report}/approve', [App\Http\Controllers\AssessmentController::class, 'approveProgressReport'])->name('progress-approve')->middleware('role:HOD,System Admin');
-    Route::get('/{assessment}/details', [App\Http\Controllers\AssessmentController::class, 'getAssessmentDetails'])->name('details');
-    Route::get('/{assessment}/activities-reports', [App\Http\Controllers\AssessmentController::class, 'activitiesReportsPage'])->name('activities-reports');
-    Route::get('/performance/{employeeId?}', [App\Http\Controllers\AssessmentController::class, 'calculatePerformance'])->name('performance');
-    Route::get('/export/{employeeId}', [App\Http\Controllers\AssessmentController::class, 'exportPerformance'])->name('export');
-    Route::get('/comprehensive-data', [App\Http\Controllers\AssessmentController::class, 'getComprehensiveData'])->name('comprehensive-data')->middleware('role:System Admin,HR Officer');
-    Route::get('/calendar/events', [App\Http\Controllers\AssessmentController::class, 'getCalendarEvents'])->name('calendar.events');
-    Route::get('/{assessment}', [App\Http\Controllers\AssessmentController::class, 'show'])->name('show');
+    Route::get('/create', [App\Http\Controllers\AssessmentController::class, 'create'])->name('.create');
+    Route::get('/{assessment}/edit', [App\Http\Controllers\AssessmentController::class, 'edit'])->name('.edit')->middleware('role:System Admin,HR Officer');
+    Route::get('/{assessment}/approve', [App\Http\Controllers\AssessmentController::class, 'approvePage'])->name('.approve')->middleware('role:HOD,System Admin,HR Officer');
+    Route::get('/{assessment}/reject', [App\Http\Controllers\AssessmentController::class, 'rejectPage'])->name('.reject')->middleware('role:HOD,System Admin,HR Officer');
+    Route::get('/activities/{activity}/reports', [App\Http\Controllers\AssessmentController::class, 'activityReportsPage'])->name('.activities.reports');
+    Route::get('/activities/{activity}/progress/create', [App\Http\Controllers\AssessmentController::class, 'progressCreatePage'])->name('.progress.create');
+    Route::get('/set-org-goal', [App\Http\Controllers\AssessmentController::class, 'setOrgGoalPage'])->name('.set-org-goal')->middleware('role:CEO,General Manager,System Admin');
+    Route::get('/delegate-activity', [App\Http\Controllers\AssessmentController::class, 'delegateActivityPage'])->name('.delegate-activity')->middleware('role:HOD,CEO,General Manager,System Admin');
+    Route::get('/daily-report', [App\Http\Controllers\AssessmentController::class, 'dailyReportPage'])->name('.daily-report');
+    
+    Route::get('/analytics', [App\Http\Controllers\AssessmentController::class, 'analyticsPage'])->name('.analytics.page')->middleware('role:System Admin,HR Officer,HOD');
+    Route::get('/analytics/data', [App\Http\Controllers\AssessmentController::class, 'getAnalytics'])->name('.analytics.data')->middleware('role:System Admin,HR Officer,HOD');
+    
+    Route::post('/store', [App\Http\Controllers\AssessmentController::class, 'store'])->name('.store');
+    Route::post('/{assessment}/hod-approve', [App\Http\Controllers\AssessmentController::class, 'hodApprove'])->name('.hod-approve')->middleware('role:HOD,System Admin,HR Officer');
+    Route::post('/activities/{activity}/progress-report', [App\Http\Controllers\AssessmentController::class, 'submitProgressReport'])->name('.progress-report');
+    Route::post('/progress-reports/{report}/approve', [App\Http\Controllers\AssessmentController::class, 'approveProgressReport'])->name('.progress-approve')->middleware('role:HOD,System Admin');
+    Route::get('/{assessment}/details', [App\Http\Controllers\AssessmentController::class, 'getAssessmentDetails'])->name('.details');
+    Route::get('/{assessment}/activities-reports', [App\Http\Controllers\AssessmentController::class, 'activitiesReportsPage'])->name('.activities-reports');
+    Route::get('/performance/{employeeId?}', [App\Http\Controllers\AssessmentController::class, 'calculatePerformance'])->name('.performance');
+    Route::get('/export/{employeeId}', [App\Http\Controllers\AssessmentController::class, 'exportPerformance'])->name('.export');
+    Route::get('/comprehensive-data', [App\Http\Controllers\AssessmentController::class, 'getComprehensiveData'])->name('.comprehensive-data')->middleware('role:System Admin,HR Officer');
+    Route::get('/calendar/events', [App\Http\Controllers\AssessmentController::class, 'getCalendarEvents'])->name('.calendar.events');
+    Route::get('/{assessment}', [App\Http\Controllers\AssessmentController::class, 'show'])->name('.show');
     
     // Admin Management Routes
-    Route::put('/{assessment}', [App\Http\Controllers\AssessmentController::class, 'update'])->name('update')->middleware('role:System Admin,HR Officer');
-    Route::delete('/{assessment}', [App\Http\Controllers\AssessmentController::class, 'destroy'])->name('destroy')->middleware('role:System Admin');
-    Route::put('/activities/{activity}', [App\Http\Controllers\AssessmentController::class, 'updateActivity'])->name('activities.update')->middleware('role:System Admin,HR Officer');
-    Route::delete('/activities/{activity}', [App\Http\Controllers\AssessmentController::class, 'destroyActivity'])->name('activities.destroy')->middleware('role:System Admin');
-    Route::delete('/progress-reports/{report}', [App\Http\Controllers\AssessmentController::class, 'destroyProgressReport'])->name('progress-reports.destroy')->middleware('role:System Admin');
-
+    Route::put('/{assessment}', [App\Http\Controllers\AssessmentController::class, 'update'])->name('.update')->middleware('role:System Admin,HR Officer');
+    Route::delete('/{assessment}', [App\Http\Controllers\AssessmentController::class, 'destroy'])->name('.destroy')->middleware('role:System Admin');
+    Route::put('/activities/{activity}', [App\Http\Controllers\AssessmentController::class, 'updateActivity'])->name('.activities.update')->middleware('role:System Admin,HR Officer');
+    Route::delete('/activities/{activity}', [App\Http\Controllers\AssessmentController::class, 'destroyActivity'])->name('.activities.destroy')->middleware('role:System Admin');
+    Route::delete('/progress-reports/{report}', [App\Http\Controllers\AssessmentController::class, 'destroyProgressReport'])->name('.progress-reports.destroy')->middleware('role:System Admin');
 });
+
+// Backward compatibility alias
+Route::get('/performance-management-module', function() {
+    return redirect()->route('modules.performance_management_module');
+})->middleware('auth');
 
 // Organizational Goals (HR/Admin)
 Route::prefix('modules/hr/organizational-goals')->name('organizational-goals.')->middleware('role:System Admin,HR Officer')->group(function () {
@@ -823,6 +826,7 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         // PDF Generation Routes
         Route::get('/payslip/{payrollItem}/pdf', [PayrollController::class, 'generatePayslipPdf'])->name('payslip.pdf');
         Route::get('/{payroll}/report/pdf', [PayrollController::class, 'generatePayrollReportPdf'])->name('report.pdf');
+        Route::get('/{payroll}/journal/pdf', [PayrollController::class, 'generateSalaryJournalPdf'])->name('journal.pdf');
         
         // Deduction Management Routes
         Route::get('/deductions', [PayrollController::class, 'showDeductionManagement'])->name('deductions.index');
@@ -1191,6 +1195,22 @@ Route::prefix('api/v1')->name('api.v1.')->group(function () {
         Route::post('settings/upload-logo', [SettingsController::class, 'uploadLogo'])->name('settings.upload-logo');
         Route::post('settings/financial-year/toggle-lock', [SettingsController::class, 'toggleFinancialYearLock'])->name('admin.settings.fy.toggle-lock');
         Route::post('settings/financial-year/initialize', [SettingsController::class, 'initializeFinancialYear'])->name('admin.settings.fy.initialize');
+        
+        // Financial Year Management
+        Route::prefix('financial-year')->name('financial-year.')->group(function() {
+            Route::get('/', [\App\Http\Controllers\FinancialYearController::class, 'index'])->name('index');
+            Route::post('/close', [\App\Http\Controllers\FinancialYearController::class, 'closeFinancialYear'])->name('close');
+            Route::post('/initialize', [\App\Http\Controllers\FinancialYearController::class, 'initializeFinancialYear'])->name('initialize');
+            Route::get('/comparison', [\App\Http\Controllers\FinancialYearController::class, 'getComparison'])->name('comparison');
+        });
+        
+        // Performance Reports
+        Route::prefix('performance-reports')->name('performance-reports.')->group(function() {
+            Route::get('/', [\App\Http\Controllers\PerformanceReportController::class, 'index'])->name('index');
+            Route::get('/generate', [\App\Http\Controllers\PerformanceReportController::class, 'generateUnifiedReport'])->name('generate');
+            Route::get('/export-pdf', [\App\Http\Controllers\PerformanceReportController::class, 'exportPdf'])->name('export-pdf');
+            Route::get('/quarterly', [\App\Http\Controllers\PerformanceReportController::class, 'getQuarterlyBreakdown'])->name('quarterly');
+        });
         
         // Individual Organization Settings Pages
         Route::get('settings/organization/info', [SettingsController::class, 'organizationInfo'])->name('admin.settings.organization.info');

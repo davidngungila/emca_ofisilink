@@ -716,7 +716,7 @@ function showAddDeductionModal(employeeId = null) {
 }
 
 function editDeduction(deductionId, employeeId) {
-    fetch(`{{ url('payroll/deductions/employee') }}/${employeeId}`, {
+    fetch(`{{ url('payroll/deductions/particulars') }}/${employeeId}`, {
         method: 'GET',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -790,7 +790,7 @@ function deleteDeduction(deductionId) {
 }
 
 function viewEmployeeDeductions(employeeId, employeeName) {
-    fetch(`{{ url('payroll/deductions/employee') }}/${employeeId}`, {
+    fetch(`{{ url('payroll/deductions/particulars') }}/${employeeId}`, {
         method: 'GET',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',

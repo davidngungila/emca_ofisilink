@@ -792,7 +792,7 @@ class EmployeeController extends Controller
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'employee' => $employee,
+                'particulars' => $employee,
                 'canEdit' => $canEdit,
                 'completion_percentage' => $completionPercentage,
                 '_performance' => [
@@ -812,7 +812,7 @@ class EmployeeController extends Controller
      */
     private function calculateParticularsCompletion($employee)
     {
-        $totalSections = 9;
+        $totalSections = 10;
         $completedSections = 0;
         
         try {
@@ -894,7 +894,20 @@ class EmployeeController extends Controller
                 // Relationship not loaded or table doesn't exist, skip
             }
             
-            // 9. Statutory/Deductions
+            
+            // 9. Benefits
+            try {
+                $benefitsCount = $employee->relationLoaded('benefits') ? $employee->benefits->count() : 
+                                (\Schema::hasTable('employee_benefits') ? 
+                                 \App\Models\EmployeeBenefit::where('employee_id', $employee->id)->count() : 0);
+                if ($benefitsCount > 0) {
+                    $completedSections++;
+                }
+            } catch (\Exception $e) {
+                // Relationship not loaded or table doesn't exist, skip
+            }
+            
+            // 10. Statutory/Deductions
             if ($employee->employee && (
                 !empty($employee->employee->nida_number) ||
                 !empty($employee->employee->tin_number) ||
@@ -1351,6 +1364,7 @@ class EmployeeController extends Controller
             'referees' => 'referees',
             'education' => 'education',
             'deductions' => 'deductions',
+            'benefits' => 'benefits',
             'profile' => 'profile',
             'documents' => 'documents',
             'statutory' => 'statutory',
@@ -1443,6 +1457,9 @@ class EmployeeController extends Controller
             } elseif ($section === 'profile') {
                 $this->updateProfile($employee, $request);
                 $sectionHandled = true;
+            } elseif ($section === 'benefits') {
+                $this->updateParticularsBenefits($employee, $request);
+                $sectionHandled = true;
             } elseif ($section === 'documents') {
                 $this->updateDocuments($employee, $request);
                 $sectionHandled = true;
@@ -1452,7 +1469,7 @@ class EmployeeController extends Controller
             }
             
             if (!$sectionHandled) {
-                throw new \Exception("Unknown section: {$section}. Valid sections are: personal, employment, emergency, family, next-of-kin, referees, bank/banking, education, deductions, profile, documents, statutory");
+                throw new \Exception("Unknown section: {$section}. Valid sections are: personal, employment, emergency, family, next-of-kin, referees, bank/banking, education, deductions, benefits, profile, documents, statutory");
             }
             
             DB::commit();
@@ -1538,7 +1555,7 @@ class EmployeeController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "{$sectionName} updated successfully.",
-                'employee' => $employee,
+                'particulars' => $employee,
                 'section' => $section,
                 'completion_percentage' => $completionPercentage
             ], 200)->header('Content-Type', 'application/json');
@@ -2536,6 +2553,69 @@ class EmployeeController extends Controller
         }
     }
     
+    private function updateParticularsBenefits($employee, $request)
+    {
+        // 1. Handle Predefined Benefits (house, hardship, nhif)
+        if ($request->has('predefined_benefits')) {
+            $predefinedBenefits = $request->input('predefined_benefits');
+            $validTypes = ['house', 'hardship', 'nhif'];
+            
+            foreach ($predefinedBenefits as $type => $data) {
+                if (!in_array($type, $validTypes)) continue;
+                
+                $isActive = isset($data['active']) && $data['active'] == '1';
+                
+                // Only save if active or it already exists (to deactivate it)
+                if ($isActive || \App\Models\EmployeeBenefit::where('employee_id', $employee->id)->where('benefit_type', $type)->exists()) {
+                    \App\Models\EmployeeBenefit::updateOrCreate(
+                        ['employee_id' => $employee->id, 'benefit_type' => $type],
+                        [
+                            'benefit_name' => ucfirst($type) . ' Benefit',
+                            'amount' => !empty($data['amount']) ? (float)$data['amount'] : null,
+                            'percentage' => !empty($data['percentage']) ? (float)$data['percentage'] : null,
+                            'is_active' => $isActive
+                        ]
+                    );
+                }
+            }
+        }
+
+        // 2. Handle Custom Benefits
+        // For simplicity, we'll sync by name or just replace all 'other' benefits
+        // better to replace all 'other' type for this employee to keep it clean
+        if ($request->has('custom_benefits')) {
+            $customBenefits = $request->input('custom_benefits');
+            
+            // Delete existing custom benefits first to sync
+            \App\Models\EmployeeBenefit::where('employee_id', $employee->id)
+                ->where('benefit_type', 'other')
+                ->delete();
+                
+            foreach ($customBenefits as $benefit) {
+                if (empty($benefit['name'])) continue;
+                
+                \App\Models\EmployeeBenefit::create([
+                    'employee_id' => $employee->id,
+                    'benefit_type' => 'other',
+                    'benefit_name' => trim($benefit['name']),
+                    'amount' => !empty($benefit['amount']) ? (float)$benefit['amount'] : null,
+                    'percentage' => !empty($benefit['percentage']) ? (float)$benefit['percentage'] : null,
+                    'is_active' => true
+                ]);
+            }
+        } else {
+             // If section is benefits but custom_benefits is missing, it might mean they were all removed
+             // We only delete if it was explicitly the benefits section update
+             if ($request->input('section') === 'benefits' || $request->input('stage') === 'benefits') {
+                 \App\Models\EmployeeBenefit::where('employee_id', $employee->id)
+                    ->where('benefit_type', 'other')
+                    ->delete();
+             }
+        }
+        
+        Log::info('Employee benefits updated', ['user_id' => $employee->id]);
+    }
+    
     private function updateProfile($employee, $request)
     {
         $profileData = $request->only(['marital_status', 'date_of_birth', 'gender', 'nationality', 'address', 'place_of_domicile']);
@@ -2868,6 +2948,17 @@ class EmployeeController extends Controller
                 'deductions.*.end_date' => 'nullable|date|after_or_equal:deductions.*.start_date',
                 'deductions.*.is_active' => 'nullable|boolean',
                 'deductions.*.notes' => 'nullable|string',
+            ];
+        } elseif ($stage === 'benefits') {
+            $rules = [
+                'predefined_benefits' => 'nullable|array',
+                'predefined_benefits.*.active' => 'nullable|boolean',
+                'predefined_benefits.*.amount' => 'nullable|numeric|min:0',
+                'predefined_benefits.*.percentage' => 'nullable|numeric|min:0|max:100',
+                'custom_benefits' => 'nullable|array',
+                'custom_benefits.*.name' => 'nullable|string|max:255',
+                'custom_benefits.*.amount' => 'nullable|numeric|min:0',
+                'custom_benefits.*.percentage' => 'nullable|numeric|min:0|max:100',
             ];
         } elseif ($stage === 'profile') {
             $rules = [
@@ -3342,6 +3433,12 @@ class EmployeeController extends Controller
                     'user_id' => $employeeUser->id,
                     'deductions_count' => count($request->deductions ?? [])
                 ]);
+            } elseif ($stage === 'benefits') {
+                $this->updateParticularsBenefits($employeeUser, $request);
+                
+                Log::info('Benefits stage data saved', [
+                    'user_id' => $employeeUser->id
+                ]);
             } elseif ($stage === 'profile') {
                 // Handle profile photo and additional personal info
                 $profileData = $request->only(['marital_status', 'date_of_birth', 'gender', 'nationality', 'address']);
@@ -3495,7 +3592,7 @@ class EmployeeController extends Controller
                 'success' => true,
                 'message' => $message,
                 'user_id' => $employeeUser->id,
-                'employee' => $employeeUser,
+                'particulars' => $employeeUser,
                 'next_stage' => $this->getNextStage($stage),
                 'is_complete' => $isComplete,
                 'progress' => $this->getRegistrationProgress($stage),
@@ -3572,17 +3669,19 @@ class EmployeeController extends Controller
     private function getRegistrationProgress($currentStage)
     {
         $stages = [
-            'personal' => 9.09,
-            'employment' => 18.18,
-            'emergency' => 27.27,
-            'family' => 36.36,
-            'next-of-kin' => 45.45,
-            'referees' => 54.54,
-            'education' => 63.63,
-            'banking' => 72.72,
-            'deductions' => 81.81,
-            'profile' => 90.90,
-            'documents' => 100,
+            'personal' => 7.69,
+            'employment' => 15.38,
+            'emergency' => 23.07,
+            'family' => 30.76,
+            'next-of-kin' => 38.46,
+            'referees' => 46.15,
+            'education' => 53.84,
+            'banking' => 61.53,
+            'deductions' => 69.23,
+            'benefits' => 76.92,
+            'profile' => 84.61,
+            'documents' => 92.30,
+            'statutory' => 100,
             'review' => 100
         ];
         
@@ -3622,7 +3721,7 @@ class EmployeeController extends Controller
         $employee = User::with([
             'employee', 'primaryDepartment', 'roles',
             'family', 'nextOfKin', 'referees', 'educations', 
-            'bankAccounts', 'salaryDeductions', 'documents'
+            'bankAccounts', 'salaryDeductions', 'documents', 'benefits'
         ])->findOrFail($userId);
         
         $departments = Department::where('is_active', true)->orderBy('name')->get();
@@ -3873,7 +3972,8 @@ class EmployeeController extends Controller
             'referees' => 'education',
             'education' => 'banking',
             'banking' => 'deductions',
-            'deductions' => 'profile',
+            'deductions' => 'benefits',
+            'benefits' => 'profile',
             'profile' => 'documents',
             'documents' => 'statutory',
             'statutory' => 'review'

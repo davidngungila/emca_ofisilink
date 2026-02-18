@@ -407,9 +407,83 @@
                 <div class="modal-body">
                     <input type="hidden" id="reportIdForAction" name="report_id">
                     <input type="hidden" id="actionType" name="action">
+                    
+                    <!-- Task Completion Check Section -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3"><i class="bx bx-check-square me-2"></i>Task Completion Check</h6>
                     <div class="mb-3">
                         <label class="form-label">Comments (Optional)</label>
-                        <textarea name="comments" id="approverComments" class="form-control" rows="3" placeholder="Add any comments or feedback..."></textarea>
+                            <textarea name="comments" id="approverComments" class="form-control" rows="3" placeholder="Add any comments or feedback about task completion..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Quality Assessment Section (Only for Approval) -->
+                    <div id="qualityAssessmentSection" style="display: none;">
+                        <hr class="my-4">
+                        <h6 class="fw-bold mb-3"><i class="bx bx-star me-2 text-warning"></i>Quality Assessment (Performance Module)</h6>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Quality Rating <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="btn-group" role="group" id="qualityRatingGroup">
+                                        <input type="radio" class="btn-check" name="quality_rating" id="rating1" value="1" autocomplete="off">
+                                        <label class="btn btn-outline-warning" for="rating1">⭐</label>
+                                        
+                                        <input type="radio" class="btn-check" name="quality_rating" id="rating2" value="2" autocomplete="off">
+                                        <label class="btn btn-outline-warning" for="rating2">⭐⭐</label>
+                                        
+                                        <input type="radio" class="btn-check" name="quality_rating" id="rating3" value="3" autocomplete="off" checked>
+                                        <label class="btn btn-outline-warning" for="rating3">⭐⭐⭐</label>
+                                        
+                                        <input type="radio" class="btn-check" name="quality_rating" id="rating4" value="4" autocomplete="off">
+                                        <label class="btn btn-outline-warning" for="rating4">⭐⭐⭐⭐</label>
+                                        
+                                        <input type="radio" class="btn-check" name="quality_rating" id="rating5" value="5" autocomplete="off">
+                                        <label class="btn btn-outline-warning" for="rating5">⭐⭐⭐⭐⭐</label>
+                                    </div>
+                                    <small class="text-muted">Rate the quality of work (1-5 stars)</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Complexity Tag</label>
+                                <select name="complexity_tag" id="complexityTag" class="form-select">
+                                    <option value="routine">Routine</option>
+                                    <option value="standard" selected>Standard</option>
+                                    <option value="complex">Complex</option>
+                                </select>
+                                <small class="text-muted">Tag the complexity level</small>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Initiative Bonus</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="initiative_bonus" id="initiativeBonus" value="1">
+                                    <label class="form-check-label" for="initiativeBonus">
+                                        Staff-initiated task (bonus points)
+                                    </label>
+                                </div>
+                                <small class="text-muted">Check if this was a staff-initiated task</small>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <label class="form-label">Quality Comments</label>
+                                <textarea name="quality_comments" id="qualityComments" class="form-control" rows="3" placeholder="Add quality assessment comments for improvement..."></textarea>
+                                <small class="text-muted">Comments for performance tracking</small>
+                            </div>
+                        </div>
+
+                        @php
+                            $hasPerformanceLink = $report->isLinkedToPerformance();
+                        @endphp
+                        @if($hasPerformanceLink)
+                            <div class="alert alert-info mt-3">
+                                <i class="bx bx-info-circle me-2"></i>
+                                <strong>Performance Impact:</strong> This task is linked to a performance objective. 
+                                Your assessment will contribute to performance scoring.
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -433,10 +507,15 @@ const ajaxUrl = '{{ route("modules.tasks.action") }}';
 function approveReport(reportId) {
     $('#reportIdForAction').val(reportId);
     $('#actionType').val('approve');
-    $('#approveRejectModalTitle').text('Approve Report');
+    $('#approveRejectModalTitle').text('Approve Report - Dual Assessment');
     $('#submitActionBtn').removeClass('btn-danger').addClass('btn-success');
     $('#submitActionText').text('Approve Report');
     $('#approverComments').val('');
+    $('#qualityComments').val('');
+    $('#qualityRatingGroup input[value="3"]').prop('checked', true);
+    $('#complexityTag').val('standard');
+    $('#initiativeBonus').prop('checked', false);
+    $('#qualityAssessmentSection').show();
     $('#approveRejectModal').modal('show');
 }
 
@@ -447,6 +526,7 @@ function rejectReport(reportId) {
     $('#submitActionBtn').removeClass('btn-success').addClass('btn-danger');
     $('#submitActionText').text('Reject Report');
     $('#approverComments').val('');
+    $('#qualityAssessmentSection').hide();
     $('#approveRejectModal').modal('show');
 }
 
@@ -468,7 +548,11 @@ $('#approveRejectForm').on('submit', function(e) {
             _token: csrfToken,
             action: action === 'approve' ? 'task_approve_report' : 'task_reject_report',
             report_id: reportId,
-            comments: comments
+            comments: comments,
+            quality_rating: action === 'approve' ? $('input[name="quality_rating"]:checked').val() : null,
+            complexity_tag: action === 'approve' ? $('#complexityTag').val() : null,
+            initiative_bonus: action === 'approve' ? $('#initiativeBonus').is(':checked') : false,
+            quality_comments: action === 'approve' ? $('#qualityComments').val() : null
         },
         success: function(response) {
             // Re-enable button

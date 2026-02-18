@@ -84,14 +84,17 @@
                             <span class="badge bg-secondary stage-badge" data-stage="deductions">
                                 <i class="bx bx-circle me-1"></i>9. Deductions
                             </span>
+                            <span class="badge bg-secondary stage-badge" data-stage="benefits">
+                                <i class="bx bx-circle me-1"></i>10. Benefits
+                            </span>
                             <span class="badge bg-secondary stage-badge" data-stage="profile">
-                                <i class="bx bx-circle me-1"></i>10. Profile
+                                <i class="bx bx-circle me-1"></i>11. Profile
                             </span>
                             <span class="badge bg-secondary stage-badge" data-stage="documents">
-                                <i class="bx bx-circle me-1"></i>11. Documents
+                                <i class="bx bx-circle me-1"></i>12. Documents
                             </span>
                             <span class="badge bg-secondary stage-badge" data-stage="statutory">
-                                <i class="bx bx-circle me-1"></i>12. Statutory Info
+                                <i class="bx bx-circle me-1"></i>13. Statutory Info
                             </span>
                         </div>
                     </div>
@@ -376,12 +379,115 @@
                             </div>
                         </div>
 
-                        <!-- Step 10: Profile Information -->
+                        <!-- Step 10: Benefits (Optional) -->
+                        <div class="registration-step d-none" id="step-benefits" data-stage="benefits">
+                            <div class="card border-primary">
+                                <div class="card-header bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-0">
+                                                <i class="bx bx-gift me-2"></i>Step 10: Employee Benefits
+                                            </h5>
+                                            <small class="text-muted">Optional - Assign benefits like House, Hardship, NHIF, etc.</small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="addBenefit()">
+                                            <i class="bx bx-plus"></i> Add Other Benefit
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info mb-4">
+                                        <i class="bx bx-info-circle me-2"></i>
+                                        <strong>Note:</strong> Multiple benefits can be assigned as a percentage of basic salary or a fixed amount.
+                                    </div>
+                                    
+                                    <div id="benefitsList">
+                                        <!-- Predefined Benefits -->
+                                        <div class="row g-3 mb-4 border-bottom pb-4">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="predefined_benefits[house][active]" id="benefit_house_active" value="1">
+                                                    <label class="form-check-label h6 mb-0" for="benefit_house_active">House Benefit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Percentage</span>
+                                                    <input type="number" name="predefined_benefits[house][percentage]" class="form-control" placeholder="15" min="0" max="100" step="0.01">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Or Amount</span>
+                                                    <input type="number" name="predefined_benefits[house][amount]" class="form-control" placeholder="Fixed Amount" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mb-4 border-bottom pb-4">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="predefined_benefits[hardship][active]" id="benefit_hardship_active" value="1">
+                                                    <label class="form-check-label h6 mb-0" for="benefit_hardship_active">Hardship Benefit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Percentage</span>
+                                                    <input type="number" name="predefined_benefits[hardship][percentage]" class="form-control" placeholder="10" min="0" max="100" step="0.01">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Or Amount</span>
+                                                    <input type="number" name="predefined_benefits[hardship][amount]" class="form-control" placeholder="Fixed Amount" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mb-4 border-bottom pb-4">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="predefined_benefits[nhif][active]" id="benefit_nhif_active" value="1">
+                                                    <label class="form-check-label h6 mb-0" for="benefit_nhif_active">NHIF Benefit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Percentage</span>
+                                                    <input type="number" name="predefined_benefits[nhif][percentage]" class="form-control" placeholder="%" min="0" max="100" step="0.01">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Or Amount</span>
+                                                    <input type="number" name="predefined_benefits[nhif][amount]" class="form-control" placeholder="Fixed Amount" min="0" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Container for Custom Benefits -->
+                                        <div id="customBenefitsList"></div>
+                                    </div>
+
+                                    <div class="text-center mt-3">
+                                        <button type="button" class="btn btn-outline-primary" onclick="addBenefit()">
+                                            <i class="bx bx-plus me-1"></i> Add Custom Benefit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 11: Profile Information -->
                         <div class="registration-step d-none" id="step-profile" data-stage="profile">
                             <div class="card border-primary">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0">
-                                        <i class="bx bx-user-circle me-2"></i>Step 10: Profile Information
+                                        <i class="bx bx-user-circle me-2"></i>Step 11: Profile Information
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -447,13 +553,13 @@
                             </div>
                         </div>
 
-                        <!-- Step 11: Documents -->
+                        <!-- Step 12: Documents -->
                         <div class="registration-step d-none" id="step-documents" data-stage="documents">
                             <div class="card border-primary">
                                 <div class="card-header bg-light">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">
-                                            <i class="bx bx-file-blank me-2"></i>Step 11: Documents
+                                            <i class="bx bx-file-blank me-2"></i>Step 12: Documents
                                         </h5>
                                         <button type="button" class="btn btn-sm btn-primary" onclick="addDocument()">
                                             <i class="bx bx-plus"></i> Add Document
@@ -476,12 +582,12 @@
                             </div>
                         </div>
 
-                        <!-- Step 12: Statutory Information -->
+                        <!-- Step 13: Statutory Information -->
                         <div class="registration-step d-none" id="step-statutory" data-stage="statutory">
                             <div class="card border-primary">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0">
-                                        <i class="bx bx-id-card me-2"></i>Step 12: Statutory Information
+                                        <i class="bx bx-id-card me-2"></i>Step 13: Statutory Information
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -550,7 +656,7 @@
 @push('scripts')
 <script>
 let currentStepIndex = 0;
-const steps = ['personal', 'employment', 'emergency', 'family', 'next-of-kin', 'referees', 'education', 'banking', 'deductions', 'profile', 'documents', 'statutory'];
+const steps = ['personal', 'employment', 'emergency', 'family', 'next-of-kin', 'referees', 'education', 'banking', 'deductions', 'benefits', 'profile', 'documents', 'statutory'];
 let emergencyContactIndex = 0;
 let familyIndex = 0;
 let nextOfKinIndex = 0;
@@ -558,6 +664,7 @@ let refereeIndex = 0;
 let educationIndex = 0;
 let bankAccountIndex = 0;
 let deductionIndex = 1;
+let benefitIndex = 0;
 let documentIndex = 0;
 let userId = null;
 
@@ -1157,6 +1264,41 @@ function updateDeductionButtons() {
     } else {
         $('.deduction-add-button').show();
     }
+}
+
+function addBenefit() {
+    const html = `
+        <div class="benefit-item border rounded p-3 mb-3" data-index="${benefitIndex}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0"><i class="bx bx-gift me-1"></i>Other Benefit ${benefitIndex + 1}</h6>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeBenefit($(this))">
+                    <i class="bx bx-trash"></i> Remove
+                </button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Benefit Name <span class="text-danger">*</span></label>
+                    <input type="text" name="custom_benefits[${benefitIndex}][name]" class="form-control" required placeholder="e.g., Transport Allowance">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Percentage (%)</label>
+                    <div class="input-group">
+                        <input type="number" name="custom_benefits[${benefitIndex}][percentage]" class="form-control" placeholder="Optional" min="0" max="100" step="0.01">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Amount</label>
+                    <input type="number" name="custom_benefits[${benefitIndex}][amount]" class="form-control" placeholder="Optional" min="0" step="0.01">
+                </div>
+            </div>
+        </div>`;
+    $('#customBenefitsList').append(html);
+    benefitIndex++;
+}
+
+function removeBenefit(button) {
+    button.closest('.benefit-item').remove();
 }
 
 function addDocument() {

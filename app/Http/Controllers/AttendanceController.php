@@ -62,6 +62,9 @@ class AttendanceController extends Controller
             $today = Carbon::today($this->getTimezone());
             
             switch ($reportPeriod) {
+                case 'all_time':
+                    // Do not apply any date filter
+                    break;
                 case 'today':
                     $query->whereDate('attendance_date', $today);
                     break;
@@ -399,7 +402,9 @@ class AttendanceController extends Controller
             $attendance->user_id = $user->id;
             $attendance->employee_id = $user->employee?->id;
             $attendance->attendance_date = $today;
-            $attendance->time_in = Carbon::now($timezone)->format('H:i:s');
+            $checkInTime = Carbon::now($timezone);
+            $attendance->time_in = $checkInTime->format('H:i:s');
+            $attendance->check_in_time = $checkInTime; // Also set check_in_time timestamp
             $attendance->attendance_method = $request->attendance_method;
             $attendance->device_id = $request->device_id;
             $attendance->device_type = $request->device_type;
@@ -2324,7 +2329,8 @@ class AttendanceController extends Controller
         
         if ($officeLocations->isEmpty()) {
             return response()->json([
-                'success' => false,
+                'success' => true,
+                'locations' => [],
                 'message' => 'No office locations configured.',
             ]);
         }

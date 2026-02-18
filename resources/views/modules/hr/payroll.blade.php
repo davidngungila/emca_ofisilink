@@ -7,7 +7,7 @@
     <!-- Professional Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-lg bg-primary" style="border-radius: 15px; overflow: hidden;">
+            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%); border-radius: 15px; overflow: hidden;">
                 <div class="card-body text-white p-4">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div class="mb-3 mb-md-0">
@@ -88,7 +88,7 @@
                 <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important;">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
-                            <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <div class="avatar avatar-lg me-3" style="background: linear-gradient(135deg, #940000 0%, #610000 100%);">
                                 <i class="bx bx-time fs-2 text-white"></i>
                             </div>
                             <div class="flex-grow-1">

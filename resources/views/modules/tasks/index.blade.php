@@ -403,6 +403,48 @@
                                                         </small>
                                                     </div>
                                                 @endif
+                                                @php
+                                                    $hasPerformanceLink = false;
+                                                    $performanceLinks = [];
+                                                    if ($task->organizational_goal_id) {
+                                                        $hasPerformanceLink = true;
+                                                        $goal = \App\Models\OrganizationalGoal::find($task->organizational_goal_id);
+                                                        if ($goal) {
+                                                            $performanceLinks[] = ['type' => 'goal', 'name' => $goal->title];
+                                                        }
+                                                    }
+                                                    if ($task->assessment_id) {
+                                                        $hasPerformanceLink = true;
+                                                        $assessment = \App\Models\Assessment::find($task->assessment_id);
+                                                        if ($assessment) {
+                                                            $performanceLinks[] = ['type' => 'assessment', 'name' => $assessment->main_responsibility];
+                                                        }
+                                                    }
+                                                    $linkedActivities = $task->activities()->whereNotNull('assessment_activity_id')->count();
+                                                    if ($linkedActivities > 0) {
+                                                        $hasPerformanceLink = true;
+                                                    }
+                                                @endphp
+                                                @if($hasPerformanceLink)
+                                                    <div class="mt-2 pt-2 border-top">
+                                                        <small class="text-success">
+                                                            <i class="bx bx-target-lock me-1"></i>Linked to Performance
+                                                        </small>
+                                                        @if($task->link_type && $task->link_type !== 'none')
+                                                            <br><small class="text-muted">
+                                                                Type: <span class="badge bg-info">{{ ucfirst($task->link_type) }}</span>
+                                                                @if($task->performance_weight)
+                                                                    | Weight: {{ $task->performance_weight }}%
+                                                                @endif
+                                                            </small>
+                                                        @endif
+                                                        @if($linkedActivities > 0)
+                                                            <br><small class="text-muted">
+                                                                <i class="bx bx-link me-1"></i>{{ $linkedActivities }} activity(ies) linked
+                                                            </small>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

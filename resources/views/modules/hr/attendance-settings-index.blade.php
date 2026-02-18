@@ -116,15 +116,15 @@
             <div class="stat-card border-left-warning">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <h6 class="text-muted mb-1">Policies</h6>
-                        <h3 class="mb-0 text-warning">{{ $stats['total_policies'] ?? 0 }}</h3>
+                        <h6 class="text-muted mb-1">Locations</h6>
+                        <h3 class="mb-0 text-warning">{{ $stats['total_locations'] ?? 0 }}</h3>
                         <small class="text-muted">
-                            <i class="bx bx-shield"></i> {{ $stats['active_policies'] ?? 0 }} Active
+                            <i class="bx bx-map"></i> {{ $stats['active_locations'] ?? 0 }} Active
                         </small>
                     </div>
                     <div class="avatar-sm">
                         <span class="avatar-title bg-warning rounded">
-                            <i class="bx bx-shield"></i>
+                            <i class="bx bx-map"></i>
                         </span>
                     </div>
                 </div>
@@ -183,16 +183,16 @@
             </a>
         </div>
         <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('modules.hr.attendance.settings.policies') }}" class="text-decoration-none">
+            <a href="{{ route('modules.hr.attendance.settings.locations') }}" class="text-decoration-none">
                 <div class="card settings-card">
                     <div class="card-body text-center">
                         <div class="settings-icon text-warning">
-                            <i class="bx bx-shield"></i>
+                            <i class="bx bx-map"></i>
                         </div>
-                        <h5 class="card-title">Policies</h5>
-                        <p class="text-muted">Set attendance policies, rules, and approval workflows</p>
+                        <h5 class="card-title">Location Settings</h5>
+                        <p class="text-muted">Manage office locations, GPS coordinates, and boundaries</p>
                         <div class="mt-3">
-                            <span class="badge bg-warning">{{ $stats['total_policies'] ?? 0 }} Policies</span>
+                            <span class="badge bg-warning">{{ $stats['total_locations'] ?? 0 }} Locations</span>
                         </div>
                     </div>
                 </div>

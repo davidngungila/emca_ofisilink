@@ -1340,12 +1340,21 @@ class PayrollController extends Controller
                 'overtime_amount' => $payroll->items->sum('overtime_amount'),
                 'bonus_amount' => $payroll->items->sum('bonus_amount'),
                 'allowance_amount' => $payroll->items->sum('allowance_amount'),
+                'house_benefit_amount' => $payroll->items->sum('house_benefit_amount'),
+                'hardship_benefit_amount' => $payroll->items->sum('hardship_benefit_amount'),
+                'other_benefits_amount' => $payroll->items->sum('other_benefits_amount'),
                 'gross_salary' => 0,
                 'nssf_amount' => $payroll->items->sum('nssf_amount'),
                 'nhif_amount' => $payroll->items->sum('nhif_amount'),
                 'heslb_amount' => $payroll->items->sum('heslb_amount'),
                 'paye_amount' => $payroll->items->sum('paye_amount'),
+                'wcf_amount' => $payroll->items->sum('wcf_amount'),
+                'sdl_amount' => $payroll->items->sum('sdl_amount'),
                 'deduction_amount' => $payroll->items->sum('deduction_amount'),
+                'other_deductions' => $payroll->items->sum('other_deductions'),
+                'employer_nssf' => $payroll->items->sum('employer_nssf'),
+                'employer_wcf' => $payroll->items->sum('employer_wcf'),
+                'employer_sdl' => $payroll->items->sum('employer_sdl'),
                 'total_deductions' => 0,
                 'net_salary' => $payroll->items->sum('net_salary'),
                 'total_employer_cost' => $payroll->items->sum('total_employer_cost'),
@@ -1354,12 +1363,17 @@ class PayrollController extends Controller
             $totals['gross_salary'] = $totals['basic_salary'] 
                 + $totals['overtime_amount'] 
                 + $totals['bonus_amount'] 
-                + $totals['allowance_amount'];
+                + $totals['allowance_amount']
+                + $totals['house_benefit_amount']
+                + $totals['hardship_benefit_amount']
+                + $totals['other_benefits_amount'];
 
             $totals['total_deductions'] = $totals['nssf_amount'] 
                 + $totals['nhif_amount'] 
                 + $totals['heslb_amount'] 
                 + $totals['paye_amount'] 
+                + $totals['wcf_amount']
+                + $totals['sdl_amount']
                 + $totals['deduction_amount'];
 
             // Generate HTML for the modal content

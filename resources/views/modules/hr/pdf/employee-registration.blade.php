@@ -662,9 +662,44 @@
     </div>
     @endif
 
+    <!-- Benefits -->
+    @if($employee->benefits && $employee->benefits->count() > 0)
+    <div class="section">
+        <div class="section-title">10. Employee Benefits</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Benefit Type</th>
+                    <th>Benefit Name</th>
+                    <th>Amount</th>
+                    <th>Percentage</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($employee->benefits as $benefit)
+                <tr>
+                    <td><strong>{{ ucfirst($benefit->benefit_type) }}</strong></td>
+                    <td>{{ $benefit->benefit_name ?? 'N/A' }}</td>
+                    <td class="amount">{{ $benefit->amount ? 'TZS ' . number_format($benefit->amount, 2) : 'N/A' }}</td>
+                    <td>{{ $benefit->percentage ? $benefit->percentage . ' %' : 'N/A' }}</td>
+                    <td>
+                        @if($benefit->is_active)
+                            <span class="status-active">Active</span>
+                        @else
+                            <span class="status-inactive">Inactive</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+
     <!-- Statutory Information -->
     <div class="section">
-        <div class="section-title">10. Statutory Information</div>
+        <div class="section-title">11. Statutory Information</div>
         <table class="info-table">
             <tr>
                 <th>NIDA Number:</th>
@@ -698,7 +733,7 @@
     <!-- Documents -->
     @if($employee->documents && $employee->documents->count() > 0)
     <div class="section">
-        <div class="section-title">11. Documents</div>
+        <div class="section-title">12. Documents</div>
         <table class="data-table">
             <thead>
                 <tr>

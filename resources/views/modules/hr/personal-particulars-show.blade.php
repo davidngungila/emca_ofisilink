@@ -233,6 +233,7 @@
                                 </td></tr>
                                 <tr><th>Hire Date:</th><td>{{ $employee->hire_date ? \Carbon\Carbon::parse($employee->hire_date)->format('d M Y') : 'N/A' }}</td></tr>
                                 <tr><th>Salary:</th><td>{{ $employee->employee->salary ? 'TZS ' . number_format($employee->employee->salary, 2) : 'N/A' }}</td></tr>
+                                <tr><th>Retirement Date (Tarehe ya Kustaafu):</th><td>{{ $employee->employee->retirement_date ? \Carbon\Carbon::parse($employee->employee->retirement_date)->format('d M Y') : 'N/A' }}</td></tr>
                                 <tr><th>Years of Service:</th><td>
                                     @if($employee->hire_date)
                                         {{ round(\Carbon\Carbon::parse($employee->hire_date)->diffInYears(now())) }} years

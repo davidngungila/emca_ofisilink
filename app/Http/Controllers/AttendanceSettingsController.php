@@ -276,7 +276,23 @@ class AttendanceSettingsController extends Controller
             abort(403, 'Unauthorized');
         }
         
-        $schedules = WorkSchedule::with(['location', 'department', 'creator'])->get();
+        $schedules = WorkSchedule::with(['location', 'department', 'creator'])->get()->map(function($schedule) {
+            // Format datetime fields to time strings for JSON encoding
+            if ($schedule->start_time) {
+                $schedule->start_time = Carbon::parse($schedule->start_time)->format('H:i:s');
+            }
+            if ($schedule->end_time) {
+                $schedule->end_time = Carbon::parse($schedule->end_time)->format('H:i:s');
+            }
+            if ($schedule->break_start_time) {
+                $schedule->break_start_time = Carbon::parse($schedule->break_start_time)->format('H:i:s');
+            }
+            if ($schedule->break_end_time) {
+                $schedule->break_end_time = Carbon::parse($schedule->break_end_time)->format('H:i:s');
+            }
+            return $schedule;
+        });
+        
         $locations = AttendanceLocation::where('is_active', true)->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         
@@ -289,9 +305,9 @@ class AttendanceSettingsController extends Controller
     }
 
     /**
-     * Display policies management page
+     * Display locations management page
      */
-    public function policies()
+    public function locations()
     {
         $user = Auth::user();
         
@@ -299,16 +315,14 @@ class AttendanceSettingsController extends Controller
             abort(403, 'Unauthorized');
         }
         
-        $policies = AttendancePolicy::with(['location', 'department', 'creator'])->get();
-        $locations = AttendanceLocation::where('is_active', true)->get();
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $locations = AttendanceLocation::with(['creator', 'devices', 'workSchedules', 'policies'])->get();
         
         $stats = [
-            'total_policies' => $policies->count(),
-            'active_policies' => $policies->where('is_active', true)->count(),
+            'total_locations' => $locations->count(),
+            'active_locations' => $locations->where('is_active', true)->count(),
         ];
         
-        return view('modules.hr.attendance-settings-policies', compact('policies', 'locations', 'departments', 'stats'));
+        return view('modules.hr.attendance-settings-locations', compact('locations', 'stats'));
     }
 
     // ==================== LOCATIONS MANAGEMENT ====================

@@ -480,7 +480,7 @@
                     <td>{{ $request->leave_type ?? 'N/A' }}</td>
                     <td>{{ $request->start_date ?? 'N/A' }} to {{ $request->end_date ?? 'N/A' }}</td>
                     <td><span class="badge bg-warning">{{ $request->status ?? 'Pending' }}</span></td>
-                    <td><a href="{{ route('leaves.show', $request->id) }}" class="btn btn-sm btn-primary">Review</a></td>
+                    <td><a href="{{ route('leave.show', $request->id) }}" class="btn btn-sm btn-primary">Review</a></td>
                   </tr>
                   @empty
                   <tr><td colspan="5" class="text-center text-muted">No pending leave requests</td></tr>
@@ -616,7 +616,7 @@
                     <td>{{ $assessment->employee->name ?? 'N/A' }}</td>
                     <td>{{ \Illuminate\Support\Str::limit($assessment->main_responsibility ?? 'N/A', 40) }}</td>
                     <td><span class="badge bg-warning">{{ $assessment->status ?? 'Pending' }}</span></td>
-                    <td><a href="{{ route('performance_management_module.show', $assessment->id) }}" class="btn btn-sm btn-primary">Review</a></td>
+                    <td><a href="{{ route('modules.performance_management_module.show', $assessment->id) }}" class="btn btn-sm btn-primary">Review</a></td>
                   </tr>
                   @empty
                   <tr><td colspan="4" class="text-center text-muted">No pending Performance Management</td></tr>

@@ -7,7 +7,7 @@
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%);">
                 <div class="card-body text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -187,7 +187,7 @@
             </div>
         </div>
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card border-info border-top border-4 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card border-top border-4 shadow-sm h-100" style="background: linear-gradient(135deg, #940000 0%, #610000 100%); border-color: #940000 !important;">
                 <div class="card-body text-white">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
@@ -196,7 +196,7 @@
                             <small class="text-white-50">{{ number_format($percentages['net_to_gross'], 2) }}% of gross</small>
                         </div>
                         <div class="avatar avatar-lg">
-                            <div class="avatar-initial bg-white text-primary rounded">
+                            <div class="avatar-initial bg-white rounded" style="color: #940000;">
                                 <i class="bx bx-money fs-4"></i>
                             </div>
                         </div>
@@ -392,7 +392,7 @@
     <!-- Net Pay Calculation & Statistics -->
     <div class="row mb-4">
         <div class="col-lg-8 mb-4">
-            <div class="card border-info shadow-lg h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card shadow-lg h-100" style="background: linear-gradient(135deg, #940000 0%, #610000 100%);">
                 <div class="card-body text-white">
                     <h5 class="mb-4 text-white"><i class="bx bx-calculator me-2"></i>NET PAY CALCULATION SUMMARY</h5>
                     <div class="row">

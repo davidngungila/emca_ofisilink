@@ -7,12 +7,12 @@
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary text-white">
+            <div class="card" style="background-color: #940000; color: white;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h4 class="card-title text-white mb-1">
-                                <i class="bx bx-time me-2"></i>Attendance and Time Management
+                                <i class="bx bx-time me-2"></i>ATTENDANCE AND TIME MANAGEMENT
                             </h4>
                             <p class="card-text text-white-50 mb-0">Track employee attendance automatically via ZKTeco biometric devices</p>
                         </div>
@@ -59,10 +59,10 @@
     @if($canManage)
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-info">
-                <div class="card-header bg-info text-white">
+            <div class="card">
+                <div class="card-header">
                     <h6 class="card-title mb-0">
-                        <i class="bx bx-sync me-2"></i>ZKTeco Device Sync
+                        <i class="bx bx-sync me-2"></i>ZKTECO DEVICE SYNC
                     </h6>
                 </div>
                 <div class="card-body">
@@ -110,11 +110,11 @@
                     
                     <!-- Live Capture Status -->
                     <div id="liveCaptureStatus" class="mt-3">
-                        <div class="card border-success">
-                            <div class="card-header bg-success text-white">
+                        <div class="card">
+                            <div class="card-header">
                                 <h6 class="mb-0">
-                                    <i class="bx bx-pulse me-2"></i>Real-Time Auto Capture Active
-                                    <span class="badge bg-light text-dark ms-2" id="captureStatusBadge">Running...</span>
+                                    <i class="bx bx-pulse me-2"></i>REAL-TIME AUTO CAPTURE ACTIVE
+                                    <span class="badge bg-custom-primary ms-2" id="captureStatusBadge">Running...</span>
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -142,18 +142,107 @@
     </div>
     @endif
 
+    <!-- Manual Check-In Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bx bx-log-in me-2"></i>MANUAL CHECK-IN
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Office Location Information -->
+                    <div id="officeLocationInfo" class="mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bx bx-map-pin me-2"></i>OFFICE LOCATION REQUIREMENTS
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="officeLocationDetails">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border text-info" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Loading office location information...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div id="checkInStatus" class="mb-3">
+                                <div class="alert alert-info mb-0">
+                                    <i class="bx bx-info-circle me-2"></i>
+                                    <strong>Check-In Instructions:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>Click the "Check-In" button below</li>
+                                        <li>Allow location access when prompted</li>
+                                        <li>Your location will be validated against office locations</li>
+                                        <li>You must be within the defined office radius to check in</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div id="locationStatus" class="mb-3" style="display: none;">
+                                <div class="alert alert-warning mb-0">
+                                    <i class="bx bx-map me-2"></i>
+                                    <span id="locationText">Getting your location...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button type="button" class="btn btn-primary btn-lg px-5" id="btnCheckIn" onclick="checkIn()">
+                                <i class="bx bx-log-in me-2"></i>Check-In
+                            </button>
+                            <div id="checkInTime" class="mt-2 text-muted small" style="display: none;">
+                                <i class="bx bx-time me-1"></i><span id="checkInTimeText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters Section -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h6 class="card-title mb-0">
-                        <i class="bx bx-filter me-2"></i>Filters
+                        <i class="bx bx-filter-alt me-2"></i>SEARCH & FILTERS
                     </h6>
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('modules.hr.attendance') }}" id="filterForm">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bx bx-search"></i></span>
+                                    <input type="text" name="search" class="form-control" placeholder="Search by employee name, email, or ID..." value="{{ request('search') }}">
+                                </div>
+                            </div>
+                        </div>
                         <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Period</label>
+                                <select name="report_period" class="form-select" onchange="toggleDateInputs(this.value)">
+                                    <option value="" {{ request('report_period') == '' ? 'selected' : '' }}>All Time</option>
+                                    <option value="this_month" {{ request('report_period') == 'this_month' ? 'selected' : '' }}>This Month</option>
+                                    <option value="today" {{ request('report_period') == 'today' ? 'selected' : '' }}>Today</option>
+                                    <option value="yesterday" {{ request('report_period') == 'yesterday' ? 'selected' : '' }}>Yesterday</option>
+                                    <option value="this_week" {{ request('report_period') == 'this_week' ? 'selected' : '' }}>This Week</option>
+                                    <option value="last_week" {{ request('report_period') == 'last_week' ? 'selected' : '' }}>Last Week</option>
+                                    <option value="last_month" {{ request('report_period') == 'last_month' ? 'selected' : '' }}>Last Month</option>
+                                    <option value="this_year" {{ request('report_period') == 'this_year' ? 'selected' : '' }}>This Year</option>
+                                    <option value="last_year" {{ request('report_period') == 'last_year' ? 'selected' : '' }}>Last Year</option>
+                                    <option value="custom" {{ request('report_period') == 'custom' ? 'selected' : '' }}>Custom Range</option>
+                                </select>
+                            </div>
                             @if($canViewAll)
                             <div class="col-md-3">
                                 <label class="form-label">Employee</label>
@@ -207,7 +296,7 @@
                                 </div>
                             </div>
                             @endif
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label">Status</label>
                                 <select name="status" class="form-select">
                                     <option value="">All Status</option>
@@ -218,7 +307,7 @@
                                 </select>
                             </div>
                             @if($canViewAll)
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label">Location</label>
                                 <select name="location_id" class="form-select">
                                     <option value="">All Locations</option>
@@ -230,21 +319,24 @@
                                 </select>
                             </div>
                             @endif
-                            <div class="col-md-3">
+                            <div class="col-md-2" id="dateFromContainer" style="{{ request('report_period') == 'custom' ? '' : 'display: none;' }}">
                                 <label class="form-label">Date From</label>
                                 <input type="date" name="start_date" class="form-control" value="{{ request('start_date') }}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2" id="dateToContainer" style="{{ request('report_period') == 'custom' ? '' : 'display: none;' }}">
                                 <label class="form-label">Date To</label>
                                 <input type="date" name="end_date" class="form-control" value="{{ request('end_date') }}">
                             </div>
-                            <div class="col-md-12">
-                                <button type="submit" class="btn btn-primary">
+                            <div class="col-md-{{ $canViewAll ? '2' : '4' }}">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="input-group">
+                                    <button type="submit" class="btn btn-outline-custom">
                                     <i class="bx bx-search me-1"></i>Apply Filters
                                 </button>
-                                <a href="{{ route('modules.hr.attendance') }}" class="btn btn-outline-secondary">
-                                    <i class="bx bx-refresh me-1"></i>Reset
+                                    <a href="{{ route('modules.hr.attendance') }}" class="btn btn-outline-secondary" title="Clear Filters">
+                                        <i class="bx bx-x"></i>
                                 </a>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -259,10 +351,10 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="card-title mb-0">
-                        <i class="bx bx-list-ul me-2"></i>Attendance Records (Captured from Device)
+                        <i class="bx bx-list-ul me-2"></i>ATTENDANCE RECORDS
                     </h6>
                     @if(!$canViewAll)
-                    <span class="badge bg-info">
+                    <span class="badge bg-custom-primary">
                         <i class="bx bx-info-circle me-1"></i>Showing only your attendance records
                     </span>
                     @endif
@@ -326,7 +418,7 @@
                                         <span class="badge bg-{{ $color }}">{{ ucfirst(str_replace('_', ' ', $attendance->status ?? 'N/A')) }}</span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-info">{{ $attendance->verify_mode ?? 'N/A' }}</span>
+                                        <span class="badge bg-custom-primary">{{ $attendance->verify_mode ?? 'N/A' }}</span>
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
@@ -375,9 +467,9 @@
 <div class="modal fade" id="viewAttendanceModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header" style="background-color: #940000; color: white;">
                 <h5 class="modal-title text-white">
-                    <i class="bx bx-info-circle me-2"></i>Attendance Details
+                    <i class="bx bx-info-circle me-2"></i>ATTENDANCE DETAILS
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -2399,25 +2491,166 @@ window.testDeviceApiConnection = function() {
 };
 
 // Toggle custom date range visibility
-function toggleCustomDateRange() {
-    const reportPeriod = document.getElementById('reportPeriod').value;
-    const startDateContainer = document.getElementById('startDateContainer');
-    const endDateContainer = document.getElementById('endDateContainer');
+function toggleDateInputs(value) {
+    // If value is not provided (e.g. on load), get it from the select
+    if (!value) {
+        const select = document.querySelector('select[name="report_period"]');
+        if (select) value = select.value;
+    }
     
-    if (reportPeriod === 'custom') {
-        startDateContainer.style.display = 'block';
-        endDateContainer.style.display = 'block';
-    } else {
-        startDateContainer.style.display = 'none';
-        endDateContainer.style.display = 'none';
+    const startDateContainer = document.getElementById('dateFromContainer');
+    const endDateContainer = document.getElementById('dateToContainer');
+    
+    if (startDateContainer && endDateContainer) {
+        if (value === 'custom') {
+            startDateContainer.style.display = 'block';
+            endDateContainer.style.display = 'block';
+        } else {
+            startDateContainer.style.display = 'none';
+            endDateContainer.style.display = 'none';
+        }
     }
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    toggleCustomDateRange();
+    toggleDateInputs();
     checkTodayAttendanceStatus();
+    loadOfficeLocationInfo();
 });
+
+// Load Office Location Information
+function loadOfficeLocationInfo() {
+    const detailsDiv = document.getElementById('officeLocationDetails');
+    if (!detailsDiv) return;
+    
+    fetch('{{ route("attendance.office-location") }}', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.locations && data.locations.length > 0) {
+            let html = '<div class="row g-3">';
+            
+            data.locations.forEach((location, index) => {
+                html += `
+                    <div class="col-md-${data.locations.length > 1 ? '6' : '12'}">
+                        <div class="card border-primary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary mb-3">
+                                    <i class="bx bx-map me-2"></i>${location.name || 'Office Location'}
+                                </h6>
+                                <div class="mb-2">
+                                    <strong>Address:</strong> ${location.address || 'N/A'}
+                                </div>
+                                ${location.latitude && location.longitude ? `
+                                    <div class="mb-2">
+                                        <strong>GPS Coordinates:</strong><br>
+                                        <small class="text-muted">
+                                            Latitude: ${location.latitude}<br>
+                                            Longitude: ${location.longitude}
+                                        </small>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Allowed Radius:</strong> 
+                                        <span class="badge bg-info">${location.radius_meters}m (${location.radius_km} km)</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="https://www.google.com/maps?q=${location.latitude},${location.longitude}" 
+                                           target="_blank" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bx bx-map me-1"></i>View on Google Maps
+                                        </a>
+                                    </div>
+                                ` : `
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="bx bx-error-circle me-2"></i>
+                                        GPS coordinates not configured
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            html += `
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bx bx-info-circle me-2"></i>
+                    <strong>Location Validation:</strong> Your location will be validated against these office locations. 
+                    You must be within the defined office radius (shown above) to check in successfully.
+                </div>
+            `;
+            
+            detailsDiv.innerHTML = html;
+        } else {
+            const settingsUrl = '{{ route("modules.hr.attendance.settings") }}';
+            const canManage = {{ $canManage ?? false ? 'true' : 'false' }};
+            
+            let actionHtml = '';
+            if (canManage) {
+                actionHtml = `
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                        <a href="${settingsUrl}" class="btn btn-warning btn-sm">
+                            <i class="bx bx-cog me-1"></i>Go to Attendance Settings
+                        </a>
+                        <span class="text-muted small">Click to configure office locations</span>
+                    </div>
+                    <div class="p-3 bg-light rounded">
+                        <strong class="d-block mb-2">Setup Instructions:</strong>
+                        <ol class="mb-0 small">
+                            <li>Click the "Go to Attendance Settings" button above</li>
+                            <li>Click on the <strong>"Advanced Settings"</strong> tab at the top</li>
+                            <li>Click on the <strong>"Office Locations"</strong> sub-tab</li>
+                            <li>Click <strong>"Add Location"</strong> button</li>
+                            <li>Enter location name, address, GPS coordinates (latitude/longitude), and radius</li>
+                            <li>Click the location icon next to Latitude field to auto-capture your current location</li>
+                            <li>Set the allowed radius (default: 100 meters)</li>
+                            <li>Enable "Require GPS Verification" if needed</li>
+                            <li>Save the location</li>
+                        </ol>
+                    </div>
+                `;
+            } else {
+                actionHtml = `
+                    <div class="alert alert-secondary mb-0">
+                        <i class="bx bx-info-circle me-2"></i>
+                        <strong>Contact HR:</strong> Please contact your HR department or System Administrator to set up office locations with GPS coordinates.
+                    </div>
+                `;
+            }
+            
+            detailsDiv.innerHTML = `
+                <div class="alert alert-warning mb-0">
+                    <div class="d-flex align-items-start">
+                        <i class="bx bx-error-circle fs-3 me-3 text-warning"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-2">No Office Location Configured</h6>
+                            <p class="mb-3">
+                                <strong>No office location is configured.</strong> Office locations with GPS coordinates must be set up before manual check-in can work.
+                            </p>
+                            ${actionHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading office location info:', error);
+        detailsDiv.innerHTML = `
+            <div class="alert alert-danger mb-0">
+                <i class="bx bx-error-circle me-2"></i>
+                Failed to load office location information. Please try again later.
+            </div>
+        `;
+    });
+}
 
 // Check today's attendance status
 function checkTodayAttendanceStatus() {
@@ -2425,11 +2658,13 @@ function checkTodayAttendanceStatus() {
     const statusLoading = document.getElementById('statusLoading');
     const btnCheckIn = document.getElementById('btnCheckIn');
     const btnCheckOut = document.getElementById('btnCheckOut');
+    const checkInTime = document.getElementById('checkInTime');
+    const checkInTimeText = document.getElementById('checkInTimeText');
+    const locationStatus = document.getElementById('locationStatus');
+    const locationText = document.getElementById('locationText');
     
-    if (!statusText) return;
-    
-    statusLoading.style.display = 'inline-block';
-    statusText.textContent = 'Checking...';
+    if (statusLoading) statusLoading.style.display = 'inline-block';
+    if (statusText) statusText.textContent = 'Checking...';
     
     fetch('{{ route("attendance.today") }}', {
         method: 'GET',
@@ -2440,37 +2675,244 @@ function checkTodayAttendanceStatus() {
     })
     .then(response => response.json())
     .then(data => {
-        statusLoading.style.display = 'none';
+        if (statusLoading) statusLoading.style.display = 'none';
         
         if (data.attendance) {
             const att = data.attendance;
             if (att.time_in && !att.time_out) {
+                if (statusText) {
                 statusText.innerHTML = '<span class="badge bg-success">Checked In</span><br><small class="text-muted">Time: ' + (att.time_in || 'N/A') + '</small>';
+                }
+                if (btnCheckIn) {
                 btnCheckIn.disabled = true;
-                btnCheckOut.disabled = false;
+                    btnCheckIn.innerHTML = '<i class="bx bx-check-circle me-2"></i>Checked In';
+                }
+                if (checkInTime && checkInTimeText) {
+                    checkInTime.style.display = 'block';
+                    checkInTimeText.textContent = `Checked in at ${att.time_in || 'N/A'}`;
+                }
+                if (locationStatus && locationText) {
+                    locationStatus.style.display = 'block';
+                    locationStatus.className = 'alert alert-success mb-0';
+                    locationText.innerHTML = '<i class="bx bx-check-circle me-2"></i>You are checked in';
+                }
+                if (btnCheckOut) btnCheckOut.disabled = false;
             } else if (att.time_in && att.time_out) {
+                if (statusText) {
                 statusText.innerHTML = '<span class="badge bg-danger">Checked Out</span><br><small class="text-muted">In: ' + (att.time_in || 'N/A') + ' | Out: ' + (att.time_out || 'N/A') + '</small>';
+                }
+                if (btnCheckIn) {
                 btnCheckIn.disabled = true;
-                btnCheckOut.disabled = true;
+                    btnCheckIn.innerHTML = '<i class="bx bx-log-out me-2"></i>Already Checked Out';
+                }
+                if (btnCheckOut) btnCheckOut.disabled = true;
             } else {
+                if (statusText) {
                 statusText.innerHTML = '<span class="badge bg-secondary">Not Checked In</span>';
+                }
+                if (btnCheckIn) {
                 btnCheckIn.disabled = false;
-                btnCheckOut.disabled = true;
+                    btnCheckIn.innerHTML = '<i class="bx bx-log-in me-2"></i>Check-In';
+                }
+                if (checkInTime) checkInTime.style.display = 'none';
+                if (locationStatus) locationStatus.style.display = 'none';
+                if (btnCheckOut) btnCheckOut.disabled = true;
             }
         } else {
+            if (statusText) {
             statusText.innerHTML = '<span class="badge bg-secondary">Not Checked In</span>';
+            }
+            if (btnCheckIn) {
             btnCheckIn.disabled = false;
-            btnCheckOut.disabled = true;
+                btnCheckIn.innerHTML = '<i class="bx bx-log-in me-2"></i>Check-In';
+            }
+            if (checkInTime) checkInTime.style.display = 'none';
+            if (locationStatus) locationStatus.style.display = 'none';
+            if (btnCheckOut) btnCheckOut.disabled = true;
         }
     })
     .catch(error => {
-        statusLoading.style.display = 'none';
+        if (statusLoading) statusLoading.style.display = 'none';
+        if (statusText) {
         statusText.innerHTML = '<span class="text-danger">Error checking status</span>';
+        }
         console.error('Error checking attendance status:', error);
     });
 }
 
-// Manual check-in/check-out functions removed - attendance is now only captured via ZKTeco devices
+// Manual Check-In Function with Location Validation
+async function checkIn() {
+    const btnCheckIn = document.getElementById('btnCheckIn');
+    const locationStatus = document.getElementById('locationStatus');
+    const locationText = document.getElementById('locationText');
+    const checkInTime = document.getElementById('checkInTime');
+    const checkInTimeText = document.getElementById('checkInTimeText');
+    
+    // Disable button during process
+    btnCheckIn.disabled = true;
+    btnCheckIn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-2"></i>Processing...';
+    
+    // Show location status
+    locationStatus.style.display = 'block';
+    locationText.innerHTML = '<i class="bx bx-loader-alt bx-spin me-2"></i>Getting your location...';
+    
+    try {
+        // Get user's current location
+        const position = await getCurrentPosition();
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+        
+        locationText.innerHTML = `<i class="bx bx-map me-2"></i>Location captured (Accuracy: ${Math.round(accuracy)}m)`;
+        
+        // Show loading state
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Checking In...',
+                html: 'Validating your location and recording attendance...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+        
+        // Send check-in request
+        const formData = new FormData();
+        formData.append('attendance_method', 'manual');
+        formData.append('latitude', latitude);
+        formData.append('longitude', longitude);
+        formData.append('location', `Lat: ${latitude}, Lng: ${longitude}`);
+        
+        const response = await fetch('{{ route("attendance.time-in") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (typeof Swal !== 'undefined') {
+            Swal.close();
+        }
+        
+        if (data.success) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            checkInTime.style.display = 'block';
+            checkInTimeText.textContent = `Checked in at ${timeString}`;
+            
+            locationText.innerHTML = `<i class="bx bx-check-circle me-2 text-success"></i>Check-in successful!`;
+            locationStatus.className = 'alert alert-success mb-0';
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Check-In Successful!',
+                    html: `
+                        <p><strong>Time:</strong> ${timeString}</p>
+                        <p><strong>Date:</strong> ${now.toLocaleDateString()}</p>
+                        ${data.attendance?.location_name ? `<p><strong>Location:</strong> ${data.attendance.location_name}</p>` : ''}
+                        ${data.message && data.message.includes('pending') ? '<p class="text-warning mt-2"><i class="bx bx-info-circle me-1"></i>Your attendance is pending HR verification.</p>' : ''}
+                    `,
+                    confirmButtonText: 'OK'
+                });
+            }
+            
+            // Disable check-in button
+            btnCheckIn.disabled = true;
+            btnCheckIn.innerHTML = '<i class="bx bx-check-circle me-2"></i>Checked In';
+            
+            // Refresh attendance status
+            setTimeout(() => {
+                checkTodayAttendanceStatus();
+            }, 1000);
+            
+        } else {
+            locationText.innerHTML = `<i class="bx bx-error-circle me-2 text-danger"></i>${data.message || 'Check-in failed'}`;
+            locationStatus.className = 'alert alert-danger mb-0';
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Check-In Failed',
+                    html: `
+                        <p>${data.message || 'Failed to check in'}</p>
+                        ${data.distance ? `<p><strong>Distance:</strong> ${Math.round(data.distance)}m away</p>` : ''}
+                        ${data.required_radius ? `<p><strong>Required:</strong> Within ${data.required_radius}m</p>` : ''}
+                        ${data.nearest_location ? `<p><strong>Nearest Office:</strong> ${data.nearest_location}</p>` : ''}
+                    `,
+                    confirmButtonText: 'OK'
+                });
+            }
+            
+            // Re-enable button
+            btnCheckIn.disabled = false;
+            btnCheckIn.innerHTML = '<i class="bx bx-log-in me-2"></i>Check-In';
+        }
+        
+    } catch (error) {
+        console.error('Check-in error:', error);
+        
+        if (typeof Swal !== 'undefined') {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Check-In Error',
+                html: `
+                    <p>${error.message || 'Failed to check in'}</p>
+                    ${error.message && error.message.includes('location') ? '<p class="text-warning mt-2">Please enable location services and try again.</p>' : ''}
+                `,
+                confirmButtonText: 'OK'
+            });
+        }
+        
+        locationText.innerHTML = `<i class="bx bx-error-circle me-2 text-danger"></i>Error: ${error.message || 'Failed to get location'}`;
+        locationStatus.className = 'alert alert-danger mb-0';
+        
+        // Re-enable button
+        btnCheckIn.disabled = false;
+        btnCheckIn.innerHTML = '<i class="bx bx-log-in me-2"></i>Check-In';
+    }
+}
+
+// Get current position with promise
+function getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Geolocation is not supported by your browser'));
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => resolve(position),
+            (error) => {
+                let errorMessage = 'Failed to get your location';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Location access denied. Please enable location permissions and try again.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Location request timed out. Please try again.';
+                        break;
+                }
+                reject(new Error(errorMessage));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+}
 
 // showToast function removed - using SweetAlert2 directly in all functions
 </script>

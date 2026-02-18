@@ -41,7 +41,7 @@
         }
         .summary-card h3 {
             font-size: 10px;
-            color: #2563eb;
+            color: #940000;
             margin-bottom: 5px;
         }
         .summary-card .amount {
@@ -61,7 +61,7 @@
             border: 1px solid #ddd;
         }
         table th {
-            background: #2563eb;
+            background: #940000;
             color: #fff;
             font-weight: bold;
             text-align: center;
@@ -77,7 +77,7 @@
             background: #f8f9fa;
         }
         .section-title {
-            background: #2563eb;
+            background: #940000;
             color: #fff;
             padding: 6px;
             font-weight: bold;
@@ -189,22 +189,25 @@
 
         <!-- Employee Details Table -->
         <div class="section-title">EMPLOYEE PAYROLL DETAILS</div>
-        <table>
+        <table style="table-layout: fixed;">
             <thead>
                 <tr>
-                    <th width="5%">#</th>
-                    <th width="12%">Employee</th>
-                    <th width="10%">Department</th>
-                    <th width="8%" class="amount-col">Basic</th>
-                    <th width="8%" class="amount-col">Overtime</th>
-                    <th width="8%" class="amount-col">Bonus</th>
-                    <th width="8%" class="amount-col">Allowance</th>
-                    <th width="8%" class="amount-col">Gross</th>
+                    <th width="3%">#</th>
+                    <th width="10%">Employee</th>
+                    <th width="8%">Dept</th>
+                    <th width="6%" class="amount-col">Basic</th>
+                    <th width="6%" class="amount-col">Ovt</th>
+                    <th width="6%" class="amount-col">Bonus</th>
+                    <th width="6%" class="amount-col">Allow.</th>
+                    <th width="6%" class="amount-col">House</th>
+                    <th width="6%" class="amount-col">Hard.</th>
+                    <th width="6%" class="amount-col">Other</th>
+                    <th width="7%" class="amount-col">Gross</th>
                     <th width="6%" class="amount-col">PAYE</th>
-                    <th width="6%" class="amount-col">NSSF</th>
-                    <th width="6%" class="amount-col">NHIF</th>
-                    <th width="6%" class="amount-col">HESLB</th>
-                    <th width="6%" class="amount-col">Ded.</th>
+                    <th width="5%" class="amount-col">NSSF</th>
+                    <th width="5%" class="amount-col">NHIF</th>
+                    <th width="5%" class="amount-col">HESLB</th>
+                    <th width="5%" class="amount-col">Ded.</th>
                     <th width="7%" class="amount-col">Net</th>
                 </tr>
             </thead>
@@ -212,19 +215,23 @@
                 @foreach($items as $index => $item)
                 @php
                     $employee = $item->employee;
-                    $employeeGross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount;
+                    $employeeGross = ($item->basic_salary ?? 0) + ($item->overtime_amount ?? 0) + ($item->bonus_amount ?? 0) + ($item->allowance_amount ?? 0) +
+                                    ($item->house_benefit_amount ?? 0) + ($item->hardship_benefit_amount ?? 0) + ($item->other_benefits_amount ?? 0);
                 @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>
+                    <td style="word-wrap: break-word;">
                         <strong>{{ $employee->name ?? 'N/A' }}</strong><br>
                         <small>{{ $employee->employee_id ?? 'N/A' }}</small>
                     </td>
-                    <td>{{ $employee->primaryDepartment->name ?? 'N/A' }}</td>
+                    <td style="word-wrap: break-word;">{{ $employee->primaryDepartment->name ?? 'N/A' }}</td>
                     <td class="amount-col">{{ number_format($item->basic_salary ?? 0, 0) }}</td>
                     <td class="amount-col">{{ number_format($item->overtime_amount ?? 0, 0) }}</td>
                     <td class="amount-col">{{ number_format($item->bonus_amount ?? 0, 0) }}</td>
                     <td class="amount-col">{{ number_format($item->allowance_amount ?? 0, 0) }}</td>
+                    <td class="amount-col">{{ number_format($item->house_benefit_amount ?? 0, 0) }}</td>
+                    <td class="amount-col">{{ number_format($item->hardship_benefit_amount ?? 0, 0) }}</td>
+                    <td class="amount-col">{{ number_format($item->other_benefits_amount ?? 0, 0) }}</td>
                     <td class="amount-col"><strong>{{ number_format($employeeGross, 0) }}</strong></td>
                     <td class="amount-col">{{ number_format($item->paye_amount ?? 0, 0) }}</td>
                     <td class="amount-col">{{ number_format($item->nssf_amount ?? 0, 0) }}</td>
@@ -241,6 +248,9 @@
                     <td class="amount-col"><strong>{{ number_format($totals['overtime_amount'], 0) }}</strong></td>
                     <td class="amount-col"><strong>{{ number_format($totals['bonus_amount'], 0) }}</strong></td>
                     <td class="amount-col"><strong>{{ number_format($totals['allowance_amount'], 0) }}</strong></td>
+                    <td class="amount-col"><strong>{{ number_format($totals['house_benefit_amount'], 0) }}</strong></td>
+                    <td class="amount-col"><strong>{{ number_format($totals['hardship_benefit_amount'], 0) }}</strong></td>
+                    <td class="amount-col"><strong>{{ number_format($totals['other_benefits_amount'], 0) }}</strong></td>
                     <td class="amount-col"><strong>{{ number_format($totals['gross_salary'], 0) }}</strong></td>
                     <td class="amount-col"><strong>{{ number_format($totals['paye_amount'], 0) }}</strong></td>
                     <td class="amount-col"><strong>{{ number_format($totals['nssf_amount'], 0) }}</strong></td>
@@ -254,7 +264,7 @@
 
         <!-- Department Breakdown -->
         @if(!empty($departmentBreakdown))
-        <div class="section-title">DEPARTMENT BREAKDOWN</div>
+        <div class="section-title" style="margin-top: 20px;">DEPARTMENT BREAKDOWN</div>
         <table>
             <thead>
                 <tr>
@@ -280,7 +290,7 @@
         @endif
 
         <!-- Final Summary -->
-        <div class="footer-totals">
+        <div class="footer-totals" style="page-break-inside: avoid;">
             <table>
                 <tr>
                     <td width="70%"><strong>Total Gross Salary:</strong></td>
@@ -309,6 +319,38 @@
                 <tr>
                     <td><strong>Total Employer Cost:</strong></td>
                     <td class="amount-col"><strong style="color: #f59e0b;">{{ number_format($totals['total_employer_cost'], 0) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Signatures Section -->
+        <div style="margin-top: 40px; page-break-inside: avoid;">
+            <table style="border: none; width: 100%;">
+                <tr style="border: none; background: none;">
+                    <td style="border: none; padding: 10px; width: 33%;">
+                        <div style="border-top: 1px solid #333; padding-top: 5px;">
+                            <strong>PREPARED BY:</strong><br><br>
+                            Name: _______________________<br><br>
+                            Signature: ____________________<br><br>
+                            Date: ________________________
+                        </div>
+                    </td>
+                    <td style="border: none; padding: 10px; width: 33%;">
+                        <div style="border-top: 1px solid #333; padding-top: 5px;">
+                            <strong>CHECKED BY:</strong><br><br>
+                            Name: _______________________<br><br>
+                            Signature: ____________________<br><br>
+                            Date: ________________________
+                        </div>
+                    </td>
+                    <td style="border: none; padding: 10px; width: 33%;">
+                        <div style="border-top: 1px solid #333; padding-top: 5px;">
+                            <strong>APPROVED BY:</strong><br><br>
+                            Name: _______________________<br><br>
+                            Signature: ____________________<br><br>
+                            Date: ________________________
+                        </div>
+                    </td>
                 </tr>
             </table>
         </div>

@@ -142,6 +142,11 @@ use App\Models\SystemSetting;
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="locations-tab" data-bs-toggle="tab" data-bs-target="#locations" type="button" role="tab">
+                                <i class="bx bx-map me-1"></i>Office Locations
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced-settings" type="button" role="tab">
                                 <i class="bx bx-cog me-1"></i>Advanced Settings
                             </button>
@@ -379,6 +384,51 @@ use App\Models\SystemSetting;
                                             <td colspan="7" class="text-center py-5 text-muted">
                                                 <i class="bx bx-loader-circle bx-spin fs-1"></i>
                                                 <p class="mt-2">Loading users...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Office Locations Tab -->
+                        <div class="tab-pane fade" id="locations" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h5 class="mb-0">
+                                        <i class="bx bx-map me-2"></i>OFFICE LOCATIONS MANAGEMENT
+                                    </h5>
+                                    <p class="text-muted mb-0 small">Define office locations with GPS coordinates for attendance verification</p>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="openLocationModal()">
+                                    <i class="bx bx-plus me-1"></i>Add Location
+                                </button>
+                            </div>
+                            
+                            <div class="alert alert-info mb-4">
+                                <i class="bx bx-info-circle me-2"></i>
+                                <strong>Location Setup:</strong> Define office locations with GPS coordinates and radius. When "Require GPS Verification" is enabled, users must be within the specified radius to check in or check out. Click "Add Location" to create a new office location.
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="locationsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Code</th>
+                                            <th>Address</th>
+                                            <th>GPS Coordinates</th>
+                                            <th>Radius</th>
+                                            <th>GPS Required</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="locationsList">
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5 text-muted">
+                                                <i class="bx bx-loader-circle bx-spin fs-1"></i>
+                                                <p class="mt-2">Loading locations...</p>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -954,9 +1004,9 @@ use App\Models\SystemSetting;
 <div class="modal fade" id="locationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="locationModalTitle">Add Location</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header" style="background-color: #940000; color: white;">
+                <h5 class="modal-title text-white" id="locationModalTitle">Add Location</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="locationForm">
                 <div class="modal-body">
@@ -994,21 +1044,49 @@ use App\Models\SystemSetting;
                             <label class="form-label">Postal Code</label>
                             <input type="text" class="form-control" id="locationPostalCode" name="postal_code">
                         </div>
+                        <div class="col-md-12">
+                            <div class="card border-info mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="bx bx-map me-2"></i>GPS Coordinates</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Latitude <span class="text-danger">*</span> <small class="text-muted">(Required for GPS verification)</small></label>
+                                            <div class="input-group">
+                                                <input type="number" step="0.00000001" class="form-control" id="locationLatitude" name="latitude" placeholder="-6.7924" min="-90" max="90">
+                                                <button type="button" class="btn btn-outline-primary" onclick="getCurrentLocationForForm()" title="Get your current location">
+                                                    <i class="bx bx-current-location"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">Range: -90 to 90 (e.g., -6.7924 for Dar es Salaam)</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Longitude <span class="text-danger">*</span> <small class="text-muted">(Required for GPS verification)</small></label>
+                                            <input type="number" step="0.00000001" class="form-control" id="locationLongitude" name="longitude" placeholder="39.2083" min="-180" max="180">
+                                            <small class="text-muted">Range: -180 to 180 (e.g., 39.2083 for Dar es Salaam)</small>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">GPS Radius (meters) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="locationRadius" name="radius_meters" value="100" min="10" max="10000" required>
-                            <small class="text-muted">Allowed radius for GPS-based attendance</small>
+                                            <small class="text-muted">Allowed radius for GPS-based attendance (10-10000 meters)</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Latitude</label>
-                            <input type="number" step="any" class="form-control" id="locationLatitude" name="latitude" placeholder="-6.7924">
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="getCurrentLocation()">
-                                <i class="bx bx-map me-1"></i>Get Current Location
-                            </button>
+                                            <label class="form-label">Location Preview</label>
+                                            <div id="locationPreview" class="p-2 bg-light rounded border" style="min-height: 50px;">
+                                                <small class="text-muted">Enter coordinates to see preview</small>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Longitude</label>
-                            <input type="number" step="any" class="form-control" id="locationLongitude" name="longitude" placeholder="39.2083">
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="bx bx-info-circle me-2"></i>
+                                            <strong>GPS Coordinates Required:</strong> To enable GPS verification, you must provide both latitude and longitude. 
+                                            Use the location button to automatically capture your current location, or enter coordinates manually.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <div class="form-check form-switch">
@@ -1942,6 +2020,11 @@ function openLocationModal(id = null) {
             document.getElementById('locationAllowRemote').checked = location.allow_remote || false;
             document.getElementById('locationIsActive').checked = location.is_active !== false;
             
+            // Update preview if coordinates exist
+            if (location.latitude && location.longitude) {
+                setTimeout(() => updateLocationPreview(location.latitude, location.longitude), 100);
+            }
+            
             // ZKTeco biometric only - no methods selection needed
         }
     }
@@ -1976,7 +2059,7 @@ function deleteLocation(id) {
 }
 
 function performDeleteLocation(id) {
-    fetch(`{{ url('attendance-settings/locations') }}/${id}`, {
+    fetch(`{{ route('attendance-settings.locations.delete', ['id' => '__ID__']) }}`.replace('__ID__', id), {
         method: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': csrfToken,
@@ -2449,20 +2532,166 @@ function deletePolicy(id) {
     });
 }
 
+// Update location preview when coordinates change
+function updateLocationPreview(lat, lng) {
+    const previewDiv = document.getElementById('locationPreview');
+    if (!previewDiv) return;
+    
+    if (lat && lng) {
+        previewDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="bx bx-map text-primary me-2"></i>
+                <div>
+                    <strong>Coordinates:</strong><br>
+                    <small>Lat: ${parseFloat(lat).toFixed(8)}, Lng: ${parseFloat(lng).toFixed(8)}</small><br>
+                    <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                        <i class="bx bx-map me-1"></i>View on Google Maps
+                    </a>
+                </div>
+            </div>
+        `;
+    } else {
+        previewDiv.innerHTML = '<small class="text-muted">Enter coordinates to see preview</small>';
+    }
+}
+
 // Get current location using browser geolocation
 // Get current location for location form
-function getCurrentLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            document.getElementById('locationLatitude').value = position.coords.latitude.toFixed(8);
-            document.getElementById('locationLongitude').value = position.coords.longitude.toFixed(8);
-            showToast('Location retrieved successfully', 'success');
-        }, function(error) {
-            showToast('Failed to get location: ' + error.message, 'error');
+async function getCurrentLocationForForm() {
+    const latInput = document.getElementById('locationLatitude');
+    const lngInput = document.getElementById('locationLongitude');
+    const previewDiv = document.getElementById('locationPreview');
+    
+    if (!navigator.geolocation) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Geolocation Not Supported',
+                text: 'Your browser does not support geolocation. Please enter coordinates manually.'
         });
     } else {
-        showToast('Geolocation is not supported by your browser', 'error');
+            alert('Geolocation not supported. Please enter coordinates manually.');
+        }
+        return;
     }
+    
+    // Show loading state
+    if (previewDiv) {
+        previewDiv.innerHTML = '<small class="text-info"><i class="bx bx-loader-alt bx-spin me-1"></i>Getting your location...</small>';
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            // Fill in the form fields
+            latInput.value = lat.toFixed(8);
+            lngInput.value = lng.toFixed(8);
+            
+            // Update preview
+            updateLocationPreview(lat, lng);
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Location Captured!',
+                    html: `
+                        <p><strong>Latitude:</strong> ${lat.toFixed(8)}</p>
+                        <p><strong>Longitude:</strong> ${lng.toFixed(8)}</p>
+                        <p><small class="text-muted">Accuracy: ±${Math.round(accuracy)}m</small></p>
+                    `,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        },
+        (error) => {
+            let errorMessage = 'Failed to get your location';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = 'Location access denied. Please enable location permissions and try again.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = 'Location information is unavailable.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = 'Location request timed out. Please try again.';
+                    break;
+            }
+            
+            if (previewDiv) {
+                previewDiv.innerHTML = `<small class="text-danger"><i class="bx bx-error-circle me-1"></i>${errorMessage}</small>`;
+            }
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Location Error',
+                    text: errorMessage
+                });
+            } else {
+                alert(errorMessage);
+            }
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+// Update location preview when coordinates change
+function updateLocationPreview(lat, lng) {
+    const previewDiv = document.getElementById('locationPreview');
+    if (!previewDiv) return;
+    
+    if (lat && lng) {
+        previewDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="bx bx-map text-primary me-2"></i>
+                <div>
+                    <strong>Coordinates:</strong><br>
+                    <small>Lat: ${parseFloat(lat).toFixed(8)}, Lng: ${parseFloat(lng).toFixed(8)}</small><br>
+                    <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                        <i class="bx bx-map me-1"></i>View on Google Maps
+                    </a>
+                </div>
+            </div>
+        `;
+    } else {
+        previewDiv.innerHTML = '<small class="text-muted">Enter coordinates to see preview</small>';
+    }
+}
+
+// Add event listeners for coordinate inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const latInput = document.getElementById('locationLatitude');
+    const lngInput = document.getElementById('locationLongitude');
+    
+    if (latInput && lngInput) {
+        latInput.addEventListener('input', function() {
+            const lat = this.value;
+            const lng = lngInput.value;
+            if (lat && lng) {
+                updateLocationPreview(lat, lng);
+    }
+        });
+        
+        lngInput.addEventListener('input', function() {
+            const lat = latInput.value;
+            const lng = this.value;
+            if (lat && lng) {
+                updateLocationPreview(lat, lng);
+            }
+        });
+    }
+});
+
+function getCurrentLocation() {
+    getCurrentLocationForForm();
 }
 
 // Form Submissions
@@ -2507,7 +2736,7 @@ document.getElementById('locationForm').addEventListener('submit', async functio
     const formData = new FormData(this);
     const locationId = document.getElementById('locationId').value;
     const url = locationId 
-        ? `{{ url('attendance-settings/locations') }}/${locationId}`
+        ? `{{ route('attendance-settings.locations.update', ['id' => '']) }}${locationId}`
         : '{{ route("attendance-settings.locations.store") }}';
     const method = locationId ? 'PUT' : 'POST';
     
@@ -4464,6 +4693,18 @@ function copyCurlExample() {
 
 // Handle user enrollment form submission
 document.addEventListener('DOMContentLoaded', function() {
+    // Load locations when locations tab is shown
+    const locationsTab = document.getElementById('locations-tab');
+    if (locationsTab) {
+        locationsTab.addEventListener('shown.bs.tab', function() {
+            loadLocations();
+        });
+        // If locations tab is active on page load, load locations immediately
+        if (locationsTab.classList.contains('active')) {
+            loadLocations();
+        }
+    }
+    
     // Load users table and locations if users tab is active
     const usersTab = document.getElementById('users-tab');
     if (usersTab) {

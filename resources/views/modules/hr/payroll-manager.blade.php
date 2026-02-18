@@ -4,7 +4,7 @@
 <div class="row">
     <div class="col-12">
         <div class="card shadow-lg border-0">
-            <div class="card-header bg-gradient-primary text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="card-header text-white" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%);">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title mb-0 text-white">
@@ -170,7 +170,10 @@
                                         
                                         @if($payroll->status === 'paid' || $payroll->status === 'approved')
                                         <a class="dropdown-item" href="{{ route('payroll.report.pdf', $payroll->id) }}" target="_blank">
-                                            <i class="bx bx-file me-2"></i> Download PDF
+                                            <i class="bx bx-file me-2"></i> Payroll Report
+                                        </a>
+                                        <a class="dropdown-item" href="{{ route('payroll.journal.pdf', $payroll->id) }}" target="_blank">
+                                            <i class="bx bx-receipt me-2"></i> Salary Journal
                                         </a>
                                         @endif
                                         @if($payroll->status === 'paid')

@@ -28,187 +28,232 @@ class AssessmentController extends Controller
         $user = Auth::user();
         $isHR = $user->hasRole('HR Officer');
         $isHOD = $user->hasRole('HOD');
-        $isCEO = $user->hasRole('CEO');
+        $isCEO = $user->hasRole('CEO') || $user->hasRole('General Manager') || $user->hasRole('System Admin');
         $isAdmin = $user->hasRole('System Admin');
         $isManager = $isHR || $isHOD || $isCEO || $isAdmin;
 
-        $query = Assessment::with(['employee.primaryDepartment', 'activities', 'hodApprover']);
+        // Fetch Organizational Goals (Top-level)
+        $orgGoals = \App\Models\OrganizationalGoal::with('children.department', 'children.assessments.employee')
+            ->whereNull('parent_id')
+            ->get();
 
-        if (!$isManager) {
-            // Regular staff see only their own assessments
-            $query->where('employee_id', $user->id);
-        } elseif ($isHR) {
-            // HR sees ALL assessments from ALL staff - no filter needed
-            // Query remains as is (no where clause)
-        } elseif ($isHOD && !$isAdmin) {
-            // HOD sees assessments from ALL staff in their department
-            if ($user->primary_department_id) {
-                $query->whereHas('employee', function($q) use ($user) {
-                    $q->where('primary_department_id', $user->primary_department_id);
-                });
-            } else {
-                // If HOD has no department, return empty result
-                $query->whereRaw('1 = 0');
-            }
-        } elseif ($isCEO && !$isAdmin) {
-            // CEO sees all - no filter needed
+        // Fetch My Activities
+        $myActivities = AssessmentActivity::whereHas('assessment', function($q) use ($user) {
+                $q->where('employee_id', $user->id);
+            })
+            ->with(['assignedBy', 'progressReports' => function($q) {
+                $q->orderBy('created_at', 'desc');
+            }])
+            ->get();
+            
+        // Add current_progress calculation to activities
+        foreach ($myActivities as $activity) {
+            $latestReport = $activity->progressReports->first();
+            $activity->current_progress = $latestReport ? $latestReport->progress_percentage : 0;
         }
 
-        $assessments = $query->orderBy('created_at', 'desc')->get();
-
-        // For staff users, load activities with progress reports upfront
-        if (!$isManager) {
-            $assessments->load(['activities.progressReports' => function($q) {
-                $q->with('hodApprover')->orderBy('created_at', 'desc');
-            }]);
-        }
-
-        $awaitingMyAction = collect();
-        $myAssessments = collect();
-        $otherAssessments = collect();
-
-        foreach ($assessments as $assessment) {
-            $isOwn = $assessment->employee_id == $user->id;
-            $awaitingAction = false;
-
-            // HOD and HR can approve assessments
-            if (($isHOD || $isHR) && !$isOwn && !$isAdmin) {
-                if ($assessment->status === 'pending_hod') {
-                    $awaitingAction = true;
-                }
-            }
-
-            if ($awaitingAction) {
-                $awaitingMyAction->push($assessment);
-            } elseif ($isOwn) {
-                $myAssessments->push($assessment);
-            } else {
-                $otherAssessments->push($assessment);
-            }
-        }
-
-        // For HOD: pending progress reports from department staff
-        $pendingReports = collect();
-        if ($isHOD && !$isAdmin) {
-            if ($user->primary_department_id) {
-                $pendingReports = AssessmentProgressReport::with(['activity.assessment.employee.primaryDepartment'])
-                    ->where('status', 'pending_approval')
-                    ->whereHas('activity.assessment.employee', function($q) use ($user) {
-                        $q->where('primary_department_id', $user->primary_department_id);
-                    })
-                    ->latest('report_date')
-                    ->limit(50)
-                    ->get();
-            } else {
-                $pendingReports = collect();
-            }
-        } elseif ($isAdmin) {
-            $pendingReports = AssessmentProgressReport::with(['activity.assessment.employee.primaryDepartment'])
-                ->where('status', 'pending_approval')
-                ->latest('report_date')
-                ->limit(50)
+        // Fetch Team Members for delegation (if HOD/GM)
+        $teamMembers = collect();
+        if ($isCEO) {
+            $teamMembers = User::where('id', '!=', $user->id)->get();
+        } elseif ($isHOD) {
+            $teamMembers = User::where('primary_department_id', $user->primary_department_id)
+                ->where('id', '!=', $user->id)
                 ->get();
         }
 
-        // For Staff: compute current-period submission status per activity
-        // Enhanced to check all periods properly based on frequency
-        $currentPeriodStatus = [];
-        if (!$isManager) {
-            $now = Carbon::now();
-            // Relationships are already loaded on $assessments above
+        // Fetch Pending Approvals
+        $pendingApprovals = collect();
+        if ($isHOD || $isCEO) {
+            $pendingQuery = AssessmentProgressReport::with(['activity.assessment.employee'])
+                ->where('status', 'pending_approval');
             
-            foreach ($myAssessments as $ass) {
-                foreach ($ass->activities as $act) {
-                    $start = null; 
-                    $end = null;
-                    
-                    // Determine period based on frequency
-                    if ($act->reporting_frequency === 'daily') {
-                        $start = $now->copy()->startOfDay();
-                        $end = $now->copy()->endOfDay();
-                    } elseif ($act->reporting_frequency === 'weekly') {
-                        $start = $now->copy()->startOfWeek();
-                        $end = $now->copy()->endOfWeek();
-                    } elseif ($act->reporting_frequency === 'monthly') {
-                        $start = $now->copy()->startOfMonth();
-                        $end = $now->copy()->endOfMonth();
-                    } elseif ($act->reporting_frequency === 'quarterly') {
-                        $quarter = ceil($now->month / 3);
-                        $start = Carbon::create($now->year, ($quarter - 1) * 3 + 1, 1)->startOfMonth();
-                        $end = $start->copy()->addMonths(2)->endOfMonth();
-                    } else {
-                        // Default to monthly if unknown
-                        $start = $now->copy()->startOfMonth();
-                        $end = $now->copy()->endOfMonth();
-                    }
-                    
-                    // Check for existing report in this period (check all statuses)
-                    $existing = AssessmentProgressReport::where('activity_id', $act->id)
-                        ->where(function($query) use ($start, $end, $act, $now) {
-                            if ($act->reporting_frequency === 'daily') {
-                                $query->whereDate('report_date', $now->toDateString());
-                            } elseif ($act->reporting_frequency === 'weekly') {
-                                $query->whereBetween('report_date', [$start->toDateString(), $end->toDateString()]);
-                            } elseif ($act->reporting_frequency === 'monthly') {
-                                $query->whereYear('report_date', $now->year)
-                                      ->whereMonth('report_date', $now->month);
-                            } elseif ($act->reporting_frequency === 'quarterly') {
-                                $quarter = ceil($now->month / 3);
-                                $qStart = Carbon::create($now->year, ($quarter - 1) * 3 + 1, 1);
-                                $qEnd = $qStart->copy()->endOfQuarter();
-                                $query->whereBetween('report_date', [$qStart->toDateString(), $qEnd->toDateString()]);
-                            }
-                        })
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-                    
-                    if ($existing) {
-                        $currentPeriodStatus[$act->id] = [
-                            'exists' => true,
-                            'status' => $existing->status,
-                            'report_date' => optional($existing->report_date)->toDateString(),
-                            'report_id' => $existing->id,
-                            'submitted_at' => optional($existing->created_at)->toDateTimeString(),
-                            'approver' => optional($existing->hodApprover)->name,
-                            'comments' => $existing->hod_comments,
-                        ];
-                    } else {
-                        $currentPeriodStatus[$act->id] = [ 
-                            'exists' => false, 
-                            'status' => null, 
-                            'report_date' => null,
-                            'report_id' => null,
-                            'submitted_at' => null,
-                            'approver' => null,
-                            'comments' => null,
-                        ];
-                    }
-                }
+            if ($isHOD && !$isAdmin && !$isCEO) {
+                $pendingQuery->whereHas('activity.assessment.employee', function($q) use ($user) {
+                    $q->where('primary_department_id', $user->primary_department_id);
+                });
             }
+            $pendingApprovals = $pendingQuery->latest()->get();
         }
 
-        // Get comprehensive statistics for admin
-        $statistics = [];
-        if ($isAdmin || $isHR) {
-            $statistics = [
-                'total_assessments' => Assessment::count(),
-                'approved_assessments' => Assessment::where('status', 'approved')->count(),
-                'pending_assessments' => Assessment::where('status', 'pending_hod')->count(),
-                'rejected_assessments' => Assessment::where('status', 'rejected')->count(),
-                'total_activities' => AssessmentActivity::count(),
-                'total_reports' => AssessmentProgressReport::count(),
-                'pending_reports' => AssessmentProgressReport::where('status', 'pending_approval')->count(),
-                'approved_reports' => AssessmentProgressReport::where('status', 'approved')->count(),
-                'rejected_reports' => AssessmentProgressReport::where('status', 'rejected')->count(),
-                'reports_this_month' => AssessmentProgressReport::whereMonth('created_at', Carbon::now()->month)
-                    ->whereYear('created_at', Carbon::now()->year)->count(),
-            ];
-        }
+        // --- Live Statistics Calculation ---
+        // 1. Orgwide Progress (Average of all assigned activities)
+        $allActivities = AssessmentActivity::with(['progressReports' => function($q) {
+            $q->orderBy('created_at', 'desc');
+        }])->get();
         
+        foreach ($allActivities as $act) {
+            $lastRep = $act->progressReports->first();
+            $act->last_progress = $lastRep ? $lastRep->progress_percentage : 0;
+        }
+        $orgProgress = $allActivities->avg('last_progress') ?? 0;
+
+        // 2. Tasks Completed vs Total
+        $completedCount = $allActivities->filter(function($a) { return $a->last_progress >= 100; })->count();
+        $totalTasks = $allActivities->count();
+
+        // 3. Overall Qualitative Score
+        $allQualitative = AssessmentProgressReport::where('status', 'approved')
+            ->whereNotNull('quality_rating')
+            ->avg('quality_rating') ?? 0;
+        $overallQualScore = $allQualitative * 10;
+
+        // 4. Critical Tasks (Less than 25% progress and deadline approaching)
+        $criticalTasksCount = $allActivities->filter(function($a) {
+            return $a->last_progress < 25 && $a->target_end_date && 
+                   Carbon::parse($a->target_end_date)->isFuture() && 
+                   Carbon::parse($a->target_end_date)->diffInDays(now()) <= 7;
+        })->count();
+
+        // Top Performers (Actually people with assessments)
+        $topPerformers = User::whereHas('assessments')->limit(5)->get();
+
+        // Calculate Personal Composite Score
+        $quantScore = $myActivities->avg('current_progress') ?? 0;
+        
+        // Qualitative score from approved progress reports
+        $qualitativeScores = AssessmentProgressReport::whereHas('activity.assessment', function($q) use ($user) {
+                $q->where('employee_id', $user->id);
+            })
+            ->where('status', 'approved')
+            ->whereNotNull('quality_rating')
+            ->get();
+            
+        $avgQuality = $qualitativeScores->avg('quality_rating') ?? 0;
+        $qualScore = $avgQuality * 10; // Scale 1-10 to 1-100
+        
+        $compositeScore = ($quantScore * 0.4) + ($qualScore * 0.6);
+
         return view('modules.hr.performance-management', compact(
-            'awaitingMyAction', 'myAssessments', 'otherAssessments', 'pendingReports',
-            'isHR', 'isHOD', 'isCEO', 'isAdmin', 'isManager', 'currentPeriodStatus', 'statistics'
+            'user', 'isHR', 'isHOD', 'isCEO', 'isAdmin', 'isManager',
+            'orgGoals', 'myActivities', 'teamMembers', 'pendingApprovals', 'topPerformers',
+            'quantScore', 'qualScore', 'compositeScore',
+            'orgProgress', 'completedCount', 'totalTasks', 'overallQualScore', 'criticalTasksCount'
         ));
+    }
+
+    public function action(Request $request)
+    {
+        $user = Auth::user();
+        $action = $request->input('action');
+
+        switch ($action) {
+            case 'create_organizational_goal':
+                if (!$user->hasAnyRole(['CEO', 'General Manager', 'System Admin'])) abort(403);
+                \App\Models\OrganizationalGoal::create([
+                    'title' => $request->title,
+                    'description' => $request->description,
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date,
+                    'level' => 'organization',
+                    'is_active' => true,
+                ]);
+                return back()->with('success', 'Strategic goal created successfully.');
+
+            case 'delegate_activity':
+                if (!$user->hasAnyRole(['HOD', 'CEO', 'General Manager', 'System Admin'])) abort(403);
+                
+                DB::transaction(function() use ($request, $user) {
+                    // Find or create assessment for this employee and goal
+                    $assessment = Assessment::firstOrCreate(
+                        [
+                            'employee_id' => $request->employee_id, 
+                            'organizational_goal_id' => $request->organizational_goal_id,
+                            'status' => 'approved'
+                        ],
+                        [
+                            'main_responsibility' => 'Assigned Responsibilities',
+                            'contribution_percentage' => 100,
+                        ]
+                    );
+
+                    AssessmentActivity::create([
+                        'assessment_id' => $assessment->id,
+                        'activity_name' => $request->activity_name,
+                        'description' => $request->description,
+                        'reporting_frequency' => $request->reporting_frequency,
+                        'contribution_percentage' => $request->contribution_percentage,
+                        'target_start_date' => $request->target_start_date,
+                        'target_end_date' => $request->target_end_date,
+                        'status' => 'pending',
+                        'assigned_by' => $user->id,
+                    ]);
+                });
+                return back()->with('success', 'Activity delegated successfully.');
+
+            case 'submit_progress_report':
+                $request->validate([
+                    'activity_id' => 'required|exists:assessment_activities,id',
+                    'progress_text' => 'required|string',
+                    'progress_percentage' => 'required|numeric|min:0|max:100',
+                    'evidence_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                ]);
+
+                $activity = AssessmentActivity::findOrFail($request->activity_id);
+                if ($activity->assessment->employee_id !== $user->id) abort(403);
+
+                $evidencePath = null;
+                if ($request->hasFile('evidence_file')) {
+                    $evidencePath = $request->file('evidence_file')->store('performance_evidence', 'public');
+                }
+
+                AssessmentProgressReport::create([
+                    'activity_id' => $activity->id,
+                    'report_date' => now()->toDateString(),
+                    'progress_text' => $request->progress_text,
+                    'progress_percentage' => $request->progress_percentage,
+                    'evidence_file' => $evidencePath,
+                    'status' => 'pending_approval',
+                ]);
+
+                // Update activity status to in_progress if not already
+                if ($activity->status === 'pending') {
+                    $activity->update(['status' => 'in_progress']);
+                }
+
+                return back()->with('success', 'Progress report submitted successfully.');
+
+            case 'approve_report':
+                if (!$user->hasAnyRole(['HOD', 'CEO', 'General Manager', 'System Admin'])) abort(403);
+                $report = AssessmentProgressReport::findOrFail($request->report_id);
+                $report->update([
+                    'status' => 'approved',
+                    'hod_approved_at' => now(),
+                    'hod_approved_by' => $user->id,
+                    'quality_rating' => $request->quality_rating,
+                    'hod_comments' => $request->comments,
+                ]);
+
+                // If progress is 100%, mark activity as completed
+                if ($report->progress_percentage >= 100) {
+                    $report->activity->update(['status' => 'completed']);
+                }
+
+                return back()->with('success', 'Progress report approved.');
+
+            case 'reject_report':
+                if (!$user->hasAnyRole(['HOD', 'CEO', 'General Manager', 'System Admin'])) abort(403);
+                $report = AssessmentProgressReport::findOrFail($request->report_id);
+                $report->update([
+                    'status' => 'rejected',
+                    'hod_approved_at' => now(),
+                    'hod_approved_by' => $user->id,
+                    'hod_comments' => $request->comments,
+                ]);
+                return back()->with('success', 'Progress report rejected.');
+
+            case 'request_changes':
+                if (!$user->hasAnyRole(['HOD', 'CEO', 'General Manager', 'System Admin'])) abort(403);
+                $report = AssessmentProgressReport::findOrFail($request->report_id);
+                $report->update([
+                    'status' => 'changes_requested',
+                    'hod_comments' => $request->comments,
+                ]);
+                return back()->with('success', 'Changes requested for progress report.');
+
+            default:
+                return back()->with('error', 'Invalid action.');
+        }
     }
 
 
@@ -1804,7 +1849,7 @@ class AssessmentController extends Controller
         }
         
         if ($assessment->status !== 'pending_hod') {
-            return redirect()->route('performance_management_module.show', $assessment->id)
+            return redirect()->route('modules.performance_management_module.show', $assessment->id)
                 ->with('error', 'Assessment is not pending approval');
         }
         
@@ -1823,7 +1868,7 @@ class AssessmentController extends Controller
         }
         
         if ($assessment->status !== 'pending_hod') {
-            return redirect()->route('performance_management_module.show', $assessment->id)
+            return redirect()->route('modules.performance_management_module.show', $assessment->id)
                 ->with('error', 'Assessment is not pending approval');
         }
         
@@ -1885,6 +1930,86 @@ class AssessmentController extends Controller
         }
         
         return view('modules.hr.performance-management-analytics');
+    }
+
+    public function pdf()
+    {
+        $user = auth()->user();
+        
+        // Fetch data exactly like index
+        $myActivities = AssessmentActivity::whereHas('assessment', function($q) use ($user) {
+                $q->where('employee_id', $user->id);
+            })
+            ->with(['assignedBy', 'progressReports' => function($q) {
+                $q->orderBy('created_at', 'desc');
+            }])
+            ->get();
+            
+        foreach ($myActivities as $activity) {
+            $latestReport = $activity->progressReports->first();
+            $activity->current_progress = $latestReport ? $latestReport->progress_percentage : 0;
+        }
+
+        $quantScore = $myActivities->avg('current_progress') ?? 0;
+        $qualitativeScores = AssessmentProgressReport::whereHas('activity.assessment', function($q) use ($user) {
+                $q->where('employee_id', $user->id);
+            })
+            ->where('status', 'approved')
+            ->whereNotNull('quality_rating')
+            ->get();
+        $avgQuality = $qualitativeScores->avg('quality_rating') ?? 0;
+        $qualScore = $avgQuality * 10;
+        $compositeScore = ($quantScore * 0.4) + ($qualScore * 0.6);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('modules.hr.pdf.performance-report', compact(
+            'user', 'myActivities', 'quantScore', 'qualScore', 'compositeScore'
+        ));
+
+        return $pdf->download("Performance_Report_{$user->name}_{$user->id}.pdf");
+    }
+
+    public function setOrgGoalPage()
+    {
+        $user = Auth::user();
+        if (!$user->hasAnyRole(['CEO', 'General Manager', 'System Admin'])) abort(403);
+        
+        return view('modules.hr.performance.set-org-goal');
+    }
+
+    public function delegateActivityPage()
+    {
+        $user = Auth::user();
+        if (!$user->hasAnyRole(['HOD', 'CEO', 'General Manager', 'System Admin'])) abort(403);
+
+        $orgGoals = \App\Models\OrganizationalGoal::with('children.department')
+            ->whereNull('parent_id')
+            ->get();
+
+        $teamMembers = collect();
+        if ($user->hasAnyRole(['CEO', 'General Manager', 'System Admin'])) {
+            $teamMembers = User::where('id', '!=', $user->id)->get();
+        } elseif ($user->hasRole('HOD')) {
+            $teamMembers = User::where('primary_department_id', $user->primary_department_id)
+                ->where('id', '!=', $user->id)
+                ->get();
+        }
+
+        return view('modules.hr.performance.delegate-activity', compact('orgGoals', 'teamMembers'));
+    }
+
+    public function dailyReportPage()
+    {
+        $user = Auth::user();
+        
+        $myActivities = AssessmentActivity::whereHas('assessment', function($q) use ($user) {
+                $q->where('employee_id', $user->id);
+            })
+            ->with(['assignedBy', 'progressReports' => function($q) {
+                $q->orderBy('created_at', 'desc');
+            }])
+            ->get();
+
+        return view('modules.hr.performance.daily-report-list', compact('myActivities'));
     }
 }
 

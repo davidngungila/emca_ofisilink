@@ -23,6 +23,8 @@ class TaskActivity extends Model
         'estimated_hours',
         'actual_hours',
         'depends_on_id',
+        'financial_year',
+        'assessment_activity_id',
     ];
 
     protected $casts = [
@@ -71,5 +73,20 @@ class TaskActivity extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(TaskAttachment::class, 'activity_id')->latest();
+    }
+
+    public function assessmentActivity(): BelongsTo
+    {
+        return $this->belongsTo(AssessmentActivity::class, 'assessment_activity_id');
+    }
+
+    public function performanceLinks()
+    {
+        return $this->belongsToMany(
+            AssessmentActivity::class,
+            'task_performance_links',
+            'task_activity_id',
+            'assessment_activity_id'
+        )->withPivot('link_type', 'weight', 'financial_year', 'is_active', 'linked_at', 'linked_by');
     }
 }

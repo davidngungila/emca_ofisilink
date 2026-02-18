@@ -7,24 +7,29 @@
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                <div class="card-body text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="mb-1 text-white">
-                                <i class="bx bx-receipt me-2"></i>Employee Payslip
-                            </h4>
-                            <p class="mb-0 text-white-50">
-                                {{ $payrollItem->employee->name ?? 'N/A' }} | 
-                                {{ \Carbon\Carbon::parse($payrollItem->payroll->pay_period . '-01')->format('F Y') ?? 'N/A' }}
-                            </p>
+            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%); border-radius: 15px;">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="d-flex align-items-center mb-3 mb-md-0">
+                            <div class="avatar avatar-lg me-3" style="width: 70px; height: 70px;">
+                                <span class="avatar-initial rounded-circle bg-white" style="font-size: 1.8rem; color: #940000;">
+                                    <i class="bx bx-receipt"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h3 class="mb-1 text-white fw-bold">Employee Payslip</h3>
+                                <div class="d-flex align-items-center flex-wrap gap-2 text-white-50">
+                                    <span class="fs-5 fw-semibold">{{ $payrollItem->employee->name ?? 'N/A' }}</span>
+                                    <span class="badge bg-white px-3" style="color: #940000;">{{ \Carbon\Carbon::parse($payrollItem->payroll->pay_period . '-01')->format('F Y') ?? 'N/A' }}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <a href="{{ route('modules.hr.payroll') }}" class="btn btn-light me-2">
-                                <i class="bx bx-arrow-back me-1"></i>Back
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('modules.hr.payroll') }}" class="btn btn-light btn-lg px-4 shadow-sm">
+                                <i class="bx bx-arrow-back me-2"></i>Back to Dashboard
                             </a>
-                            <a href="{{ route('payroll.payslip.pdf', $payrollItem->id) }}" class="btn btn-light" target="_blank">
-                                <i class="bx bx-download me-1"></i>Download PDF
+                            <a href="{{ route('payroll.payslip.pdf', $payrollItem->id) }}" class="btn btn-warning btn-lg px-4 shadow-sm" target="_blank">
+                                <i class="bx bx-download me-2"></i>Download PDF
                             </a>
                         </div>
                     </div>
@@ -88,7 +93,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card shadow-lg border-0">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header text-white" style="background-color: #940000;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-0 text-white">
@@ -107,255 +112,221 @@
                 </div>
                 <br>
                 <div class="card-body">
-                    <!-- Employee Information -->
+                    <!-- Employee & Processing Summary -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card border-primary">
-                                <div class="card-header bg-primary text-white">
-                                    <h6 class="mb-0"><i class="bx bx-user me-2"></i>Employee Information</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="mb-2"><strong>Name:</strong> {{ $payslipData['employee']['name'] }}</p>
-                                    <p class="mb-2"><strong>Employee ID:</strong> <code>{{ $payslipData['employee']['employee_id'] }}</code></p>
-                                    <p class="mb-2"><strong>Department:</strong> {{ $payslipData['employee']['department'] }}</p>
-                                    <p class="mb-0"><strong>Position:</strong> {{ $payslipData['employee']['position'] }}</p>
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div class="card border-0 shadow-sm h-100" style="background: rgba(148, 0, 0, 0.05); border-radius: 12px; border-left: 5px solid #940000 !important;">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="avatar rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background-color: #940000;">
+                                            <i class="bx bx-user text-white fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0 fw-bold" style="color: #940000;">Employee Profile</h5>
+                                    </div>
+                                    <div class="info-list">
+                                        <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                            <span class="text-muted fw-medium">Full Name</span>
+                                            <span class="fw-bold text-dark">{{ $payslipData['employee']['name'] }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                            <span class="text-muted fw-medium">Employee ID</span>
+                                            <span class="badge px-3" style="background-color: rgba(148, 0, 0, 0.1); color: #940000;">#{{ $payslipData['employee']['employee_id'] }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                            <span class="text-muted fw-medium">Department</span>
+                                            <span class="fw-bold text-dark">{{ $payslipData['employee']['department'] }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted fw-medium">Job Position</span>
+                                            <span class="fw-bold text-dark">{{ $payslipData['employee']['position'] }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card border-info">
-                                <div class="card-header bg-info text-white">
-                                    <h6 class="mb-0 text-white"><i class="bx bx-calendar me-2"></i>Payroll Processing Information</h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="mb-2">
-                                        <strong>Pay Period:</strong><br>
-                                        <span class="text-muted">{{ \Carbon\Carbon::parse($payslipData['payroll']['pay_period'] . '-01')->format('F Y') ?? 'N/A' }}</span>
-                                    </p>
-                                    <p class="mb-2">
-                                        <strong>Pay Date:</strong><br>
-                                        <span class="text-muted">{{ $payslipData['payroll']['pay_date'] ? \Carbon\Carbon::parse($payslipData['payroll']['pay_date'])->format('l, F j, Y') : 'N/A' }}</span>
-                                    </p>
-                                    <p class="mb-2">
-                                        <strong>Status:</strong><br>
-                                        <span class="badge bg-{{ $payslipData['payroll']['status'] === 'paid' ? 'success' : ($payslipData['payroll']['status'] === 'approved' ? 'info' : 'warning') }}">
-                                            {{ ucfirst($payslipData['payroll']['status']) }}
-                                        </span>
-                                    </p>
-                                    <hr>
-                                    <p class="mb-2">
-                                        <strong>Processed By:</strong><br>
-                                        <span class="text-muted">{{ $payslipData['payroll']['processed_by'] }}</span>
-                                    </p>
-                                    @if($payslipData['payroll']['reviewed_by'])
-                                    <p class="mb-2">
-                                        <strong>Reviewed By:</strong><br>
-                                        <span class="text-muted">{{ $payslipData['payroll']['reviewed_by'] }}</span>
-                                    </p>
-                                    @endif
-                                    @if($payslipData['payroll']['approved_by'])
-                                    <p class="mb-2">
-                                        <strong>Approved By:</strong><br>
-                                        <span class="text-muted">{{ $payslipData['payroll']['approved_by'] }}</span>
-                                    </p>
-                                    @endif
-                                    @if($payslipData['payroll']['paid_by'])
-                                    <p class="mb-0">
-                                        <strong>Paid By:</strong><br>
-                                        <span class="text-muted">{{ $payslipData['payroll']['paid_by'] }}</span>
-                                    </p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Detailed Earnings Section -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-success shadow-sm">
-                                <div class="card-header bg-success text-white">
-                                    <h5 class="mb-0"><i class="bx bx-trending-up me-2"></i>EARNINGS BREAKDOWN</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover mb-0">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Earning Type</th>
-                                                    <th class="text-end">Amount (TZS)</th>
-                                                    <th class="text-end">% of Gross</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-money me-2 text-success"></i>
-                                                        <strong>Basic Salary</strong>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-success">TZS {{ number_format($payslipData['basic_salary'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['basic_salary'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @if($payslipData['overtime_amount'] > 0)
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-time me-2 text-info"></i>
-                                                        Overtime Pay
-                                                        <small class="text-muted d-block ms-4">({{ number_format($payslipData['overtime_hours'], 2) }} hours)</small>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-success">+ TZS {{ number_format($payslipData['overtime_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['overtime_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @endif
-                                                @if($payslipData['bonus_amount'] > 0)
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-gift me-2 text-warning"></i>
-                                                        <strong>Bonus & Incentives</strong>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-success">+ TZS {{ number_format($payslipData['bonus_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['bonus_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @endif
-                                                @if($payslipData['allowance_amount'] > 0)
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-dollar me-2 text-primary"></i>
-                                                        <strong>Allowances</strong>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-success">+ TZS {{ number_format($payslipData['allowance_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['allowance_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @endif
-                                                <tr class="table-success border-top border-3">
-                                                    <td>
-                                                        <strong><i class="bx bx-calculator me-2"></i>TOTAL GROSS SALARY</strong>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <strong class="fs-5 text-success">TZS {{ number_format($grossSalary, 2) }}</strong>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <strong class="fs-5 text-success">100.00%</strong>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                            <div class="card border-0 shadow-sm h-100" style="background: rgba(23, 162, 184, 0.05); border-radius: 12px; border-left: 5px solid #17a2b8 !important;">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-center mb-4">
+                                        <div class="avatar avatar bg-info rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="bx bx-calendar text-white fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0 fw-bold text-info">Period Summary</h5>
+                                    </div>
+                                    <div class="row g-4">
+                                        <div class="col-sm-6">
+                                            <label class="text-muted small d-block mb-1 fw-medium">PAY PERIOD</label>
+                                            <span class="fw-bold text-dark fs-6">{{ \Carbon\Carbon::parse($payslipData['payroll']['pay_period'] . '-01')->format('F Y') }}</span>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="text-muted small d-block mb-1 fw-medium">PAY DATE</label>
+                                            <span class="fw-bold text-dark fs-6">{{ $payslipData['payroll']['pay_date'] ? \Carbon\Carbon::parse($payslipData['payroll']['pay_date'])->format('M d, Y') : 'Processing' }}</span>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="text-muted small d-block mb-1 fw-medium">STATUS</label>
+                                            <span class="badge bg-{{ $payslipData['payroll']['status'] === 'paid' ? 'success' : 'warning' }} shadow-sm px-3">
+                                                <i class="bx {{ $payslipData['payroll']['status'] === 'paid' ? 'bx-check-double' : 'bx-time' }} me-1"></i>{{ strtoupper($payslipData['payroll']['status']) }}
+                                            </span>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="text-muted small d-block mb-1 fw-medium">PROCESSED BY</label>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-xs bg-label-secondary me-2 rounded-circle" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+                                                    {{ substr($payslipData['payroll']['processed_by'], 0, 1) }}
+                                                </div>
+                                                <span class="text-dark fw-medium small">{{ $payslipData['payroll']['processed_by'] }}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Detailed Deductions Section -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card border-danger shadow-sm">
-                                <div class="card-header bg-danger text-white">
-                                    <h5 class="mb-0"><i class="bx bx-trending-down me-2"></i>DEDUCTIONS BREAKDOWN</h5>
+                    <!-- Income and Deductions Modern Layout -->
+                    <div class="row mb-5">
+                        <div class="col-lg-6 mb-4 mb-lg-0">
+                            <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 15px;">
+                                <div class="card-header bg-success bg-opacity-10 border-0 p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bx bx-trending-up text-white fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0 fw-bold text-success">EARNINGS BREAKDOWN</h5>
+                                    </div>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body p-0">
                                     <div class="table-responsive">
-                                        <table class="table table-hover mb-0">
-                                            <thead class="table-light">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light text-muted small">
                                                 <tr>
-                                                    <th>Deduction Type</th>
-                                                    <th class="text-end">Amount (TZS)</th>
-                                                    <th class="text-end">% of Gross</th>
+                                                    <th class="ps-3 py-3">DESCRIPTION</th>
+                                                    <th class="text-end pe-3 py-3">AMOUNT (TZS)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">Basic Salary</div>
+                                                        <small class="text-muted small">Standard monthly base pay</small>
+                                                    </td>
+                                                    <td class="text-end pe-3 fw-bold text-dark">{{ number_format($payslipData['basic_salary'], 2) }}</td>
+                                                </tr>
+                                                @if($payslipData['overtime_amount'] > 0)
+                                                <tr>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">Overtime Pay</div>
+                                                        <small class="text-muted small">{{ number_format($payslipData['overtime_hours'], 1) }} hours worked</small>
+                                                    </td>
+                                                    <td class="text-end pe-3 fw-bold text-success">+{{ number_format($payslipData['overtime_amount'], 2) }}</td>
+                                                </tr>
+                                                @endif
+                                                @if($payslipData['bonus_amount'] > 0)
+                                                <tr>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">Bonus & Incentives</div>
+                                                        <small class="text-muted small">Performance/Referral awards</small>
+                                                    </td>
+                                                    <td class="text-end pe-3 fw-bold text-success">+{{ number_format($payslipData['bonus_amount'], 2) }}</td>
+                                                </tr>
+                                                @endif
+                                                @if($payslipData['allowance_amount'] > 0)
+                                                <tr>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">Allowances</div>
+                                                        <small class="text-muted small">House, Meal, Travel, etc.</small>
+                                                    </td>
+                                                    <td class="text-end pe-3 fw-bold text-success">+{{ number_format($payslipData['allowance_amount'], 2) }}</td>
+                                                </tr>
+                                                @endif
+                                            </tbody>
+                                            <tfoot class="bg-success bg-opacity-10 border-0">
+                                                <tr>
+                                                    <td class="ps-3 py-3 fw-bold text-success uppercase small">TOTAL GROSS EARNINGS</td>
+                                                    <td class="text-end pe-3 py-3">
+                                                        <span class="fs-5 fw-bold text-success">TZS {{ number_format($grossSalary, 2) }}</span>
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 15px;">
+                                <div class="card-header bg-danger bg-opacity-10 border-0 p-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-danger rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bx bx-trending-down text-white fs-4"></i>
+                                        </div>
+                                        <h5 class="mb-0 fw-bold text-danger">DEDUCTIONS BREAKDOWN</h5>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light text-muted small">
+                                                <tr>
+                                                    <th class="ps-3 py-3">CONTRIBUTION/TAX</th>
+                                                    <th class="text-end pe-3 py-3">AMOUNT (TZS)</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @if($payslipData['paye_amount'] > 0)
                                                 <tr>
-                                                    <td>
-                                                        <i class="bx bx-receipt me-2 text-danger"></i>
-                                                        <strong>PAYE (Pay As You Earn Tax)</strong>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">P.A.Y.E</div>
+                                                        <small class="text-muted small">Pay As You Earn Tax</small>
                                                     </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['paye_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ number_format($payePercent, 2) }}%</td>
+                                                    <td class="text-end pe-3 fw-bold text-danger">-{{ number_format($payslipData['paye_amount'], 2) }}</td>
                                                 </tr>
                                                 @endif
                                                 @if($payslipData['nssf_amount'] > 0)
                                                 <tr>
-                                                    <td>
-                                                        <i class="bx bx-shield me-2 text-danger"></i>
-                                                        <strong>NSSF (National Social Security Fund)</strong>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">N.S.S.F</div>
+                                                        <small class="text-muted small">Social Security Fund</small>
                                                     </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['nssf_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ number_format($nssfPercent, 2) }}%</td>
+                                                    <td class="text-end pe-3 fw-bold text-danger">-{{ number_format($payslipData['nssf_amount'], 2) }}</td>
                                                 </tr>
                                                 @endif
                                                 @if($payslipData['nhif_amount'] > 0)
                                                 <tr>
-                                                    <td>
-                                                        <i class="bx bx-plus-medical me-2 text-danger"></i>
-                                                        <strong>NHIF (National Health Insurance Fund)</strong>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">N.H.I.F</div>
+                                                        <small class="text-muted small">Health Insurance Fund</small>
                                                     </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['nhif_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['nhif_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
+                                                    <td class="text-end pe-3 fw-bold text-danger">-{{ number_format($payslipData['nhif_amount'], 2) }}</td>
                                                 </tr>
                                                 @endif
                                                 @if($payslipData['heslb_amount'] > 0)
                                                 <tr>
-                                                    <td>
-                                                        <i class="bx bx-book me-2 text-danger"></i>
-                                                        <strong>HESLB (Higher Education Students' Loans Board)</strong>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">H.E.S.L.B</div>
+                                                        <small class="text-muted small">Education Loan Board</small>
                                                     </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['heslb_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['heslb_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
+                                                    <td class="text-end pe-3 fw-bold text-danger">-{{ number_format($payslipData['heslb_amount'], 2) }}</td>
                                                 </tr>
                                                 @endif
-                                                @if($payslipData['wcf_amount'] > 0)
+                                                @if(($payslipData['deduction_amount'] + $payslipData['other_deductions']) > 0)
                                                 <tr>
-                                                    <td>
-                                                        <i class="bx bx-buildings me-2 text-danger"></i>
-                                                        <strong>WCF (Workers Compensation Fund)</strong>
+                                                    <td class="ps-3 py-3">
+                                                        <div class="fw-semibold text-dark">Other Deductions</div>
+                                                        <small class="text-muted small">Additional/Manual adjustments</small>
                                                     </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['wcf_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['wcf_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
+                                                    <td class="text-end pe-3 fw-bold text-danger">-{{ number_format($payslipData['deduction_amount'] + $payslipData['other_deductions'], 2) }}</td>
                                                 </tr>
                                                 @endif
-                                                @if($payslipData['sdl_amount'] > 0)
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-money me-2 text-danger"></i>
-                                                        <strong>SDL (Skills Development Levy)</strong>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['sdl_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['sdl_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @endif
-                                                @if($payslipData['deduction_amount'] > 0)
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-minus-circle me-2 text-danger"></i>
-                                                        <strong>Other Deductions</strong>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['deduction_amount'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['deduction_amount'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @endif
-                                                @if($payslipData['other_deductions'] > 0)
-                                                <tr>
-                                                    <td>
-                                                        <i class="bx bx-minus-circle me-2 text-danger"></i>
-                                                        <strong>Additional Deductions</strong>
-                                                    </td>
-                                                    <td class="text-end fw-bold text-danger">- TZS {{ number_format($payslipData['other_deductions'], 2) }}</td>
-                                                    <td class="text-end text-muted">{{ $grossSalary > 0 ? number_format(($payslipData['other_deductions'] / $grossSalary) * 100, 2) : 0 }}%</td>
-                                                </tr>
-                                                @endif
-                                                <tr class="table-danger border-top border-3">
-                                                    <td>
-                                                        <strong><i class="bx bx-calculator me-2"></i>TOTAL DEDUCTIONS</strong>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <strong class="fs-5 text-danger">- TZS {{ number_format($totalDeductions, 2) }}</strong>
-                                                    </td>
-                                                    <td class="text-end">
-                                                        <strong class="fs-5 text-danger">{{ number_format($deductionPercent, 2) }}%</strong>
-                                                    </td>
-                                                </tr>
                                             </tbody>
+                                            <tfoot class="bg-danger bg-opacity-10 border-0">
+                                                <tr>
+                                                    <td class="ps-3 py-3 fw-bold text-danger uppercase small">TOTAL DEDUCTIONS</td>
+                                                    <td class="text-end pe-3 py-3">
+                                                        <span class="fs-5 fw-bold text-danger">TZS {{ number_format($totalDeductions, 2) }}</span>
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                 </div>
@@ -364,42 +335,49 @@
                     </div>
 
                     <!-- Net Pay Calculation Summary -->
-                    <div class="row mb-4">
+                    <div class="row mb-5">
                         <div class="col-12">
-                            <div class="card border-info shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <div class="card-body text-white">
+                            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #940000 0%, #610000 100%); border-radius: 15px; overflow: hidden;">
+                                <div class="card-body p-5 text-white">
                                     <div class="row align-items-center">
-                                        <div class="col-md-8">
-                                            <h5 class="mb-3 text-white"><i class="bx bx-calculator me-2"></i>NET PAY CALCULATION</h5>
-                                            <div class="calculation-breakdown">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="text-white-50">Gross Salary:</span>
-                                                    <strong class="fs-5">TZS {{ number_format($grossSalary, 2) }}</strong>
+                                        <div class="col-lg-7 mb-4 mb-lg-0">
+                                            <div class="d-flex align-items-center mb-4">
+                                                <div class="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+                                                    <i class="bx bx-wallet text-white fs-3"></i>
                                                 </div>
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <span class="text-white-50">Less: Total Deductions:</span>
-                                                    <strong class="fs-5">- TZS {{ number_format($totalDeductions, 2) }}</strong>
-                                                </div>
-                                                <hr class="my-3" style="border-color: rgba(255,255,255,0.3);">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <span class="fs-5 fw-bold">NET PAY:</span>
-                                                    <strong class="fs-2 fw-bold" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">TZS {{ number_format($netPay, 2) }}</strong>
-                                                </div>
-                                                <div class="mt-3 text-center">
-                                                    <small class="text-white-50">Net Pay represents {{ number_format($netPercent, 2) }}% of Gross Salary</small>
+                                                <h4 class="mb-0 fw-bold text-white">NET TAKE-HOME PAY</h4>
+                                            </div>
+                                            <div class="calculation-box bg-white p-4 rounded-3 shadow-sm">
+                                                <div class="list-group list-group-flush bg-transparent">
+                                                    <div class="list-group-item bg-transparent px-0 border-light d-flex justify-content-between align-items-center">
+                                                        <span class="text-muted fw-medium">Total Gross Earnings</span>
+                                                        <span class="fs-5 fw-bold" style="color: #940000;">TZS {{ number_format($grossSalary, 2) }}</span>
+                                                    </div>
+                                                    <div class="list-group-item bg-transparent px-0 border-light d-flex justify-content-between align-items-center">
+                                                        <span class="text-muted fw-medium">Total Deductions</span>
+                                                        <span class="fs-5 fw-bold" style="color: #940000;">- TZS {{ number_format($totalDeductions, 2) }}</span>
+                                                    </div>
+                                                    <div class="list-group-item bg-transparent px-0 border-0 pt-3 d-flex justify-content-between align-items-center">
+                                                        <span class="fs-4 fw-bold" style="color: #940000;">NET SALARY</span>
+                                                        <span class="text-end">
+                                                            <div class="fs-1 fw-bold mb-0" style="color: #940000;">TZS {{ number_format($netPay, 2) }}</div>
+                                                            <small class="fw-medium" style="color: #940000; opacity: 0.8;">{{ number_format($netPercent, 1) }}% of gross remains</small>
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-4 text-center">
-                                            <div class="net-pay-highlight">
-                                                <h6 class="text-white-50 mb-3">NET SALARY PAYABLE</h6>
-                                                <h1 class="mb-0 fw-bold" style="font-size: 3rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                                        <div class="col-lg-5">
+                                            <div class="text-center p-4 rounded-4" style="background: rgba(255,255,255,0.15); border: 2px dashed rgba(255,255,255,0.4);">
+                                                <div class="mb-3">
+                                                    <h6 class="text-white opacity-75 small mb-1">TOTAL PAYABLE FOR</h6>
+                                                    <h5 class="text-white fw-bold">{{ \Carbon\Carbon::parse($payslipData['payroll']['pay_period'] . '-01')->format('F Y') }}</h5>
+                                                </div>
+                                                <div class="display-3 fw-bold mb-3 text-white" style="letter-spacing: -2px;">
                                                     TZS {{ number_format($netPay, 0) }}
-                                                </h1>
-                                                <div class="mt-4">
-                                                    <div class="badge bg-light text-dark fs-6 px-3 py-2">
-                                                        {{ number_format($netPercent, 1) }}% of Gross
-                                                    </div>
+                                                </div>
+                                                <div class="d-inline-block bg-white fw-bold px-4 py-2 rounded-pill shadow-sm" style="color: #940000;">
+                                                    {{ strtoupper($payslipData['payroll']['status']) }}
                                                 </div>
                                             </div>
                                         </div>
@@ -409,72 +387,50 @@
                         </div>
                     </div>
 
-                    <!-- Summary Statistics -->
-                    <div class="row mb-4">
+                    <!-- Enhanced Summary Statistics -->
+                    <div class="row g-4">
                         <div class="col-md-4">
-                            <div class="card border-success shadow-sm h-100">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted mb-3"><i class="bx bx-trending-up me-2"></i>Gross Earnings</h6>
-                                    <h3 class="text-success mb-2">TZS {{ number_format($grossSalary, 2) }}</h3>
-                                    <small class="text-muted">100% of total earnings</small>
-                                    <hr class="my-3">
-                                    <div class="text-start">
-                                        <small class="d-block text-muted mb-1">Basic: TZS {{ number_format($payslipData['basic_salary'], 2) }}</small>
-                                        @if($payslipData['overtime_amount'] > 0)
-                                        <small class="d-block text-muted mb-1">Overtime: TZS {{ number_format($payslipData['overtime_amount'], 2) }}</small>
-                                        @endif
-                                        @if($payslipData['bonus_amount'] > 0)
-                                        <small class="d-block text-muted mb-1">Bonus: TZS {{ number_format($payslipData['bonus_amount'], 2) }}</small>
-                                        @endif
-                                        @if($payslipData['allowance_amount'] > 0)
-                                        <small class="d-block text-muted">Allowance: TZS {{ number_format($payslipData['allowance_amount'], 2) }}</small>
-                                        @endif
+                            <div class="card border-0 shadow-sm h-100 text-center p-4" style="border-radius: 12px; border-bottom: 4px solid #28a745 !important;">
+                                <div class="avatar bg-success rounded-circle mx-auto mb-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bx bx-trending-up text-white fs-4"></i>
+                                </div>
+                                <h6 class="text-muted small fw-bold mb-1">GROSS EARNINGS</h6>
+                                <h4 class="text-dark fw-bold mb-0">TZS {{ number_format($grossSalary, 2) }}</h4>
+                                <div class="mt-2">
+                                    <div class="progress shadow-none" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
                                     </div>
+                                    <small class="text-muted mt-1 d-block">100% of income</small>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card border-danger shadow-sm h-100">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted mb-3"><i class="bx bx-trending-down me-2"></i>Total Deductions</h6>
-                                    <h3 class="text-danger mb-2">TZS {{ number_format($totalDeductions, 2) }}</h3>
-                                    <small class="text-muted">{{ number_format($deductionPercent, 2) }}% of gross salary</small>
-                                    <hr class="my-3">
-                                    <div class="text-start">
-                                        @if($payslipData['paye_amount'] > 0)
-                                        <small class="d-block text-muted mb-1">PAYE: TZS {{ number_format($payslipData['paye_amount'], 2) }}</small>
-                                        @endif
-                                        @if($payslipData['nssf_amount'] > 0)
-                                        <small class="d-block text-muted mb-1">NSSF: TZS {{ number_format($payslipData['nssf_amount'], 2) }}</small>
-                                        @endif
-                                        @if($payslipData['nhif_amount'] > 0)
-                                        <small class="d-block text-muted mb-1">NHIF: TZS {{ number_format($payslipData['nhif_amount'], 2) }}</small>
-                                        @endif
-                                        @if($payslipData['heslb_amount'] > 0)
-                                        <small class="d-block text-muted mb-1">HESLB: TZS {{ number_format($payslipData['heslb_amount'], 2) }}</small>
-                                        @endif
-                                        @if(($payslipData['wcf_amount'] + $payslipData['sdl_amount'] + $payslipData['deduction_amount'] + $payslipData['other_deductions']) > 0)
-                                        <small class="d-block text-muted">Others: TZS {{ number_format($payslipData['wcf_amount'] + $payslipData['sdl_amount'] + $payslipData['deduction_amount'] + $payslipData['other_deductions'], 2) }}</small>
-                                        @endif
+                            <div class="card border-0 shadow-sm h-100 text-center p-4" style="border-radius: 12px; border-bottom: 4px solid #dc3545 !important;">
+                                <div class="avatar bg-danger rounded-circle mx-auto mb-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="bx bx-trending-down text-white fs-4"></i>
+                                </div>
+                                <h6 class="text-muted small fw-bold mb-1">TOTAL DEDUCTIONS</h6>
+                                <h4 class="text-dark fw-bold mb-0">TZS {{ number_format($totalDeductions, 2) }}</h4>
+                                <div class="mt-2">
+                                    <div class="progress shadow-none" style="height: 6px;">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ $deductionPercent }}%"></div>
                                     </div>
+                                    <small class="text-muted mt-1 d-block">{{ number_format($deductionPercent, 1) }}% of earnings</small>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card border-primary shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <div class="card-body text-center text-white">
-                                    <h6 class="text-white-50 mb-3"><i class="bx bx-money me-2"></i>Net Pay</h6>
-                                    <h3 class="text-white mb-2">TZS {{ number_format($netPay, 2) }}</h3>
-                                    <small class="text-white-50">{{ number_format($netPercent, 2) }}% of gross salary</small>
-                                    <hr class="my-3" style="border-color: rgba(255,255,255,0.3);">
-                                    <div class="text-start text-white-50">
-                                        <small class="d-block mb-2">
-                                            <strong>Calculation:</strong><br>
-                                            Gross: TZS {{ number_format($grossSalary, 2) }}<br>
-                                            Less Deductions: TZS {{ number_format($totalDeductions, 2) }}<br>
-                                            <strong class="text-white">= Net Pay: TZS {{ number_format($netPay, 2) }}</strong>
-                                        </small>
+                            <div class="card border-0 shadow-sm h-100 text-center p-4" style="border-radius: 12px; border-bottom: 4px solid #940000 !important;">
+                                <div class="avatar rounded-circle mx-auto mb-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background-color: #940000;">
+                                    <i class="bx bx-check-shield text-white fs-4"></i>
+                                </div>
+                                <h6 class="text-muted small fw-bold mb-1">NET TAKE-HOME</h6>
+                                <h4 class="text-dark fw-bold mb-0">TZS {{ number_format($netPay, 2) }}</h4>
+                                <div class="mt-2">
+                                    <div class="progress shadow-none" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ $netPercent }}%; background-color: #940000;"></div>
                                     </div>
+                                    <small class="text-muted mt-1 d-block">{{ number_format($netPercent, 1) }}% of earnings</small>
                                 </div>
                             </div>
                         </div>

@@ -859,14 +859,30 @@ class TaskController extends Controller
                     $canCreateTask = $this->canCreateTask($user);
                     if (!$canCreateTask) abort(403, 'Only HOD, CEO, or HR Officer can create tasks');
                     
+                    // Financial year validation
+                    $financialYearService = app(\App\Services\FinancialYearService::class);
+                    $startDate = $request->date('start_date');
+                    $endDate = $request->date('end_date');
+                    $linkToObjective = $request->input('organizational_goal_id') || $request->input('assessment_id');
+                    
+                    $fyValidation = $financialYearService->validateTaskCreation($startDate, $endDate, $linkToObjective);
+                    if (!$fyValidation['valid']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $fyValidation['message']
+                        ], 400);
+                    }
+                    
+                    $financialYear = $fyValidation['financial_year'] ?? $financialYearService->getFinancialYearForDate($startDate);
+                    
                     $tags = $request->input('tags');
                     $tagsArray = $tags ? array_map('trim', explode(',', $tags)) : [];
                     
                     $mainTask = MainTask::create([
                         'name' => $request->string('name'),
                         'description' => $request->input('description'),
-                        'start_date' => $request->date('start_date'),
-                        'end_date' => $request->date('end_date'),
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
                         'timeframe' => $request->string('timeframe'),
                         'team_leader_id' => $request->integer('team_leader_id'),
                         'status' => $request->string('status', 'in_progress'),
@@ -875,6 +891,11 @@ class TaskController extends Controller
                         'tags' => $tagsArray,
                         'budget' => $request->input('budget'),
                         'created_by' => $user->id,
+                        'financial_year' => $financialYear,
+                        'organizational_goal_id' => $request->input('organizational_goal_id'),
+                        'assessment_id' => $request->input('assessment_id'),
+                        'link_type' => $request->input('link_type', 'none'),
+                        'performance_weight' => $request->input('performance_weight'),
                     ]);
 
                     // Create initial activities if provided
@@ -882,11 +903,16 @@ class TaskController extends Controller
                     if ($request->has('activities') && is_array($request->input('activities'))) {
                         foreach ($request->input('activities') as $activityData) {
                             if (!empty($activityData['name'])) {
+                                $activityStartDate = $activityData['start_date'] ?? $mainTask->start_date;
+                                $activityFY = $financialYearService->getFinancialYearForDate($activityStartDate);
+                                
                                 $activity = TaskActivity::create([
                                     'main_task_id' => $mainTask->id,
                                     'name' => $activityData['name'],
-                                    'start_date' => $activityData['start_date'] ?? null,
+                                    'start_date' => $activityStartDate,
                                     'status' => 'Not Started',
+                                    'financial_year' => $activityFY,
+                                    'assessment_activity_id' => $activityData['assessment_activity_id'] ?? null,
                                 ]);
 
                                 // Assign users to activity
@@ -1392,16 +1418,22 @@ class TaskController extends Controller
                     // Allow multiple reports per activity - removed the pending check
                     // Users can submit multiple reports for the same activity
 
+                    // Get financial year for report date
+                    $reportDate = $request->date('report_date');
+                    $orgSettings = \App\Models\OrganizationSetting::getSettings();
+                    $financialYear = $orgSettings->getFinancialYearForDate($reportDate);
+
                     $report = ActivityReport::create([
                         'activity_id' => $activityId,
                         'user_id' => $user->id,
-                        'report_date' => $request->date('report_date'),
+                        'report_date' => $reportDate,
                         'work_description' => $request->input('work_description'),
                         'next_activities' => $request->input('next_activities'),
                         'attachment_path' => null, // Keep for backward compatibility, but use attachments table
                         'completion_status' => $request->string('completion_status'),
                         'reason_if_delayed' => $request->input('reason_if_delayed'),
                         'status' => 'Pending',
+                        'financial_year' => $financialYear,
                     ]);
 
                     // Handle multiple file uploads
@@ -1648,17 +1680,59 @@ class TaskController extends Controller
                         }
                     }
 
+                    // Get quality assessment data
+                    $qualityRating = $request->input('quality_rating');
+                    $complexityTag = $request->input('complexity_tag');
+                    $initiativeBonus = $request->boolean('initiative_bonus', false);
+                    $qualityComments = $request->input('quality_comments', '');
+
+                    // Calculate performance score
+                    $performanceScoringService = app(\App\Services\PerformanceScoringService::class);
+                    $performanceScore = $performanceScoringService->calculateReportPerformanceScore($report);
+                    
+                    // Apply quality rating if provided
+                    if ($qualityRating) {
+                        $performanceScore = ($qualityRating / 5) * 100;
+                        // Apply complexity multiplier
+                        $complexityMultiplier = match($complexityTag) {
+                            'complex' => 1.2,
+                            'standard' => 1.0,
+                            'routine' => 0.9,
+                            default => 1.0
+                        };
+                        $performanceScore = min(100, $performanceScore * $complexityMultiplier);
+                        // Add initiative bonus
+                        if ($initiativeBonus) {
+                            $performanceScore = min(100, $performanceScore + 10);
+                        }
+                    }
+
+                    // Get financial year
+                    $orgSettings = \App\Models\OrganizationSetting::getSettings();
+                    $financialYear = $orgSettings->getFinancialYearForDate($report->report_date ?? now());
+
                     $report->update([
                         'status' => 'Approved',
                         'approved_by' => $user->id,
                         'approved_at' => now(),
                         'approver_comments' => $request->input('comments', ''),
+                        'quality_rating' => $qualityRating,
+                        'complexity_tag' => $complexityTag,
+                        'initiative_bonus' => $initiativeBonus,
+                        'quality_comments' => $qualityComments,
+                        'performance_score' => round($performanceScore, 2),
+                        'financial_year' => $financialYear,
                     ]);
 
                     // Auto-calculate task progress based on approved reports
                     if ($report->activity && $report->activity->mainTask) {
                         $mainTask = $report->activity->mainTask;
                         $this->calculateTaskProgress($mainTask);
+                    }
+
+                    // Sync to performance module if linked
+                    if ($report->activity && $report->activity->assessment_activity_id) {
+                        $performanceScoringService->syncReportToPerformance($report);
                     }
 
                     // Send SMS and Email notifications

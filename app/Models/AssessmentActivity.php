@@ -19,7 +19,14 @@ class AssessmentActivity extends Model
         'target_end_date',
         'reporting_frequency',
         'contribution_percentage',
+        'status',
+        'assigned_by',
     ];
+
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
 
     protected $casts = [
         'contribution_percentage' => 'decimal:2',

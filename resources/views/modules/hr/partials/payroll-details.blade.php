@@ -69,6 +69,9 @@
                             <th class="text-end">Overtime</th>
                             <th class="text-end">Bonus</th>
                             <th class="text-end">Allowance</th>
+                            <th class="text-end">House Ben.</th>
+                            <th class="text-end">Hardship Ben.</th>
+                            <th class="text-end">Other Ben.</th>
                             <th class="text-end">Gross</th>
                             <th class="text-end">PAYE</th>
                             <th class="text-end">NSSF</th>
@@ -83,7 +86,8 @@
                         @foreach($items as $index => $item)
                         @php
                             $employee = $item->employee;
-                            $gross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount;
+                            $gross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount + 
+                                     $item->house_benefit_amount + $item->hardship_benefit_amount + $item->other_benefits_amount;
                         @endphp
                         <tr>
                             <td>{{ $index + 1 }}</td>
@@ -119,6 +123,9 @@
                             <td class="text-end">{{ number_format($item->overtime_amount, 0) }}</td>
                             <td class="text-end">{{ number_format($item->bonus_amount, 0) }}</td>
                             <td class="text-end">{{ number_format($item->allowance_amount, 0) }}</td>
+                            <td class="text-end">{{ number_format($item->house_benefit_amount, 0) }}</td>
+                            <td class="text-end">{{ number_format($item->hardship_benefit_amount, 0) }}</td>
+                            <td class="text-end">{{ number_format($item->other_benefits_amount, 0) }}</td>
                             <td class="text-end fw-bold">{{ number_format($gross, 0) }}</td>
                             <td class="text-end">{{ number_format($item->paye_amount, 0) }}</td>
                             <td class="text-end">{{ number_format($item->nssf_amount, 0) }}</td>
@@ -142,6 +149,9 @@
                             <td class="text-end">{{ number_format($totals['overtime_amount'], 0) }}</td>
                             <td class="text-end">{{ number_format($totals['bonus_amount'], 0) }}</td>
                             <td class="text-end">{{ number_format($totals['allowance_amount'], 0) }}</td>
+                            <td class="text-end">{{ number_format($totals['house_benefit_amount'], 0) }}</td>
+                            <td class="text-end">{{ number_format($totals['hardship_benefit_amount'], 0) }}</td>
+                            <td class="text-end">{{ number_format($totals['other_benefits_amount'], 0) }}</td>
                             <td class="text-end">{{ number_format($totals['gross_salary'], 0) }}</td>
                             <td class="text-end">{{ number_format($totals['paye_amount'], 0) }}</td>
                             <td class="text-end">{{ number_format($totals['nssf_amount'], 0) }}</td>

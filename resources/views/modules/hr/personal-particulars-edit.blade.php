@@ -86,14 +86,17 @@
                                     <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="deductions" onclick="goToStep(8)" title="Click to jump to this section">
                                         <i class="bx bx-circle me-1"></i>9. Deductions
                                     </span>
-                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="profile" onclick="goToStep(9)" title="Click to jump to this section">
-                                        <i class="bx bx-circle me-1"></i>10. Profile
+                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="benefits" onclick="goToStep(9)" title="Click to jump to this section">
+                                        <i class="bx bx-circle me-1"></i>10. Benefits
                                     </span>
-                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="documents" onclick="goToStep(10)" title="Click to jump to this section">
-                                        <i class="bx bx-circle me-1"></i>11. Documents
+                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="profile" onclick="goToStep(10)" title="Click to jump to this section">
+                                        <i class="bx bx-circle me-1"></i>11. Profile
                                     </span>
-                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="statutory" onclick="goToStep(11)" title="Click to jump to this section">
-                                        <i class="bx bx-circle me-1"></i>12. Statutory Info
+                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="documents" onclick="goToStep(11)" title="Click to jump to this section">
+                                        <i class="bx bx-circle me-1"></i>12. Documents
+                                    </span>
+                                    <span class="badge bg-secondary stage-badge cursor-pointer" data-stage="statutory" onclick="goToStep(12)" title="Click to jump to this section">
+                                        <i class="bx bx-circle me-1"></i>13. Statutory Info
                                     </span>
                                 </div>
                             </div>
@@ -231,6 +234,10 @@
                                             <label class="form-label">Salary (TZS)</label>
                                             <input type="number" name="salary" id="salary" class="form-control" min="0" step="0.01" value="{{ old('salary', $employee->employee->salary ?? '') }}" placeholder="Enter salary amount">
                                             <small class="text-muted" id="salary-range-hint"></small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Retirement Date (Tarehe ya Kustaafu)</label>
+                                            <input type="date" name="retirement_date" class="form-control" value="{{ old('retirement_date', $employee->employee->retirement_date ? \Carbon\Carbon::parse($employee->employee->retirement_date)->format('Y-m-d') : '') }}">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Assign Roles</label>
@@ -874,12 +881,150 @@
                             </div>
                         </div>
 
-                        <!-- Step 10: Profile Information -->
+                        <!-- Step 10: Benefits (Optional) -->
+                        <div class="registration-step d-none" id="step-benefits" data-stage="benefits">
+                            <div class="card border-primary">
+                                <div class="card-header bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-0">
+                                                <i class="bx bx-gift me-2"></i>Step 10: Employee Benefits
+                                            </h5>
+                                            <small class="text-muted">Optional - Assign benefits like House, Hardship, NHIF, etc.</small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="addBenefit()">
+                                            <i class="bx bx-plus"></i> Add Other Benefit
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    @php
+                                        $houseBenefit = $employee->benefits->where('benefit_type', 'house')->first();
+                                        $hardshipBenefit = $employee->benefits->where('benefit_type', 'hardship')->first();
+                                        $nhifBenefit = $employee->benefits->where('benefit_type', 'nhif')->first();
+                                        $customBenefits = $employee->benefits->where('benefit_type', 'other');
+                                    @endphp
+
+                                    <div class="alert alert-info mb-4">
+                                        <i class="bx bx-info-circle me-2"></i>
+                                        <strong>Note:</strong> Multiple benefits can be assigned as a percentage of basic salary or a fixed amount.
+                                    </div>
+                                    
+                                    <div id="benefitsList">
+                                        <!-- Predefined Benefits -->
+                                        <div class="row g-3 mb-4 border-bottom pb-4">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="predefined_benefits[house][active]" id="benefit_house_active__edit" value="1" {{ $houseBenefit && $houseBenefit->is_active ? 'checked' : '' }}>
+                                                    <label class="form-check-label h6 mb-0" for="benefit_house_active__edit">House Benefit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Percentage</span>
+                                                    <input type="number" name="predefined_benefits[house][percentage]" class="form-control" placeholder="15" min="0" max="100" step="0.01" value="{{ $houseBenefit->percentage ?? '' }}">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Or Amount</span>
+                                                    <input type="number" name="predefined_benefits[house][amount]" class="form-control" placeholder="Fixed Amount" min="0" step="0.01" value="{{ $houseBenefit->amount ?? '' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mb-4 border-bottom pb-4">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="predefined_benefits[hardship][active]" id="benefit_hardship_active__edit" value="1" {{ $hardshipBenefit && $hardshipBenefit->is_active ? 'checked' : '' }}>
+                                                    <label class="form-check-label h6 mb-0" for="benefit_hardship_active__edit">Hardship Benefit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Percentage</span>
+                                                    <input type="number" name="predefined_benefits[hardship][percentage]" class="form-control" placeholder="10" min="0" max="100" step="0.01" value="{{ $hardshipBenefit->percentage ?? '' }}">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Or Amount</span>
+                                                    <input type="number" name="predefined_benefits[hardship][amount]" class="form-control" placeholder="Fixed Amount" min="0" step="0.01" value="{{ $hardshipBenefit->amount ?? '' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mb-4 border-bottom pb-4">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-switch mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="predefined_benefits[nhif][active]" id="benefit_nhif_active__edit" value="1" {{ $nhifBenefit && $nhifBenefit->is_active ? 'checked' : '' }}>
+                                                    <label class="form-check-label h6 mb-0" for="benefit_nhif_active__edit">NHIF Benefit</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Percentage</span>
+                                                    <input type="number" name="predefined_benefits[nhif][percentage]" class="form-control" placeholder="%" min="0" max="100" step="0.01" value="{{ $nhifBenefit->percentage ?? '' }}">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Or Amount</span>
+                                                    <input type="number" name="predefined_benefits[nhif][amount]" class="form-control" placeholder="Fixed Amount" min="0" step="0.01" value="{{ $nhifBenefit->amount ?? '' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Container for Custom Benefits -->
+                                        <div id="customBenefitsList">
+                                            @foreach($customBenefits as $index => $benefit)
+                                            <div class="benefit-item border rounded p-3 mb-3" data-index="{{ $index }}">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <h6 class="mb-0"><i class="bx bx-gift me-1"></i>Other Benefit {{ $index + 1 }}</h6>
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeBenefit($(this))">
+                                                        <i class="bx bx-trash"></i> Remove
+                                                    </button>
+                                                </div>
+                                                <div class="row g-3">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Benefit Name <span class="text-danger">*</span></label>
+                                                        <input type="text" name="custom_benefits[{{ $index }}][name]" class="form-control" required placeholder="e.g., Transport Allowance" value="{{ $benefit->benefit_name }}">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Percentage (%)</label>
+                                                        <div class="input-group">
+                                                            <input type="number" name="custom_benefits[{{ $index }}][percentage]" class="form-control" placeholder="Optional" min="0" max="100" step="0.01" value="{{ $benefit->percentage }}">
+                                                            <span class="input-group-text">%</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Amount</label>
+                                                        <input type="number" name="custom_benefits[{{ $index }}][amount]" class="form-control" placeholder="Optional" min="0" step="0.01" value="{{ $benefit->amount }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mt-3">
+                                        <button type="button" class="btn btn-outline-primary" onclick="addBenefit()">
+                                            <i class="bx bx-plus me-1"></i> Add Custom Benefit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 11: Profile Information -->
                         <div class="registration-step d-none" id="step-profile" data-stage="profile">
                             <div class="card border-primary">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0">
-                                        <i class="bx bx-user-circle me-2"></i>Step 10: Profile Information
+                                        <i class="bx bx-user-circle me-2"></i>Step 11: Profile Information
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -949,7 +1094,7 @@
                                 <div class="card-header bg-light">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h5 class="mb-0">
-                                            <i class="bx bx-file-blank me-2"></i>Step 11: Documents
+                                            <i class="bx bx-file-blank me-2"></i>Step 12: Documents
                                         </h5>
                                         <button type="button" class="btn btn-sm btn-primary" onclick="addDocument()">
                                             <i class="bx bx-plus"></i> Add Document
@@ -1047,7 +1192,7 @@
                             <div class="card border-primary">
                                 <div class="card-header bg-light">
                                     <h5 class="mb-0">
-                                        <i class="bx bx-id-card me-2"></i>Step 12: Statutory Information
+                                        <i class="bx bx-id-card me-2"></i>Step 13: Statutory Information
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -1132,7 +1277,7 @@
 @push('scripts')
 <script>
 let currentStepIndex = 0;
-const steps = ['personal', 'employment', 'emergency', 'family', 'next-of-kin', 'referees', 'education', 'banking', 'deductions', 'profile', 'documents', 'statutory'];
+const steps = ['personal', 'employment', 'emergency', 'family', 'next-of-kin', 'referees', 'education', 'banking', 'deductions', 'benefits', 'profile', 'documents', 'statutory'];
 // Initialize indices based on existing data counts
 let emergencyContactIndex = {{ ($employee->employee && ($employee->employee->emergency_contact_name || $employee->employee->emergency_contact_phone)) ? 1 : 0 }};
 let familyIndex = {{ $employee->family && $employee->family->count() > 0 ? $employee->family->count() : 0 }};
@@ -1140,8 +1285,9 @@ let nextOfKinIndex = {{ $employee->nextOfKin && $employee->nextOfKin->count() > 
 let refereeIndex = {{ $employee->referees && $employee->referees->count() > 0 ? $employee->referees->count() : 1 }};
 let educationIndex = {{ $employee->educations && $employee->educations->count() > 0 ? $employee->educations->count() : 1 }};
 let bankAccountIndex = {{ $employee->bankAccounts && $employee->bankAccounts->count() > 0 ? $employee->bankAccounts->count() : 1 }};
-let deductionIndex = {{ $employee->salaryDeductions && $employee->salaryDeductions->count() > 0 ? $employee->salaryDeductions->count() : 1 }};
-let documentIndex = {{ $employee->documents && $employee->documents->count() > 0 ? $employee->documents->count() : 1 }};
+let deductionIndex = {{ $employee->salaryDeductions->count() > 0 ? $employee->salaryDeductions->count() : 1 }};
+let benefitIndex = {{ $employee->benefits->where('benefit_type', 'other')->count() > 0 ? $employee->benefits->where('benefit_type', 'other')->count() : 0 }};
+let documentIndex = {{ $employee->documents->count() > 0 ? $employee->documents->count() : 0 }};
 let userId = {{ $employee->id }};
 
 $(document).ready(function() {
@@ -1739,6 +1885,41 @@ function addDocument() {
         </tr>`;
     $('#documentsListBody').append(html);
     documentIndex++;
+}
+
+function addBenefit() {
+    const html = `
+        <div class="benefit-item border rounded p-3 mb-3" data-index="${benefitIndex}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0"><i class="bx bx-gift me-1"></i>Other Benefit ${benefitIndex + 1}</h6>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeBenefit($(this))">
+                    <i class="bx bx-trash"></i> Remove
+                </button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Benefit Name <span class="text-danger">*</span></label>
+                    <input type="text" name="custom_benefits[${benefitIndex}][name]" class="form-control" required placeholder="e.g., Transport Allowance">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Percentage (%)</label>
+                    <div class="input-group">
+                        <input type="number" name="custom_benefits[${benefitIndex}][percentage]" class="form-control" placeholder="Optional" min="0" max="100" step="0.01">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Amount</label>
+                    <input type="number" name="custom_benefits[${benefitIndex}][amount]" class="form-control" placeholder="Optional" min="0" step="0.01">
+                </div>
+            </div>
+        </div>`;
+    $('#customBenefitsList').append(html);
+    benefitIndex++;
+}
+
+function removeBenefit(button) {
+    button.closest('.benefit-item').remove();
 }
 
 function removeDocument(button) {

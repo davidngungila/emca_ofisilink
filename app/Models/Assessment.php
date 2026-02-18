@@ -21,11 +21,17 @@ class Assessment extends Model
         'target_end_date',
         'target_type',
         'contribution_percentage',
+        'organizational_goal_id',
         'status',
         'hod_approved_at',
         'hod_approved_by',
         'hod_comments',
     ];
+
+    public function organizationalGoal()
+    {
+        return $this->belongsTo(OrganizationalGoal::class);
+    }
 
     protected $casts = [
         'contribution_percentage' => 'decimal:2',

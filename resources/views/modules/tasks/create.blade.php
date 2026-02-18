@@ -228,6 +228,83 @@
                     <input type="text" name="tags" class="form-control" placeholder="Comma-separated tags (e.g., urgent, q1, marketing)">
                 </div>
             </div>
+
+            @php
+                $orgSettings = \App\Models\OrganizationSetting::getSettings();
+                $currentFY = $orgSettings->current_financial_year ?? date('Y');
+                $organizationalGoals = \App\Models\OrganizationalGoal::where('is_active', true)
+                    ->where(function($q) use ($currentFY, $orgSettings) {
+                        $fyDates = $orgSettings->getFinancialYearDates($currentFY);
+                        $q->whereBetween('start_date', [$fyDates['start'], $fyDates['end']])
+                          ->orWhereBetween('end_date', [$fyDates['start'], $fyDates['end']])
+                          ->orWhere(function($q2) use ($fyDates) {
+                              $q2->where('start_date', '<=', $fyDates['start'])
+                                 ->where('end_date', '>=', $fyDates['end']);
+                          });
+                    })
+                    ->get();
+                $myAssessments = auth()->user()->hasAnyRole(['HR Officer', 'System Admin', 'HOD']) 
+                    ? \App\Models\Assessment::where('status', 'approved')->with('employee')->get()
+                    : \App\Models\Assessment::where('employee_id', auth()->id())->where('status', 'approved')->get();
+            @endphp
+
+            <div class="form-section-title">
+                <i class="bx bx-target-lock me-2"></i>Performance Management Integration
+                <small class="text-muted ms-2">(Optional - Link this task to performance objectives)</small>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-12">
+                    <div class="alert alert-info">
+                        <i class="bx bx-info-circle me-2"></i>
+                        <strong>Financial Year:</strong> {{ $currentFY }} 
+                        ({{ $orgSettings->getFinancialYearDates($currentFY)['start']->format('M d, Y') }} - {{ $orgSettings->getFinancialYearDates($currentFY)['end']->format('M d, Y') }})
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Link Type</label>
+                    <select name="link_type" class="form-select" id="link_type">
+                        <option value="none">No Link (Operational Task)</option>
+                        <option value="direct">Direct Strategic Link</option>
+                        <option value="supporting">Supporting Link</option>
+                        <option value="operational">Operational Link</option>
+                    </select>
+                    <small class="text-muted">How this task contributes to performance objectives</small>
+                </div>
+                <div class="col-md-6" id="performance_weight_field" style="display: none;">
+                    <label class="form-label">Performance Weight (%)</label>
+                    <input type="number" name="performance_weight" class="form-control" min="0" max="100" step="0.01" placeholder="e.g., 15.5">
+                    <small class="text-muted">Weight percentage for performance contribution</small>
+                </div>
+                <div class="col-md-6" id="organizational_goal_field" style="display: none;">
+                    <label class="form-label">Organizational Goal</label>
+                    <select name="organizational_goal_id" class="form-select" id="organizational_goal_id">
+                        <option value="">Select Organizational Goal</option>
+                        @foreach($organizationalGoals as $goal)
+                            <option value="{{ $goal->id }}">
+                                {{ $goal->title }} 
+                                ({{ $goal->start_date->format('M Y') }} - {{ $goal->end_date->format('M Y') }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">Link to organizational-level objective</small>
+                </div>
+                <div class="col-md-6" id="assessment_field" style="display: none;">
+                    <label class="form-label">Performance Assessment</label>
+                    <select name="assessment_id" class="form-select" id="assessment_id">
+                        <option value="">Select Assessment</option>
+                        @foreach($myAssessments as $assessment)
+                            <option value="{{ $assessment->id }}">
+                                {{ $assessment->main_responsibility }} 
+                                @if($assessment->employee)
+                                    - {{ $assessment->employee->name }}
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">Link to individual performance assessment</small>
+                </div>
+            </div>
+            <input type="hidden" name="financial_year" value="{{ $currentFY }}">
         </div>
 
         <!-- Activities Section -->
@@ -274,6 +351,28 @@ $(document).ready(function() {
     $('select[name="team_leader_id"]').select2({
         placeholder: 'Select Team Leader',
         allowClear: true
+    });
+
+    // Initialize Select2 for performance fields
+    $('#organizational_goal_id, #assessment_id').select2({
+        placeholder: 'Select option',
+        allowClear: true
+    });
+
+    // Handle link type changes
+    $('#link_type').on('change', function() {
+        const linkType = $(this).val();
+        const showFields = linkType !== 'none';
+        
+        $('#performance_weight_field, #organizational_goal_field, #assessment_field').toggle(showFields);
+        
+        if (linkType === 'direct') {
+            $('#organizational_goal_field').show();
+            $('#assessment_field').show();
+        } else if (linkType === 'supporting' || linkType === 'operational') {
+            $('#organizational_goal_field').show();
+            $('#assessment_field').hide();
+        }
     });
     
     // Calculate timeframe when dates change
@@ -348,6 +447,28 @@ $(document).ready(function() {
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-12">
+                        <label class="form-label">
+                            <i class="bx bx-target-lock me-1"></i>Link to Performance Activity (Optional)
+                        </label>
+                        <select name="activities[${activityCounter}][assessment_activity_id]" class="form-select select2-performance-activity">
+                            <option value="">No Link</option>
+                            @php
+                                $assessmentActivities = \App\Models\AssessmentActivity::whereHas('assessment', function($q) {
+                                    $q->where('status', 'approved');
+                                })->with('assessment.employee')->get();
+                            @endphp
+                            @foreach($assessmentActivities as $act)
+                                <option value="{{ $act->id }}">
+                                    {{ $act->activity_name }} 
+                                    @if($act->assessment && $act->assessment->employee)
+                                        ({{ $act->assessment->employee->name }})
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Link this task activity to a performance assessment activity</small>
+                    </div>
                 </div>
             </div>
         `;
@@ -357,6 +478,12 @@ $(document).ready(function() {
         // Initialize Select2 for the new activity users
         $(`.activity-item[data-activity-index="${activityCounter}"] .select2-activity-users`).select2({
             placeholder: 'Select team members',
+            allowClear: true
+        });
+        
+        // Initialize Select2 for performance activity
+        $(`.activity-item[data-activity-index="${activityCounter}"] .select2-performance-activity`).select2({
+            placeholder: 'Select performance activity',
             allowClear: true
         });
     }

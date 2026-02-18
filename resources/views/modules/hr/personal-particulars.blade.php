@@ -721,9 +721,11 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="mb-3">
-                                <label for="add_salary" class="form-label">Basic Salary (TZS)</label>
-                                <input type="number" class="form-control" id="add_salary" name="salary" step="0.01" min="0" placeholder="0.00">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="add_salary" class="form-label">Basic Salary (TZS)</label>
+                                            <input type="number" class="form-control" id="add_salary" name="salary" step="0.01" min="0" placeholder="0.00">
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                 <label class="form-label">Assign Roles</label>
@@ -2683,9 +2685,11 @@ function renderEmploymentTab(particulars) {
                     </div>
                 </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Basic Salary (TZS)</label>
-                <input type="number" class="form-control" name="salary" step="0.01" min="0" value="${salary}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Basic Salary (TZS)</label>
+                    <input type="number" class="form-control" name="salary" step="0.01" min="0" value="${salary}">
+                </div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Roles</label>
@@ -3914,7 +3918,7 @@ function viewDocumentDetails(documentId) {
     
     // Fetch document details
     $.ajax({
-        url: `/Particulars/${particularsId}/documents/${documentId}`,
+        url: `/personal-particulars/${particularsId}/documents/${documentId}`,
         type: 'GET',
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -4167,7 +4171,7 @@ function downloadDocument(documentId) {
     }
     
     const particularsId = $('#edit_particulars_user_id').val();
-    window.open(`/Particulars/${particularsId}/documents/${documentId}/download`, '_blank');
+    window.open(`/personal-particulars/${particularsId}/documents/${documentId}/download`, '_blank');
 }
 
 function deleteDocument(documentId, documentName) {
@@ -4199,7 +4203,7 @@ function deleteDocument(documentId, documentName) {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `/Particulars/${particularsId}/documents/${documentId}`,
+                    url: `/personal-particulars/${particularsId}/documents/${documentId}`,
                     type: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
@@ -4215,8 +4219,26 @@ function deleteDocument(documentId, documentName) {
                                 position: 'top-end',
                                 timer: 3000
                             }).then(() => {
-                                // Reload documents tab
-                                loadEditTabContent('documents', editparticularsData);
+                                // Refresh data and reload documents tab
+                                if (typeof loadEditTabContent === 'function' && typeof currentEditparticulars !== 'undefined' && currentEditparticulars) {
+                                    $.ajax({
+                                        url: `/personal-particulars/${currentEditparticulars}`,
+                                        type: 'GET',
+                                        data: { load_all: 'true' },
+                                        headers: {
+                                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                                            'Accept': 'application/json'
+                                        },
+                                        success: function(refreshResponse) {
+                                            if (refreshResponse.success && refreshResponse.particulars) {
+                                                editparticularsData = normalizeparticularsData(refreshResponse.particulars);
+                                                loadEditTabContent('documents', editparticularsData);
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    location.reload();
+                                }
                             });
                         }
                     },
@@ -4277,7 +4299,7 @@ $(document).on('submit', '#uploadDocumentForm', function(e) {
     submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Uploading...');
     
     $.ajax({
-        url: `/Particulars/${particularsId}/documents`,
+        url: `/personal-particulars/${particularsId}/documents`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -4313,9 +4335,23 @@ $(document).on('submit', '#uploadDocumentForm', function(e) {
                 
                 $('#uploadDocumentModal').modal('hide');
                 
-                // Reload documents tab
-                if (typeof loadEditTabContent === 'function') {
-                    loadEditTabContent('documents', editparticularsData);
+                // Refresh data and reload documents tab
+                if (typeof loadEditTabContent === 'function' && typeof currentEditparticulars !== 'undefined' && currentEditparticulars) {
+                    $.ajax({
+                        url: `/personal-particulars/${currentEditparticulars}`,
+                        type: 'GET',
+                        data: { load_all: 'true' },
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        success: function(refreshResponse) {
+                            if (refreshResponse.success && refreshResponse.particulars) {
+                                editparticularsData = normalizeparticularsData(refreshResponse.particulars);
+                                loadEditTabContent('documents', editparticularsData);
+                            }
+                        }
+                    });
                 } else {
                     location.reload();
                 }
@@ -4504,7 +4540,7 @@ function saveCurrentSection() {
     }, 30000); // 30 seconds warning
     
     $.ajax({
-        url: `/Particulars/${particularsId}`,
+        url: `/personal-particulars/${particularsId}`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -4546,7 +4582,7 @@ function saveCurrentSection() {
                 if (response.particulars) {
                     // Reload particulars data with all relationships to get fresh data
                     $.ajax({
-                        url: `/Particulars/${currentEditparticulars}`,
+                        url: `/personal-particulars/${currentEditparticulars}`,
                         type: 'GET',
                         data: { load_all: 'true' },
                         headers: {
@@ -4987,7 +5023,7 @@ function saveAllSections() {
                     sectionFormData.append('_method', 'PUT');
                     
                     $.ajax({
-                        url: `/Particulars/${particularsId}`,
+                        url: `/personal-particulars/${particularsId}`,
                         type: 'POST',
                         data: sectionFormData,
                         processData: false,
@@ -5038,7 +5074,7 @@ function openUploadPhotoModal(particularsId) {
 
 function updateparticulars(particularsId, formData) {
     $.ajax({
-        url: `/Particulars/${particularsId}`,
+        url: `/personal-particulars/${particularsId}`,
         type: 'PUT',
         data: formData,
         processData: false,
@@ -5092,7 +5128,7 @@ function uploadPhoto(particularsId, formData) {
     console.log('FormData entries:', Array.from(formData.entries()));
     
     $.ajax({
-        url: `/Particulars/${particularsId}/upload-photo`,
+        url: `/personal-particulars/${particularsId}/upload-photo`,
         type: 'POST',
         data: formData,
         processData: false,
@@ -5312,7 +5348,7 @@ function toggleParticularstatus(particularsId) {
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({
-                url: `/Particulars/${particularsId}/toggle-status`,
+                url: `/personal-particulars/${particularsId}/toggle-status`,
                 type: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

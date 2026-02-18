@@ -26,6 +26,12 @@ class MainTask extends Model
         'progress_percentage',
         'budget',
         'actual_cost',
+        'financial_year',
+        'organizational_goal_id',
+        'assessment_id',
+        'link_type',
+        'performance_weight',
+        'carried_forward_from_fy',
     ];
 
     protected $casts = [
@@ -59,6 +65,16 @@ class MainTask extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(TaskAttachment::class)->latest();
+    }
+
+    public function organizationalGoal(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationalGoal::class, 'organizational_goal_id');
+    }
+
+    public function assessment(): BelongsTo
+    {
+        return $this->belongsTo(Assessment::class, 'assessment_id');
     }
 
     public function getTotalActivitiesAttribute(): int

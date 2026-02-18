@@ -7,6 +7,7 @@ use App\Models\AssessmentActivity;
 use App\Models\Assessment;
 use App\Models\AssessmentProgressReport;
 use App\Models\TaskPerformanceSync;
+use App\Models\OrganizationSetting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -21,8 +22,31 @@ class TaskPerformanceSyncService
         try {
             DB::beginTransaction();
 
+            // Get current financial year
+            $orgSettings = OrganizationSetting::getSettings();
+            $currentFY = $orgSettings->current_financial_year ?? date('Y');
+            
+            // Check if task activity is in current financial year
+            $taskFY = $taskActivity->financial_year ?? $orgSettings->getFinancialYearForDate($taskActivity->start_date ?? now());
+            if ($taskFY != $currentFY) {
+                DB::rollBack();
+                return false; // Only sync tasks from current financial year
+            }
+
             // Find assessment activities linked to this task activity
             $assessmentActivities = AssessmentActivity::where('task_activity_id', $taskActivity->id)->get();
+            
+            // Also check task_performance_links table for many-to-many relationships
+            $linkedActivities = DB::table('task_performance_links')
+                ->where('task_activity_id', $taskActivity->id)
+                ->where('financial_year', $currentFY)
+                ->where('is_active', true)
+                ->pluck('assessment_activity_id');
+            
+            if ($linkedActivities->isNotEmpty()) {
+                $additionalActivities = AssessmentActivity::whereIn('id', $linkedActivities)->get();
+                $assessmentActivities = $assessmentActivities->merge($additionalActivities);
+            }
 
             if ($assessmentActivities->isEmpty()) {
                 DB::rollBack();
@@ -35,6 +59,12 @@ class TaskPerformanceSyncService
                 // Only sync if assessment is approved
                 if ($assessment->status !== 'approved') {
                     continue;
+                }
+                
+                // Verify assessment is in current financial year
+                $assessmentFY = $orgSettings->getFinancialYearForDate($assessment->created_at ?? now());
+                if ($assessmentFY != $currentFY) {
+                    continue; // Skip assessments from other financial years
                 }
 
                 // Calculate performance score based on task completion
@@ -205,14 +235,30 @@ class TaskPerformanceSyncService
      */
     public function syncUserTasks($userId, $period = null)
     {
+        // Get current financial year
+        $orgSettings = OrganizationSetting::getSettings();
+        $currentFY = $orgSettings->current_financial_year ?? date('Y');
+        $fyDates = $orgSettings->getFinancialYearDates($currentFY);
+        
         $query = TaskActivity::whereHas('assignedUsers', function($q) use ($userId) {
             $q->where('user_id', $userId);
-        })->whereIn('status', ['Completed', 'In Progress']);
+        })->whereIn('status', ['Completed', 'In Progress'])
+        ->where(function($q) use ($currentFY, $fyDates) {
+            // Filter by financial year
+            $q->where('financial_year', $currentFY)
+              ->orWhere(function($q2) use ($fyDates) {
+                  $q2->whereBetween('start_date', [$fyDates['start'], $fyDates['end']])
+                     ->orWhereBetween('end_date', [$fyDates['start'], $fyDates['end']]);
+              });
+        });
 
         if ($period) {
             $startDate = Carbon::parse($period['start']);
             $endDate = Carbon::parse($period['end']);
             $query->whereBetween('end_date', [$startDate, $endDate]);
+        } else {
+            // Default to current financial year period
+            $query->whereBetween('end_date', [$fyDates['start'], $fyDates['end']]);
         }
 
         $taskActivities = $query->get();

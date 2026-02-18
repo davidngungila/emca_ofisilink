@@ -853,7 +853,8 @@ $(document).ready(function() {
             const fixedDeductions = fixedDeductionsEl.length ? parseFloat(fixedDeductionsEl.attr('data-fixed-deductions')) || 0 : 0;
             
             const hourlyRate = basicSalary / (22 * 8);
-            const overtimeAmount = overtimeHours * hourlyRate * 1.5;
+            const overtimeInput = row.find('.overtime-input');
+            const overtimeAmount = parseFloat(overtimeInput.attr('data-overtime-amount')) || 0;
             const gross = basicSalary + overtimeAmount + bonus + allowance + benefits;
             
             const storedStatutoryEl = row.find('.employee-stored-statutory');
@@ -1243,16 +1244,16 @@ $(document).ready(function() {
             const employeeId = $(this).val();
             const row = $(`.employee-row[data-employee-id="${employeeId}"]`);
             const basicSalary = parseFloat(row.find('.salary-input').val()) || 0;
-            const overtimeHours = parseFloat(row.find('.overtime-input').val()) || 0;
+            const overtimeInput = row.find('.overtime-input');
+            const overtimeAmount = parseFloat(overtimeInput.attr('data-overtime-amount')) || 0;
             const bonus = parseFloat(row.find('.bonus-input').val()) || 0;
             const allowance = parseFloat(row.find('.allowance-input').val()) || 0;
+            const benefits = parseFloat(row.find('.benefits-input').val()) || 0;
             const deduction = parseFloat(row.find('.deduction-input').val()) || 0;
             const fixedDeductionsEl = row.find('.employee-fixed-deductions');
             const fixedDeductions = fixedDeductionsEl.length ? parseFloat(fixedDeductionsEl.attr('data-fixed-deductions')) || 0 : 0;
             
-            const hourlyRate = basicSalary / (22 * 8);
-            const overtimeAmount = overtimeHours * hourlyRate * 1.5;
-            const gross = basicSalary + overtimeAmount + bonus + allowance;
+            const gross = basicSalary + overtimeAmount + bonus + allowance + benefits;
             
             const storedStatutoryEl = row.find('.employee-stored-statutory');
             const statutoryTotal = storedStatutoryEl.length ? parseFloat(storedStatutoryEl.attr('data-stored-statutory')) || 0 : 0;
