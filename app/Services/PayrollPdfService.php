@@ -201,6 +201,7 @@ class PayrollPdfService
             'total_employer_cost' => (float)($payrollItem->total_employer_cost ?? 0),
             'date_of_birth' => $employee->date_of_birth ? $employee->date_of_birth->format('d M Y') : 'N/A',
             'retirement_date' => $employee->date_of_birth ? $employee->date_of_birth->copy()->addYears(60)->format('d M Y') : 'N/A',
+            'age' => $employee->date_of_birth ? $employee->date_of_birth->age : 'N/A',
         ];
 
         // Final sanitization - ensure all data is properly formatted

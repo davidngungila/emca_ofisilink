@@ -4,8 +4,8 @@
         $payroll = $payslip['payroll'];
         $employee = $payslip['employee'];
         
-        $gross = $payslip['basic_salary'] + $payslip['overtime_amount'] + $payslip['bonus_amount'] + $payslip['allowance_amount'];
-        $deductions = $payslip['nssf_amount'] + $payslip['nhif_amount'] + $payslip['heslb_amount'] + $payslip['paye_amount'] + $payslip['wcf_amount'] + $payslip['deduction_amount'] + $payslip['other_deductions'];
+        $gross = ($payslip['basic_salary'] ?? 0) + ($payslip['overtime_amount'] ?? 0) + ($payslip['bonus_amount'] ?? 0) + ($payslip['allowance_amount'] ?? 0) + ($payslip['house_benefit_amount'] ?? 0) + ($payslip['hardship_benefit_amount'] ?? 0) + ($payslip['other_benefits_amount'] ?? 0);
+        $deductions = ($payslip['nssf_amount'] ?? 0) + ($payslip['nhif_amount'] ?? 0) + ($payslip['heslb_amount'] ?? 0) + ($payslip['paye_amount'] ?? 0) + ($payslip['wcf_amount'] ?? 0) + ($payslip['deduction_amount'] ?? 0) + ($payslip['other_deductions'] ?? 0);
     @endphp
 
     <!-- Payroll Information Card -->
@@ -63,6 +63,24 @@
                         <tr>
                             <td><i class="bx bx-dollar me-2 text-muted"></i>Allowances</td>
                             <td class="text-end"><strong class="text-success">+ TZS {{ number_format($payslip['allowance_amount'], 0) }}</strong></td>
+                        </tr>
+                        @endif
+                        @if(($payslip['house_benefit_amount'] ?? 0) > 0)
+                        <tr>
+                            <td><i class="bx bx-home me-2 text-muted"></i>House Benefit</td>
+                            <td class="text-end"><strong class="text-success">+ TZS {{ number_format($payslip['house_benefit_amount'], 0) }}</strong></td>
+                        </tr>
+                        @endif
+                        @if(($payslip['hardship_benefit_amount'] ?? 0) > 0)
+                        <tr>
+                            <td><i class="bx bx-wrench me-2 text-muted"></i>Hardship Benefit</td>
+                            <td class="text-end"><strong class="text-success">+ TZS {{ number_format($payslip['hardship_benefit_amount'], 0) }}</strong></td>
+                        </tr>
+                        @endif
+                        @if(($payslip['other_benefits_amount'] ?? 0) > 0)
+                        <tr>
+                            <td><i class="bx bx-gift me-2 text-muted"></i>Other Benefits</td>
+                            <td class="text-end"><strong class="text-success">+ TZS {{ number_format($payslip['other_benefits_amount'], 0) }}</strong></td>
                         </tr>
                         @endif
                         <tr class="table-success">
@@ -200,14 +218,43 @@
                         <strong>{{ $employee['department'] ?? 'N/A' }}</strong>
                     </div>
                     <hr class="my-2">
-                    <div>
+                    <div class="mb-2">
                         <small class="text-muted d-block">Position</small>
                         <strong>{{ $employee['position'] ?? 'N/A' }}</strong>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <small class="text-muted d-block">TIN Number</small>
+                            <strong>{{ $employee['tin_number'] ?? 'N/A' }}</strong>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <small class="text-muted d-block">NSSF Number</small>
+                            <strong>{{ $employee['nssf_number'] ?? 'N/A' }}</strong>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6 mb-2">
+                            <small class="text-muted d-block">Date of Birth</small>
+                            <strong>{{ $employee['date_of_birth'] ?? 'N/A' }}</strong>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <small class="text-muted d-block">Retirement Date</small>
+                            <strong>
+                                {{ $employee['retirement_date'] ?? 'N/A' }}
+                                @if(isset($employee['age']) && $employee['age'] !== 'N/A')
+                                    (Age: {{ $employee['age'] }})
+                                @endif
+                            </strong>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+
 </div>
 
 

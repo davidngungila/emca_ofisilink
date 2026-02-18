@@ -1510,6 +1510,7 @@ class PayrollController extends Controller
                     'nhif_number' => ($payrollItem->employee->employee ?? null) ? $payrollItem->employee->employee->nhif_number : 'N/A',
                     'date_of_birth' => $payrollItem->employee->date_of_birth ? $payrollItem->employee->date_of_birth->format('d M Y') : 'N/A',
                     'retirement_date' => $payrollItem->employee->date_of_birth ? $payrollItem->employee->date_of_birth->copy()->addYears(60)->format('d M Y') : 'N/A',
+                    'age' => $payrollItem->employee->date_of_birth ? $payrollItem->employee->date_of_birth->age : 'N/A',
                 ],
                 'employer_nssf' => (float)($payrollItem->employer_nssf ?? 0),
                 'employer_wcf' => (float)($payrollItem->employer_wcf ?? 0),

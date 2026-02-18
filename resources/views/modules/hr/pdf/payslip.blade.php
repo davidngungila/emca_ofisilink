@@ -217,8 +217,29 @@
             <tr>
                 <th>Employment Type</th>
                 <td>{{ $safeOutput($payslip['employment_type'] ?? null, 'N/A') }}</td>
-                <th>Bank Details</th>
+                <th>TIN Number</th>
+                <td>{{ $safeOutput($payslip['tin_number'] ?? null, 'N/A') }}</td>
+            </tr>
+            <tr>
+                <th>NSSF Number</th>
+                <td>{{ $safeOutput($payslip['nssf_number'] ?? null, 'N/A') }}</td>
+                <th>NHIF Number</th>
+                <td>{{ $safeOutput($payslip['nhif_number'] ?? null, 'N/A') }}</td>
+            </tr>
+            <tr>
+                <th>Date of Birth</th>
+                <td>{{ $safeOutput($payslip['date_of_birth'] ?? null, 'N/A') }}</td>
+                <th>Retirement Date</th>
                 <td>
+                    {{ $safeOutput($payslip['retirement_date'] ?? null, 'N/A') }}
+                    @if(isset($payslip['age']) && $payslip['age'] !== 'N/A')
+                        (Age: {{ $safeOutput($payslip['age']) }})
+                    @endif
+                </td>
+            </tr>
+            <tr>
+                <th>Bank Details</th>
+                <td colspan="3">
                     @php
                         $bankName = is_array($bank_details['bank_name'] ?? null) ? 'Not Provided' : ($bank_details['bank_name'] ?? 'Not Provided');
                         $accountNumber = is_array($bank_details['account_number'] ?? null) ? '' : ($bank_details['account_number'] ?? '');
@@ -364,6 +385,8 @@
             </tr>
         </table>
     </div>
+
+
 
     <div class="net-salary">
         <div>NET SALARY PAYABLE</div>
