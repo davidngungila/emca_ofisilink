@@ -237,14 +237,19 @@
                     <div class="row">
                         <div class="col-6 mb-2">
                             <small class="text-muted d-block">Date of Birth</small>
-                            <strong>{{ $employee['date_of_birth'] ?? 'N/A' }}</strong>
+                            <strong>
+                                {{ $employee['date_of_birth'] ?? 'N/A' }}
+                                @if(isset($employee['age']) && $employee['age'] !== 'N/A')
+                                    (Age: {{ $employee['age'] }})
+                                @endif
+                            </strong>
                         </div>
                         <div class="col-6 mb-2">
                             <small class="text-muted d-block">Retirement Date</small>
                             <strong>
                                 {{ $employee['retirement_date'] ?? 'N/A' }}
-                                @if(isset($employee['age']) && $employee['age'] !== 'N/A')
-                                    (Age: {{ $employee['age'] }})
+                                @if(isset($employee['retirement_date']) && $employee['retirement_date'] !== 'N/A')
+                                    (Age to retire: 60)
                                 @endif
                             </strong>
                         </div>

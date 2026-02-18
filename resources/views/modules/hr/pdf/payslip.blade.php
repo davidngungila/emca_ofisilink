@@ -228,12 +228,17 @@
             </tr>
             <tr>
                 <th>Date of Birth</th>
-                <td>{{ $safeOutput($payslip['date_of_birth'] ?? null, 'N/A') }}</td>
+                <td>
+                    {{ $safeOutput($payslip['date_of_birth'] ?? null, 'N/A') }}
+                    @if(isset($payslip['age']) && $payslip['age'] !== 'N/A')
+                        (Age: {{ $safeOutput($payslip['age']) }})
+                    @endif
+                </td>
                 <th>Retirement Date</th>
                 <td>
                     {{ $safeOutput($payslip['retirement_date'] ?? null, 'N/A') }}
-                    @if(isset($payslip['age']) && $payslip['age'] !== 'N/A')
-                        (Age: {{ $safeOutput($payslip['age']) }})
+                    @if(isset($payslip['retirement_date']) && $payslip['retirement_date'] !== 'N/A')
+                        (Age to retire: 60)
                     @endif
                 </td>
             </tr>
