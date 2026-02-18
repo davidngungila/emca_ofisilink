@@ -192,18 +192,23 @@
                                             </div>
                                         </td>
                                         <td>
-                                            @if($allowance)
-                                                <button class="btn btn-sm btn-info" onclick="editAllowance({{ $allowance->id }}, {{ $employee->id }}, '{{ $employee->name }}', {{ $allowance->amount }}, '{{ $allowance->allowance_type ?? '' }}', '{{ $allowance->description ?? '' }}')">
-                                                    <i class="bx bx-edit"></i>
+                                            <div class="d-flex gap-1">
+                                                <button class="btn btn-sm btn-primary" onclick="viewEmployeePayDetails({{ $employee->id }}, '{{ addslashes($employee->name) }}', '{{ $employee->employee->employee_id ?? 'N/A' }}', {{ $allowanceAmount }}, '{{ addslashes($allowance->allowance_type ?? 'N/A') }}', '{{ addslashes($allowance->description ?? 'N/A') }}', {{ $totalBenefits }}, '{{ addslashes(implode('|', $benefitDetails)) }}')" title="View Details">
+                                                    <i class="bx bx-show"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteAllowance({{ $allowance->id }})">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                            @else
-                                                <button class="btn btn-sm btn-primary" onclick="addAllowance({{ $employee->id }}, '{{ $employee->name }}')">
-                                                    <i class="bx bx-plus"></i> Add
-                                                </button>
-                                            @endif
+                                                @if($allowance)
+                                                    <button class="btn btn-sm btn-info" onclick="editAllowance({{ $allowance->id }}, {{ $employee->id }}, '{{ $employee->name }}', {{ $allowance->amount }}, '{{ $allowance->allowance_type ?? '' }}', '{{ $allowance->description ?? '' }}')" title="Edit Allowance">
+                                                        <i class="bx bx-edit"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger" onclick="deleteAllowance({{ $allowance->id }})" title="Delete Allowance">
+                                                        <i class="bx bx-trash"></i>
+                                                    </button>
+                                                @else
+                                                    <button class="btn btn-sm btn-success" onclick="addAllowance({{ $employee->id }}, '{{ $employee->name }}')" title="Add Allowance">
+                                                        <i class="bx bx-plus"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -268,12 +273,67 @@
     </div>
 </div>
 
+<!-- View Details Modal -->
+<div class="modal fade" id="viewDetailsModal" tabindex="-1" style="z-index: 10090 !important;">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title text-white fw-bold"><i class="bx bx-detail me-2"></i>Payment Details Breakdown</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="avatar avatar-xl mx-auto mb-2">
+                        <span class="avatar-initial rounded-circle bg-label-primary shadow-sm" style="font-size: 2rem;" id="view_avatar"></span>
+                    </div>
+                    <h5 class="mb-0 fw-bold" id="view_employee_name"></h5>
+                    <small class="text-muted" id="view_employee_id"></small>
+                </div>
+
+                <div class="card bg-light border-0 mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">Manual Allowance</span>
+                            <span class="fw-bold text-info" id="view_allowance_amount"></span>
+                        </div>
+                        <div class="ps-3 border-start border-info border-3">
+                            <p class="mb-1 small"><strong>Type:</strong> <span id="view_allowance_type"></span></p>
+                            <p class="mb-0 small text-muted italic" id="view_allowance_desc"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-light border-0 mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">Automatic Benefits</span>
+                            <span class="fw-bold text-success" id="view_benefits_total"></span>
+                        </div>
+                        <div id="view_benefits_list" class="small">
+                            <!-- Benefits will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="d-flex justify-content-between align-items-center p-3 bg-primary bg-opacity-10 rounded">
+                    <h5 class="mb-0 fw-bold">Grand Total</h5>
+                    <h4 class="mb-0 fw-bold text-primary" id="view_grand_total"></h4>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Bulk Create Allowance Modal -->
 <div class="modal fade" id="bulkAllowanceModal" tabindex="-1" style="z-index: 10090 !important;">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
-                <h5 class="modal-title">Bulk Create Allowance</h5>
+                <h5 class="modal-title text-white fw-bold"><i class="bx bx-layer me-2"></i>Bulk Create Allowance</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="bulkAllowanceForm" enctype="multipart/form-data">
@@ -351,6 +411,40 @@
 <script>
 let allowanceModal = new bootstrap.Modal(document.getElementById('allowanceModal'));
 let bulkAllowanceModal = new bootstrap.Modal(document.getElementById('bulkAllowanceModal'));
+let viewDetailsModal = new bootstrap.Modal(document.getElementById('viewDetailsModal'));
+
+function viewEmployeePayDetails(id, name, empCode, allowanceAmt, allowanceType, allowanceDesc, benefitsTotal, benefitsListStr) {
+    document.getElementById('view_employee_name').textContent = name;
+    document.getElementById('view_employee_id').textContent = empCode;
+    document.getElementById('view_avatar').textContent = name.charAt(0);
+    
+    document.getElementById('view_allowance_amount').textContent = 'TZS ' + allowanceAmt.toLocaleString();
+    document.getElementById('view_allowance_type').textContent = allowanceType;
+    document.getElementById('view_allowance_desc').textContent = allowanceDesc;
+    
+    document.getElementById('view_benefits_total').textContent = 'TZS ' + benefitsTotal.toLocaleString();
+    
+    const benefitsList = document.getElementById('view_benefits_list');
+    benefitsList.innerHTML = '';
+    
+    if (benefitsListStr) {
+        const benefits = benefitsListStr.split('|');
+        benefits.forEach(benefit => {
+            const div = document.createElement('div');
+            div.className = 'd-flex justify-content-between mb-1 text-muted';
+            const parts = benefit.split(':');
+            div.innerHTML = `<span>${parts[0]}</span> <span class="fw-medium">${parts[1]}</span>`;
+            benefitsList.appendChild(div);
+        });
+    } else {
+        benefitsList.innerHTML = '<div class="text-muted italic">No active benefits found</div>';
+    }
+    
+    const grandTotal = allowanceAmt + benefitsTotal;
+    document.getElementById('view_grand_total').textContent = 'TZS ' + grandTotal.toLocaleString();
+    
+    viewDetailsModal.show();
+}
 
 function showBulkAllowanceModal() {
     document.getElementById('bulkAllowanceForm').reset();
