@@ -27,10 +27,12 @@ class PayrollAllowanceController extends Controller
         $month = $request->get('month', Carbon::now()->format('Y-m'));
         $selectedMonth = $month;
 
-        // Get all employees
+        // Get all employees with benefits
         $employees = User::where('is_active', true)
             ->whereHas('employee')
-            ->with(['primaryDepartment', 'employee'])
+            ->with(['primaryDepartment', 'employee', 'benefits' => function($q) {
+                $q->where('is_active', true);
+            }])
             ->orderBy('name')
             ->get();
 
@@ -42,8 +44,32 @@ class PayrollAllowanceController extends Controller
             ->keyBy('employee_id');
 
         // Calculate statistics
-        $totalAmount = $allowances->sum('amount');
-        $employeeCount = $allowances->count();
+        $totalAllowances = $allowances->sum('amount');
+        $totalBenefits = 0;
+        $beneficiaryCount = 0;
+
+        foreach ($employees as $employee) {
+            $hasBenefit = false;
+            foreach ($employee->benefits as $benefit) {
+                $bAmount = 0;
+                if ($benefit->amount > 0) {
+                    $bAmount = $benefit->amount;
+                } elseif ($benefit->percentage > 0 && ($employee->employee->salary ?? 0) > 0) {
+                    $bAmount = ($employee->employee->salary * $benefit->percentage) / 100;
+                }
+                
+                if ($bAmount > 0) {
+                    $totalBenefits += $bAmount;
+                    $hasBenefit = true;
+                }
+            }
+            if ($hasBenefit) {
+                $beneficiaryCount++;
+            }
+        }
+
+        $totalAmount = $totalAllowances + $totalBenefits;
+        $employeeCount = $employees->count();
         $avgAmount = $employeeCount > 0 ? $totalAmount / $employeeCount : 0;
 
         // Get available months
@@ -54,7 +80,8 @@ class PayrollAllowanceController extends Controller
 
         return view('modules.hr.pages.manage-allowance', compact(
             'employees', 'allowances', 'month', 'selectedMonth', 
-            'totalAmount', 'employeeCount', 'avgAmount',
+            'totalAmount', 'totalAllowances', 'totalBenefits', 
+            'employeeCount', 'beneficiaryCount', 'avgAmount',
             'availableMonths'
         ));
     }

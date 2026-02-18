@@ -39,9 +39,9 @@
                             <i class="bx bx-money fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h6 class="text-muted mb-1 small">Total Allowance</h6>
+                            <h6 class="text-muted mb-1 small">Total (Allowances + Benefits)</h6>
                             <h3 class="mb-0 fw-bold text-info">TZS {{ number_format($totalAmount ?? 0, 0) }}</h3>
-                            <small class="text-muted">This Month</small>
+                            <small class="text-muted">TZS {{ number_format($totalAllowances ?? 0, 0) }} Allowances</small>
                         </div>
                     </div>
                 </div>
@@ -55,9 +55,9 @@
                             <i class="bx bx-group fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h6 class="text-muted mb-1 small">Employees</h6>
+                            <h6 class="text-muted mb-1 small">Beneficiaries</h6>
                             <h3 class="mb-0 fw-bold text-success">{{ $employeeCount ?? 0 }}</h3>
-                            <small class="text-muted">With Allowance</small>
+                            <small class="text-muted">{{ $beneficiaryCount ?? 0 }} With Auto Benefits</small>
                         </div>
                     </div>
                 </div>
@@ -125,9 +125,9 @@
                                 <tr>
                                     <th>Employee</th>
                                     <th>Department</th>
-                                    <th class="text-end">Amount</th>
-                                    <th>Type</th>
-                                    <th>Description</th>
+                                    <th class="text-end">Allowances</th>
+                                    <th class="text-end">Auto Benefits</th>
+                                    <th class="text-end">Total Amount</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -135,6 +135,25 @@
                                 @forelse($employees as $employee)
                                     @php
                                         $allowance = $allowances[$employee->id] ?? null;
+                                        $allowanceAmount = $allowance ? $allowance->amount : 0;
+                                        
+                                        $totalBenefits = 0;
+                                        $benefitDetails = [];
+                                        if ($employee->benefits) {
+                                            foreach($employee->benefits as $benefit) {
+                                                $bAmount = 0;
+                                                if ($benefit->amount > 0) {
+                                                    $bAmount = $benefit->amount;
+                                                } elseif ($benefit->percentage > 0 && ($employee->employee->salary ?? 0) > 0) {
+                                                    $bAmount = (($employee->employee->salary ?? 0) * $benefit->percentage) / 100;
+                                                }
+                                                $totalBenefits += $bAmount;
+                                                if ($bAmount > 0) {
+                                                    $benefitDetails[] = $benefit->benefit_name . ': ' . number_format($bAmount, 0);
+                                                }
+                                            }
+                                        }
+                                        $totalRow = $allowanceAmount + $totalBenefits;
                                     @endphp
                                     <tr>
                                         <td>
@@ -151,24 +170,26 @@
                                         <td>{{ $employee->primaryDepartment->name ?? 'N/A' }}</td>
                                         <td class="text-end">
                                             @if($allowance)
-                                                <span class="fw-bold text-info">TZS {{ number_format($allowance->amount, 0) }}</span>
+                                                <div class="fw-bold text-info">TZS {{ number_format($allowance->amount, 0) }}</div>
+                                                <small class="text-muted">{{ $allowance->allowance_type ?? 'Allowance' }}</small>
                                             @else
                                                 <span class="text-muted">TZS 0</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if($allowance && $allowance->allowance_type)
-                                                <span class="badge bg-label-info">{{ $allowance->allowance_type }}</span>
+                                        <td class="text-end">
+                                            @if($totalBenefits > 0)
+                                                <div class="fw-bold text-success">TZS {{ number_format($totalBenefits, 0) }}</div>
+                                                <small class="text-muted" title="{{ implode(', ', $benefitDetails) }}">
+                                                    {{ count($benefitDetails) }} Active Benefits
+                                                </small>
                                             @else
-                                                <span class="text-muted">-</span>
+                                                <span class="text-muted">TZS 0</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            @if($allowance)
-                                                <small class="text-muted">{{ Str::limit($allowance->description ?? 'N/A', 30) }}</small>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
+                                        <td class="text-end">
+                                            <div class="fw-bold {{ $totalRow > 0 ? 'text-primary' : 'text-muted' }}">
+                                                TZS {{ number_format($totalRow, 0) }}
+                                            </div>
                                         </td>
                                         <td>
                                             @if($allowance)
