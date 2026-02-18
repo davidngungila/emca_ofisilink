@@ -47,6 +47,7 @@ class User extends Authenticatable
         'failed_login_attempts',
         'last_failed_login_at',
         'locked_until',
+        'supervisor_id',
     ];
 
     /**
@@ -140,6 +141,14 @@ class User extends Authenticatable
     public function salaryDeductions()
     {
         return $this->hasMany(EmployeeSalaryDeduction::class, 'employee_id');
+    }
+
+    /**
+     * Get benefits for the employee
+     */
+    public function benefits()
+    {
+        return $this->hasMany(EmployeeBenefit::class, 'employee_id');
     }
 
     /**
@@ -560,5 +569,29 @@ class User extends Authenticatable
 
         // Return as-is if can't format properly (will fail validation elsewhere)
         return $cleaned;
+    }
+
+    /**
+     * Get the user's supervisor
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    /**
+     * Get the user's subordinates
+     */
+    public function subordinates()
+    {
+        return $this->hasMany(User::class, 'supervisor_id');
+    }
+
+    /**
+     * Get the user's performance assessments
+     */
+    public function assessments()
+    {
+        return $this->hasMany(Assessment::class, 'employee_id');
     }
 }

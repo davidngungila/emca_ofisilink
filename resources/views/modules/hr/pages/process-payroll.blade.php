@@ -7,7 +7,7 @@
     <!-- Enhanced Page Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; overflow: hidden;">
+            <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%); border-radius: 15px; overflow: hidden;">
                 <div class="card-body text-white p-4">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div class="mb-3 mb-md-0">
@@ -34,7 +34,7 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-0 shadow-lg">
-                    <div class="card-header bg-gradient-primary text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-header text-white" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%);">
                         <h5 class="mb-0 text-white fw-bold">
                             <i class="bx bx-calendar me-2"></i>Payroll Information
                         </h5>
@@ -171,7 +171,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card border-0 shadow-lg">
-                    <div class="card-header bg-gradient-primary text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-header text-white" style="background: linear-gradient(135deg, #940000 0%, #c00000 100%);">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
                             <h5 class="mb-0 text-white fw-bold">
                                 <i class="bx bx-user me-2"></i>Employee Selection
@@ -241,6 +241,7 @@
                                         <th width="100">Overtime (Hrs)</th>
                                         <th width="120">Bonus</th>
                                         <th width="120">Allowance</th>
+                                        <th width="120">Benefits</th>
                                         <th width="120">Deductions</th>
                                         <th width="150">Statutory</th>
                                         <th width="120">Net Salary</th>
@@ -330,6 +331,37 @@
                                                     @if($allowance && $allowance->allowance_type)
                                                         <small class="text-muted">{{ $allowance->allowance_type }}</small>
                                                     @endif
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $totalBenefitsAmount = 0;
+                                                    $employeeBenefits = $employee->benefits ?? collect();
+                                                    foreach($employeeBenefits as $benefit) {
+                                                        if($benefit->is_active) {
+                                                            if($benefit->amount > 0) {
+                                                                $totalBenefitsAmount += $benefit->amount;
+                                                            } elseif($benefit->percentage > 0) {
+                                                                $totalBenefitsAmount += ($employee->employee->salary * $benefit->percentage) / 100;
+                                                            }
+                                                        }
+                                                    }
+                                                @endphp
+                                                <input type="hidden" class="benefits-input" 
+                                                       value="{{ $totalBenefitsAmount }}" 
+                                                       data-employee-id="{{ $employee->id }}">
+                                                @if($totalBenefitsAmount > 0)
+                                                    <div class="fw-semibold text-warning">TZS {{ number_format($totalBenefitsAmount, 0) }}</div>
+                                                    @foreach($employeeBenefits as $benefit)
+                                                        @if($benefit->is_active)
+                                                            <small class="text-muted d-block" style="font-size: 0.7rem;">
+                                                                {{ $benefit->benefit_name ?? ucfirst($benefit->benefit_type) }}: 
+                                                                {{ $benefit->amount > 0 ? number_format($benefit->amount, 0) : $benefit->percentage.'%' }}
+                                                            </small>
+                                                        @endif
+                                                    @endforeach
                                                 @else
                                                     <span class="text-muted">-</span>
                                                 @endif
@@ -519,12 +551,13 @@ $(document).ready(function() {
         const overtimeAmount = parseFloat(overtimeInput.attr('data-overtime-amount')) || 0;
         const bonus = parseFloat(row.find('.bonus-input').val()) || 0;
         const allowance = parseFloat(row.find('.allowance-input').val()) || 0;
+        const benefits = parseFloat(row.find('.benefits-input').val()) || 0;
         const deduction = parseFloat(row.find('.deduction-input').val()) || 0;
         const fixedDeductionsEl = row.find('.employee-fixed-deductions');
         const fixedDeductions = fixedDeductionsEl.length ? parseFloat(fixedDeductionsEl.attr('data-fixed-deductions')) || 0 : 0;
         
-        // Calculate gross salary (overtime amount is already calculated from monthly records)
-        const gross = basicSalary + overtimeAmount + bonus + allowance;
+        // Calculate gross salary (overtime and benefits included)
+        const gross = basicSalary + overtimeAmount + bonus + allowance + benefits;
         
         // Get statutory deductions
         const storedStatutoryEl = row.find('.employee-stored-statutory');
@@ -800,7 +833,7 @@ $(document).ready(function() {
         // Collect all employee data
         let employees = [];
         let totalGross = 0, totalDeductions = 0, totalNet = 0, totalEmployerCost = 0;
-        let totalBasic = 0, totalOvertime = 0, totalBonus = 0, totalAllowance = 0;
+        let totalBasic = 0, totalOvertime = 0, totalBonus = 0, totalAllowance = 0, totalBenefitsEarning = 0;
         let totalStatutory = 0, totalOtherDeductions = 0;
         let departmentBreakdown = {};
         
@@ -814,13 +847,14 @@ $(document).ready(function() {
             const overtimeHours = parseFloat(row.find('.overtime-input').val()) || 0;
             const bonus = parseFloat(row.find('.bonus-input').val()) || 0;
             const allowance = parseFloat(row.find('.allowance-input').val()) || 0;
+            const benefits = parseFloat(row.find('.benefits-input').val()) || 0;
             const deduction = parseFloat(row.find('.deduction-input').val()) || 0;
             const fixedDeductionsEl = row.find('.employee-fixed-deductions');
             const fixedDeductions = fixedDeductionsEl.length ? parseFloat(fixedDeductionsEl.attr('data-fixed-deductions')) || 0 : 0;
             
             const hourlyRate = basicSalary / (22 * 8);
             const overtimeAmount = overtimeHours * hourlyRate * 1.5;
-            const gross = basicSalary + overtimeAmount + bonus + allowance;
+            const gross = basicSalary + overtimeAmount + bonus + allowance + benefits;
             
             const storedStatutoryEl = row.find('.employee-stored-statutory');
             const statutoryTotal = storedStatutoryEl.length ? parseFloat(storedStatutoryEl.attr('data-stored-statutory')) || 0 : 0;
@@ -838,6 +872,7 @@ $(document).ready(function() {
                 overtimeHours: overtimeHours,
                 bonus: bonus,
                 allowance: allowance,
+                benefits: benefits,
                 gross: gross,
                 statutory: statutoryTotal,
                 otherDeductions: deduction + fixedDeductions,
@@ -850,6 +885,7 @@ $(document).ready(function() {
             totalOvertime += overtimeAmount;
             totalBonus += bonus;
             totalAllowance += allowance;
+            totalBenefitsEarning += benefits;
             totalGross += gross;
             totalStatutory += statutoryTotal;
             totalOtherDeductions += (deduction + fixedDeductions);
@@ -952,6 +988,11 @@ $(document).ready(function() {
                                         <td><strong>Allowances</strong></td>
                                         <td class="text-end">TZS ${formatNumber(totalAllowance)}</td>
                                         <td class="text-end">${totalGross > 0 ? ((totalAllowance / totalGross) * 100).toFixed(2) : 0}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Benefits</strong></td>
+                                        <td class="text-end">TZS ${formatNumber(totalBenefitsEarning)}</td>
+                                        <td class="text-end">${totalGross > 0 ? ((totalBenefitsEarning / totalGross) * 100).toFixed(2) : 0}%</td>
                                     </tr>
                                     <tr class="table-primary">
                                         <td><strong>Total Gross Salary</strong></td>

@@ -43,7 +43,10 @@ class PayrollPdfService
         $overtime = (float)($payrollItem->overtime_amount ?? 0);
         $bonus = (float)($payrollItem->bonus_amount ?? 0);
         $allowance = (float)($payrollItem->allowance_amount ?? 0);
-        $grossSalary = $basic + $overtime + $bonus + $allowance;
+        $houseBenefit = (float)($payrollItem->house_benefit_amount ?? 0);
+        $hardshipBenefit = (float)($payrollItem->hardship_benefit_amount ?? 0);
+        $otherBenefits = (float)($payrollItem->other_benefits_amount ?? 0);
+        $grossSalary = $basic + $overtime + $bonus + $allowance + $houseBenefit + $hardshipBenefit + $otherBenefits;
 
         $nssf = (float)($payrollItem->nssf_amount ?? 0);
         $paye = (float)($payrollItem->paye_amount ?? 0);
@@ -180,6 +183,9 @@ class PayrollPdfService
             'overtime_amount' => (float)$overtime,
             'bonus_amount' => (float)$bonus,
             'allowance_amount' => (float)$allowance,
+            'house_benefit_amount' => (float)$houseBenefit,
+            'hardship_benefit_amount' => (float)$hardshipBenefit,
+            'other_benefits_amount' => (float)$otherBenefits,
             'nssf_amount' => (float)$nssf,
             'paye_amount' => (float)$paye,
             'nhif_amount' => (float)$nhif,
@@ -187,6 +193,14 @@ class PayrollPdfService
             'wcf_amount' => (float)$wcf,
             'deduction_amount' => (float)$otherDeductions,
             'net_salary' => (float)$netSalary,
+            'nssf_number' => $employeeRecord->nssf_number ?? 'N/A',
+            'nhif_number' => $employeeRecord->nhif_number ?? 'N/A',
+            'tin_number' => $employeeRecord->tin_number ?? 'N/A',
+            'employer_nssf' => (float)($payrollItem->employer_nssf ?? 0),
+            'employer_wcf' => (float)($payrollItem->employer_wcf ?? 0),
+            'total_employer_cost' => (float)($payrollItem->total_employer_cost ?? 0),
+            'date_of_birth' => $employee->date_of_birth ? $employee->date_of_birth->format('d M Y') : 'N/A',
+            'retirement_date' => $employee->date_of_birth ? $employee->date_of_birth->copy()->addYears(60)->format('d M Y') : 'N/A',
         ];
 
         // Final sanitization - ensure all data is properly formatted
@@ -860,6 +874,9 @@ class PayrollPdfService
             'overtime_amount' => $items->sum('overtime_amount'),
             'bonus_amount' => $items->sum('bonus_amount'),
             'allowance_amount' => $items->sum('allowance_amount'),
+            'house_benefit_amount' => $items->sum('house_benefit_amount'),
+            'hardship_benefit_amount' => $items->sum('hardship_benefit_amount'),
+            'other_benefits_amount' => $items->sum('other_benefits_amount'),
             'gross_salary' => 0,
             'nssf_amount' => $items->sum('nssf_amount'),
             'nhif_amount' => $items->sum('nhif_amount'),
@@ -878,7 +895,10 @@ class PayrollPdfService
         $totals['gross_salary'] = $totals['basic_salary'] 
             + $totals['overtime_amount'] 
             + $totals['bonus_amount'] 
-            + $totals['allowance_amount'];
+            + $totals['allowance_amount']
+            + $totals['house_benefit_amount']
+            + $totals['hardship_benefit_amount']
+            + $totals['other_benefits_amount'];
 
         $totals['total_deductions'] = $totals['nssf_amount'] 
             + $totals['nhif_amount'] 
@@ -899,11 +919,12 @@ class PayrollPdfService
                     'total_deductions' => 0,
                 ];
             }
-            $deptGross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount;
+            $deptGross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount + 
+                         $item->house_benefit_amount + $item->hardship_benefit_amount + $item->other_benefits_amount;
             $departmentBreakdown[$deptName]['count']++;
             $departmentBreakdown[$deptName]['total_gross'] += $deptGross;
             $departmentBreakdown[$deptName]['total_net'] += $item->net_salary;
-            $departmentBreakdown[$deptName]['total_deductions'] += ($item->nssf_amount + $item->nhif_amount + $item->heslb_amount + $item->paye_amount + $item->deduction_amount);
+            $departmentBreakdown[$deptName]['total_deductions'] += ($item->nssf_amount + $item->nhif_amount + $item->heslb_amount + $item->paye_amount + $item->deduction_amount + $item->wcf_amount + $item->other_deductions);
         }
 
         $data = [
@@ -929,6 +950,74 @@ class PayrollPdfService
         // Safely get pay_period for filename
         $reportPayPeriod = $this->safeToString($payroll->pay_period ?? date('Y-m'), date('Y-m'));
         $filename = 'Payroll_Report_' . $reportPayPeriod . '_' . date('Y-m-d') . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Generate Salary Journal PDF
+     */
+    public function generateSalaryJournal(Payroll $payroll)
+    {
+        $items = $payroll->items()->get();
+        $employeeIds = $items->pluck('employee_id')->toArray();
+        $payPeriod = $payroll->pay_period; // YYYY-MM
+
+        // Fetch actual allowance breakdown for this period
+        $allowances = \App\Models\EmployeeAllowance::whereIn('employee_id', $employeeIds)
+            ->where('month', $payPeriod)
+            ->get();
+
+        // Calculate totals for the journal
+        $totals = [
+            'basic_salary' => $items->sum('basic_salary'),
+            'travel_allowance' => $allowances->where('allowance_type', 'Travel')->sum('amount'),
+            'communication_allowance' => $allowances->where('allowance_type', 'Communication')->sum('amount'),
+            'meal_allowance' => $allowances->where('allowance_type', 'Meal')->sum('amount'),
+            'house_allowance' => $allowances->where('allowance_type', 'House')->sum('amount'),
+            'other_allowances' => 0,
+            'net_salary' => $items->sum('net_salary'),
+            'nssf_amount' => $items->sum('nssf_amount'),
+            'nhif_amount' => $items->sum('nhif_amount'),
+            'paye_amount' => $items->sum('paye_amount'),
+            'heslb_amount' => $items->sum('heslb_amount'),
+            'other_deductions' => $items->sum('other_deductions') + $items->sum('deduction_amount'),
+            'employer_nssf' => $items->sum('employer_nssf'),
+            'employer_wcf' => $items->sum('employer_wcf'),
+            'employer_sdl' => $items->sum('employer_sdl'),
+            'employer_nhif' => 0, // In Tanzania, NHIF is usually just employee 3% and employer 3%
+        ];
+
+        // Handle "Other" allowances if not categorized in the specific requested ones
+        $specificTypes = ['Travel', 'Communication', 'Meal', 'House'];
+        $totals['other_allowances'] = $allowances->whereNotIn('allowance_type', $specificTypes)->sum('amount');
+        
+        // Add any allowances from PayrollItem that weren't in EmployeeAllowance (redundancy check)
+        $totalPayrollAllowances = $items->sum('allowance_amount');
+        $totalFoundAllowances = $allowances->sum('amount');
+        if ($totalPayrollAllowances > $totalFoundAllowances) {
+            $totals['other_allowances'] += ($totalPayrollAllowances - $totalFoundAllowances);
+        }
+
+        // Add bonus to other allowances or as a separate row if needed
+        $totals['other_allowances'] += $items->sum('bonus_amount');
+        $totals['basic_salary'] += $items->sum('overtime_amount'); // User didn't specify overtime, adding to basic or other
+
+        $data = [
+            'payroll' => $payroll,
+            'totals' => $totals,
+            'companyName' => config('app.name', 'Company Name'),
+            'generatedAt' => now()->format('F j, Y H:i'),
+        ];
+
+        $html = view('modules.hr.pdf.salary-journal', $data)->render();
+        
+        $pdf = Pdf::loadHtml($html);
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOption('enable-local-file-access', true);
+
+        $reportPayPeriod = $this->safeToString($payroll->pay_period ?? date('Y-m'), date('Y-m'));
+        $filename = 'Salary_Journal_' . $reportPayPeriod . '_' . date('Y-m-d') . '.pdf';
 
         return $pdf->stream($filename);
     }
@@ -1056,7 +1145,7 @@ class PayrollPdfService
                 if (is_array($payslipValue)) {
                     \Log::warning("Payslip field '{$payslipKey}' is an array", ['value' => $payslipValue]);
                     // Set appropriate defaults based on the key
-                    if (in_array($payslipKey, ['basic_salary', 'overtime_amount', 'bonus_amount', 'allowance_amount', 'nssf_amount', 'paye_amount', 'nhif_amount', 'heslb_amount', 'wcf_amount', 'deduction_amount', 'net_salary'])) {
+                    if (in_array($payslipKey, ['basic_salary', 'overtime_amount', 'bonus_amount', 'allowance_amount', 'nssf_amount', 'paye_amount', 'nhif_amount', 'heslb_amount', 'wcf_amount', 'deduction_amount', 'net_salary', 'employer_nssf', 'employer_wcf', 'total_employer_cost'])) {
                         $payslipValue = 0;
                     } else {
                         $payslipValue = 'N/A';

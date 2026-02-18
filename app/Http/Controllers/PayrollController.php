@@ -351,7 +351,7 @@ class PayrollController extends Controller
                     ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
                     ->where('payrolls.pay_period', 'like', $currentMonth . '%')
                     ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
-                    ->selectRaw('COALESCE(SUM(basic_salary + overtime_amount + bonus_amount + allowance_amount), 0) as gross')
+                    ->selectRaw('COALESCE(SUM(basic_salary + overtime_amount + bonus_amount + allowance_amount + house_benefit_amount + hardship_benefit_amount + other_benefits_amount), 0) as gross')
                     ->value('gross') ?? 0,
                 'current_month_deductions' => (float)$applyBranchFilter(DB::table('payroll_items')
                     ->join('payrolls', 'payroll_items.payroll_id', '=', 'payrolls.id'))
@@ -429,7 +429,7 @@ class PayrollController extends Controller
                 ->where('payrolls.pay_period', '>=', Carbon::now()->subMonths(11)->format('Y-m'))
                 ->selectRaw('payrolls.pay_period, 
                     COALESCE(SUM(net_salary), 0) as net_total,
-                    COALESCE(SUM(basic_salary + overtime_amount + bonus_amount + allowance_amount), 0) as gross_total,
+                    COALESCE(SUM(basic_salary + overtime_amount + bonus_amount + allowance_amount + house_benefit_amount + hardship_benefit_amount + other_benefits_amount), 0) as gross_total,
                     COALESCE(SUM(deduction_amount + nssf_amount + paye_amount + nhif_amount + heslb_amount + wcf_amount + sdl_amount + other_deductions), 0) as deductions_total,
                     COALESCE(SUM(total_employer_cost), 0) as employer_cost_total,
                     COUNT(DISTINCT payroll_items.employee_id) as employee_count')
@@ -449,7 +449,7 @@ class PayrollController extends Controller
                 ->selectRaw('departments.id, departments.name,
                     COUNT(DISTINCT payroll_items.employee_id) as employee_count,
                     COALESCE(SUM(payroll_items.net_salary), 0) as net_total,
-                    COALESCE(SUM(payroll_items.basic_salary + payroll_items.overtime_amount + payroll_items.bonus_amount + payroll_items.allowance_amount), 0) as gross_total,
+                    COALESCE(SUM(payroll_items.basic_salary + payroll_items.overtime_amount + payroll_items.bonus_amount + payroll_items.allowance_amount + payroll_items.house_benefit_amount + payroll_items.hardship_benefit_amount + payroll_items.other_benefits_amount), 0) as gross_total,
                     COALESCE(SUM(payroll_items.deduction_amount + payroll_items.nssf_amount + payroll_items.paye_amount + payroll_items.nhif_amount + payroll_items.heslb_amount + payroll_items.wcf_amount + payroll_items.sdl_amount + payroll_items.other_deductions), 0) as deductions_total,
                     COALESCE(SUM(payroll_items.total_employer_cost), 0) as employer_cost_total,
                     COALESCE(AVG(payroll_items.net_salary), 0) as avg_net_salary')
@@ -468,7 +468,7 @@ class PayrollController extends Controller
                 ->whereIn('payrolls.status', ['processed', 'reviewed', 'approved', 'paid'])
                 ->selectRaw('users.id, users.name, employees.employee_id,
                     payroll_items.net_salary,
-                    COALESCE((payroll_items.basic_salary + payroll_items.overtime_amount + payroll_items.bonus_amount + payroll_items.allowance_amount), 0) as gross_salary,
+                    COALESCE((payroll_items.basic_salary + payroll_items.overtime_amount + payroll_items.bonus_amount + payroll_items.allowance_amount + payroll_items.house_benefit_amount + payroll_items.hardship_benefit_amount + payroll_items.other_benefits_amount), 0) as gross_salary,
                     COALESCE((payroll_items.deduction_amount + payroll_items.nssf_amount + payroll_items.paye_amount + payroll_items.nhif_amount + payroll_items.heslb_amount + payroll_items.wcf_amount + payroll_items.sdl_amount + payroll_items.other_deductions), 0) as total_deductions')
                 ->orderByDesc('payroll_items.net_salary')
                 ->limit(10)
@@ -606,7 +606,7 @@ class PayrollController extends Controller
                                         ->orWhere('end_date', '>=', now());
                                   });
                         }
-                    ])->find($employeeId);
+                    ])->with('benefits')->find($employeeId);
                     
                     // Validate employee exists
                     if (!$employee || !$employee->employee) {
@@ -643,12 +643,44 @@ class PayrollController extends Controller
                     $overtimeAmount = $overtimeRecord ? $overtimeRecord->amount : 0;
                     $bonusAmount = $bonusRecord ? $bonusRecord->amount : 0;
                     $allowanceAmount = $allowanceRecord ? $allowanceRecord->amount : 0;
+
+                    // Calculate Employee Benefits
+                    $houseBenefitAmount = 0;
+                    $hardshipBenefitAmount = 0;
+                    $nhifBenefitAmount = 0;
+                    $otherBenefitsAmount = 0;
+
+                    if ($employee->relationLoaded('benefits') && $employee->benefits) {
+                        foreach ($employee->benefits as $benefit) {
+                            if (!$benefit->is_active) continue;
+
+                            $amount = 0;
+                            if ($benefit->amount > 0) {
+                                $amount = $benefit->amount;
+                            } elseif ($benefit->percentage > 0) {
+                                $amount = ($basicSalary * $benefit->percentage) / 100;
+                            }
+
+                            if ($benefit->benefit_type === 'house') {
+                                $houseBenefitAmount += $amount;
+                            } elseif ($benefit->benefit_type === 'hardship') {
+                                $hardshipBenefitAmount += $amount;
+                            } elseif ($benefit->benefit_type === 'nhif') {
+                                $nhifBenefitAmount += $amount;
+                            } else {
+                                $otherBenefitsAmount += $amount;
+                            }
+                        }
+                    }
+
+                    // Total benefits added to gross
+                    $totalBenefits = $houseBenefitAmount + $hardshipBenefitAmount + $nhifBenefitAmount + $otherBenefitsAmount;
                     
                     // Additional deduction (still editable in process page)
                     $additionalDeduction = $this->validateNumericInput($request->deduction_amount[$employeeId] ?? 0, 0, null, 'Deduction amount', $employeeErrorList);
 
                     // Validate deduction doesn't exceed gross salary
-                    $estimatedGross = $basicSalary + $overtimeAmount + $bonusAmount + $allowanceAmount;
+                    $estimatedGross = $basicSalary + $overtimeAmount + $bonusAmount + $allowanceAmount + $totalBenefits;
                     if ($additionalDeduction > $estimatedGross * 0.5) {
                         $employeeErrorList[] = "Warning: Additional deduction exceeds 50% of estimated gross salary.";
                     }
@@ -712,7 +744,7 @@ class PayrollController extends Controller
 
                     // Use ONLY stored statutory deductions - NO CALCULATION
                     // If statutory deduction is not stored, it will be 0
-                    $grossSalary = $basicSalary + $overtimeAmount + $bonusAmount + $allowanceAmount;
+                    $grossSalary = $basicSalary + $overtimeAmount + $bonusAmount + $allowanceAmount + $totalBenefits;
                     
                     // Use ONLY stored statutory deductions - NO CALCULATION
                     $finalStatutory = [
@@ -732,6 +764,13 @@ class PayrollController extends Controller
                     // Build breakdown for response (use ONLY stored amounts)
                     $breakdown = [
                         'gross_salary' => $grossSalary,
+                        'basic_salary' => $basicSalary,
+                        'overtime' => $overtimeAmount,
+                        'bonus' => $bonusAmount,
+                        'allowance' => $allowanceAmount,
+                        'house_benefit' => $houseBenefitAmount,
+                        'hardship_benefit' => $hardshipBenefitAmount,
+                        'other_benefits' => $nhifBenefitAmount + $otherBenefitsAmount, // NHIF benefit grouped with others in breakdown for now
                         'paye' => $finalStatutory['PAYE'],
                         'nssf' => ['employee' => $finalStatutory['NSSF'], 'employer' => 0], // No calculation
                         'nhif' => $finalStatutory['NHIF'],
@@ -765,6 +804,9 @@ class PayrollController extends Controller
                         'overtime_amount' => $overtimeAmount,
                         'bonus_amount' => $bonusAmount,
                         'allowance_amount' => $allowanceAmount,
+                        'house_benefit_amount' => $houseBenefitAmount,
+                        'hardship_benefit_amount' => $hardshipBenefitAmount,
+                        'other_benefits_amount' => $nhifBenefitAmount + $otherBenefitsAmount,
                         'deduction_amount' => $otherDeductionsTotal + $additionalDeduction, // Only non-statutory deductions
                         'nssf_amount' => $finalStatutory['NSSF'],
                         'paye_amount' => $finalStatutory['PAYE'],
@@ -1435,6 +1477,9 @@ class PayrollController extends Controller
                 'overtime_hours' => (float)($payrollItem->overtime_hours ?? 0),
                 'bonus_amount' => (float)($payrollItem->bonus_amount ?? 0),
                 'allowance_amount' => (float)($payrollItem->allowance_amount ?? 0),
+                'house_benefit_amount' => (float)($payrollItem->house_benefit_amount ?? 0),
+                'hardship_benefit_amount' => (float)($payrollItem->hardship_benefit_amount ?? 0),
+                'other_benefits_amount' => (float)($payrollItem->other_benefits_amount ?? 0),
                 'nssf_amount' => (float)($payrollItem->nssf_amount ?? 0),
                 'nhif_amount' => (float)($payrollItem->nhif_amount ?? 0),
                 'heslb_amount' => (float)($payrollItem->heslb_amount ?? 0),
@@ -1460,7 +1505,15 @@ class PayrollController extends Controller
                     'employee_id' => $payrollItem->employee->employee_id ?? $payrollItem->employee->id ?? 'N/A',
                     'department' => ($payrollItem->employee->primaryDepartment ?? null) ? $payrollItem->employee->primaryDepartment->name : 'N/A',
                     'position' => ($payrollItem->employee->employee ?? null) ? $payrollItem->employee->employee->position : 'N/A',
-                ]
+                    'tin_number' => ($payrollItem->employee->employee ?? null) ? $payrollItem->employee->employee->tin_number : 'N/A',
+                    'nssf_number' => ($payrollItem->employee->employee ?? null) ? $payrollItem->employee->employee->nssf_number : 'N/A',
+                    'nhif_number' => ($payrollItem->employee->employee ?? null) ? $payrollItem->employee->employee->nhif_number : 'N/A',
+                    'date_of_birth' => $payrollItem->employee->date_of_birth ? $payrollItem->employee->date_of_birth->format('d M Y') : 'N/A',
+                    'retirement_date' => $payrollItem->employee->date_of_birth ? $payrollItem->employee->date_of_birth->copy()->addYears(60)->format('d M Y') : 'N/A',
+                ],
+                'employer_nssf' => (float)($payrollItem->employer_nssf ?? 0),
+                'employer_wcf' => (float)($payrollItem->employer_wcf ?? 0),
+                'total_employer_cost' => (float)($payrollItem->total_employer_cost ?? 0),
             ];
 
             // Generate HTML for the modal content
@@ -1543,6 +1596,44 @@ class PayrollController extends Controller
                 \Log::warning('employee_salary_deductions table not found: ' . $e->getMessage());
             }
 
+            // Calculate Employee Benefits
+            $houseBenefitAmount = 0;
+            $hardshipBenefitAmount = 0;
+            $nhifBenefitAmount = 0;
+            $otherBenefitsAmount = 0;
+            $totalBenefits = 0;
+
+            try {
+                if (Schema::hasTable('employee_benefits')) {
+                    $benefits = DB::table('employee_benefits')
+                        ->where('employee_id', $request->employee_id)
+                        ->where('is_active', true)
+                        ->get();
+
+                    foreach ($benefits as $benefit) {
+                        $amount = 0;
+                        if ($benefit->amount > 0) {
+                            $amount = (float)$benefit->amount;
+                        } elseif ($benefit->percentage > 0) {
+                            $amount = ($basicSalary * (float)$benefit->percentage) / 100;
+                        }
+
+                        if ($benefit->benefit_type === 'house') {
+                            $houseBenefitAmount += $amount;
+                        } elseif ($benefit->benefit_type === 'hardship') {
+                            $hardshipBenefitAmount += $amount;
+                        } elseif ($benefit->benefit_type === 'nhif') {
+                            $nhifBenefitAmount += $amount;
+                        } else {
+                            $otherBenefitsAmount += $amount;
+                        }
+                    }
+                    $totalBenefits = $houseBenefitAmount + $hardshipBenefitAmount + $nhifBenefitAmount + $otherBenefitsAmount;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Error calculating specific benefits in preview: ' . $e->getMessage());
+            }
+
             // Separate statutory deductions from other fixed deductions - ONLY USE STORED VALUES
             $statutoryDeductions = [
                 'PAYE' => 0,
@@ -1582,7 +1673,7 @@ class PayrollController extends Controller
             $totalAdditionalDeductions = $additionalDeductions + $otherFixedDeductionsTotal;
             
             // Calculate gross salary
-            $grossSalary = $basicSalary + $overtimeAmount + $bonusAmount + $allowanceAmount;
+            $grossSalary = $basicSalary + $overtimeAmount + $bonusAmount + $allowanceAmount + $totalBenefits;
             
             // Use ONLY stored statutory deductions - NO CALCULATION
             $finalPaye = $statutoryDeductions['PAYE'];
@@ -1726,6 +1817,7 @@ class PayrollController extends Controller
                 fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Write CSV headers
+            // Write CSV headers
             fputcsv($output, [
                 'Employee ID',
                 'Employee Name',
@@ -1736,6 +1828,9 @@ class PayrollController extends Controller
                 'Overtime Amount',
                 'Bonus',
                 'Allowance',
+                'House Benefit',
+                'Hardship Benefit',
+                'Other Benefits',
                 'Gross Salary',
                 'PAYE',
                 'NSSF',
@@ -1751,7 +1846,8 @@ class PayrollController extends Controller
             // Write payroll items
             foreach ($payroll->items as $item) {
                 $employee = $item->employee;
-                $gross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount;
+                $gross = $item->basic_salary + $item->overtime_amount + $item->bonus_amount + $item->allowance_amount + 
+                         $item->house_benefit_amount + $item->hardship_benefit_amount + $item->other_benefits_amount;
                 $totalDeductions = $item->nssf_amount + $item->nhif_amount + $item->heslb_amount + $item->paye_amount + $item->deduction_amount + $item->wcf_amount;
 
                 fputcsv($output, [
@@ -1764,6 +1860,9 @@ class PayrollController extends Controller
                     number_format($item->overtime_amount, 2, '.', ''),
                     number_format($item->bonus_amount, 2, '.', ''),
                     number_format($item->allowance_amount, 2, '.', ''),
+                    number_format($item->house_benefit_amount, 2, '.', ''),
+                    number_format($item->hardship_benefit_amount, 2, '.', ''),
+                    number_format($item->other_benefits_amount, 2, '.', ''),
                     number_format($gross, 2, '.', ''),
                     number_format($item->paye_amount, 2, '.', ''),
                     number_format($item->nssf_amount, 2, '.', ''),
@@ -1907,6 +2006,19 @@ class PayrollController extends Controller
 
         $pdfService = app(\App\Services\PayrollPdfService::class);
         return $pdfService->generatePayrollReport($payroll);
+    }
+
+    public function generateSalaryJournalPdf(Payroll $payroll)
+    {
+        // Check authorization
+        if (!Auth::user()->hasAnyRole(['HR Officer', 'System Admin', 'CEO', 'Director', 'Accountant'])) {
+            abort(403, 'You are not authorized to export salary journals.');
+        }
+
+        $payroll->load(['branch', 'processor', 'reviewer', 'approver']);
+
+        $pdfService = app(\App\Services\PayrollPdfService::class);
+        return $pdfService->generateSalaryJournal($payroll);
     }
 
     /**
@@ -2577,6 +2689,9 @@ class PayrollController extends Controller
                               $q->whereNull('end_date')->orWhere('end_date', '>=', now());
                           })
                           ->orderBy('created_at', 'desc');
+                },
+                'benefits' => function($query) {
+                    $query->where('is_active', true);
                 }
             ])
             ->get();
