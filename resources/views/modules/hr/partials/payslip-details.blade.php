@@ -224,14 +224,20 @@
                     </div>
                     <hr class="my-2">
                     <div class="row">
-                        <div class="col-6 mb-2">
+                        <div class="{{ ($payslip['nhif_amount'] ?? 0) > 0 ? 'col-4' : 'col-6' }} mb-2">
                             <small class="text-muted d-block">TIN Number</small>
                             <strong>{{ $employee['tin_number'] ?? 'N/A' }}</strong>
                         </div>
-                        <div class="col-6 mb-2">
+                        <div class="{{ ($payslip['nhif_amount'] ?? 0) > 0 ? 'col-4' : 'col-6' }} mb-2">
                             <small class="text-muted d-block">NSSF Number</small>
                             <strong>{{ $employee['nssf_number'] ?? 'N/A' }}</strong>
                         </div>
+                        @if(($payslip['nhif_amount'] ?? 0) > 0)
+                        <div class="col-4 mb-2">
+                            <small class="text-muted d-block">NHIF Number</small>
+                            <strong>{{ $employee['nhif_number'] ?? 'N/A' }}</strong>
+                        </div>
+                        @endif
                     </div>
                     <hr class="my-2">
                     <div class="row">

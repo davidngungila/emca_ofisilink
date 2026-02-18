@@ -222,9 +222,11 @@
             </tr>
             <tr>
                 <th>NSSF Number</th>
-                <td>{{ $safeOutput($payslip['nssf_number'] ?? null, 'N/A') }}</td>
-                <th>NHIF Number</th>
-                <td>{{ $safeOutput($payslip['nhif_number'] ?? null, 'N/A') }}</td>
+                <td @if(($payslip['nhif_amount'] ?? 0) <= 0) colspan="3" @endif>{{ $safeOutput($payslip['nssf_number'] ?? null, 'N/A') }}</td>
+                @if(($payslip['nhif_amount'] ?? 0) > 0)
+                    <th>NHIF Number</th>
+                    <td>{{ $safeOutput($payslip['nhif_number'] ?? null, 'N/A') }}</td>
+                @endif
             </tr>
             <tr>
                 <th>Date of Birth</th>
