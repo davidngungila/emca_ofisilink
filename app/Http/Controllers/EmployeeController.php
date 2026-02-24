@@ -3725,11 +3725,12 @@ class EmployeeController extends Controller
         ])->findOrFail($userId);
         
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $roles = \App\Models\Role::where('is_active', true)->orderBy('name')->get();
         $positions = \App\Models\Position::where('is_active', true)->orderBy('title')->get();
         $salaryStructures = \App\Models\SalaryStructure::where('is_active', true)->orderBy('name')->get();
         
-        return view('modules.hr.personal-particulars-edit', compact('employee', 'departments', 'roles', 'positions', 'salaryStructures'));
+        return view('modules.hr.personal-particulars-edit', compact('employee', 'departments', 'branches', 'roles', 'positions', 'salaryStructures'));
     }
 
     /**

@@ -3,6 +3,7 @@
 @section('title', 'Job Vacancies Management - Recruitment')
 
 @section('content')
+<div class="jobs-page">
 <div class="container-xxl flex-grow-1 container-p-y">
     <!-- Professional Header -->
     <div class="row mb-4">
@@ -187,6 +188,8 @@
     </div>
 </div>
 
+</div>
+
 <!-- Create/Edit Job Modal -->
 <div class="modal fade" id="jobModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -290,6 +293,27 @@
 @push('styles')
 <link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.min.css') }}">
 <style>
+    .jobs-page {
+        --bs-primary: #940000;
+        --bs-primary-rgb: 148, 0, 0;
+        --bs-link-color: #940000;
+        --bs-link-hover-color: #7a0000;
+    }
+
+    .jobs-page .modal-header.bg-primary,
+    .jobs-page .modal-header.bg-info,
+    .jobs-page .card.bg-primary {
+        background-color: var(--bs-primary) !important;
+    }
+
+    .jobs-page .avatar.bg-primary {
+        background-color: var(--bs-primary) !important;
+    }
+
+    .jobs-page .text-primary {
+        color: var(--bs-primary) !important;
+    }
+
     .job-card {
         transition: all 0.3s ease;
         border: 1px solid #e9ecef;
@@ -302,7 +326,7 @@
     .job-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        border-color: #007bff;
+        border-color: var(--bs-primary);
     }
     .job-actions {
         position: absolute;

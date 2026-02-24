@@ -196,7 +196,7 @@
                             <small class="text-white-50">Branch Details & Statistics</small>
                         </div>
                         <div>
-                            <a href="{{ route('admin.branches.show', $selectedBranch->id) }}" class="btn btn-light btn-sm">
+                            <a href="{{ route('admin.settings.branches.page') }}" class="btn btn-light btn-sm">
                                 <i class="bx bx-show me-1"></i>View Branch Details
                             </a>
                             <a href="{{ route('modules.hr.personal-particulars') }}" class="btn btn-light btn-sm">
@@ -657,19 +657,30 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <div class="mb-3">
                                         <label for="add_hire_date" class="form-label">Hire Date</label>
                                         <input type="date" class="form-control" id="add_hire_date" name="hire_date">
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <div class="mb-3">
                                         <label for="add_primary_department_id" class="form-label">Department <span class="text-danger">*</span></label>
                                         <select class="form-select" id="add_primary_department_id" name="primary_department_id" required>
                                                     <option value="">Select Department</option>
                                                     @foreach($departments as $department)
                                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                        <label for="add_branch_id" class="form-label">Branch <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="add_branch_id" name="branch_id" required>
+                                                    <option value="">Select Branch</option>
+                                                    @foreach($branches ?? [] as $branch)
+                                                    <option value="{{ $branch->id }}">{{ $branch->name }} ({{ $branch->code }})</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -1058,7 +1069,7 @@ $(document).ready(function() {
     function validateStage(stage) {
         let isValid = true;
         const requiredFields = {
-            'personal': ['name', 'email'],
+            'personal': ['name', 'email', 'branch_id'],
             'employment': ['primary_department_id'],
             'emergency': [], // Optional
             'family': [], // Optional
